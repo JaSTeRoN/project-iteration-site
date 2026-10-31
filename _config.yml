@@ -3,3 +3,4 @@ plugins:
 - jekyll-remote-them
 title: Проект "Итерация-8"
 description: Образовательный проект "Итерация-N"
+show_downloads: false
