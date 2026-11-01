@@ -1,0 +1,44 @@
+---
+layout: demo
+title: Подземелье Rogue — Итерация-8
+permalink: /rogue.html
+---
+
+<main class="demo">
+  <header class="topbar">
+    <a class="home" href="{{ '/' | relative_url }}">Итерация-8</a>
+    <h1>Подземелье Rogue, 1980</h1>
+  </header>
+  <p class="explain">Уровень Rogue собирается по шагам: секторы, комнаты, связное дерево коридоров, двери и только потом вещи. После ролика символом @ можно пройтись по полу.</p>
+  <div class="layout">
+    <section class="stage iso-mode" id="stage">
+      <canvas id="map" aria-label="Карта подземелья"></canvas>
+      <div class="zoom-controls">
+        <button type="button" id="zoom-out" aria-label="Уменьшить">−</button>
+        <button type="button" id="zoom-in" aria-label="Увеличить">+</button>
+      </div>
+    </section>
+    <aside class="side" id="side"></aside>
+  </div>
+  <div class="transport" id="transport">
+    <p class="caption" id="caption" role="status"></p>
+    <p class="message" id="message" role="status"></p>
+    <button type="button" id="to-start">В начало</button>
+    <button type="button" id="step-back">Шаг назад</button>
+    <button type="button" id="play">Пуск</button>
+    <button type="button" id="step-forward">Шаг вперёд</button>
+    <button type="button" id="to-end">В конец</button>
+    <label class="field">Скорость
+      <input id="speed" type="range" min="4" max="120" value="28">
+    </label>
+  </div>
+  <div class="dpad-wrap">
+    <div class="dpad" aria-label="Ход по подземелью">
+      <button type="button" data-dir="n" aria-label="Вверх">↑</button>
+      <button type="button" data-dir="w" aria-label="Влево">←</button>
+      <button type="button" data-dir="e" aria-label="Вправо">→</button>
+      <button type="button" data-dir="s" aria-label="Вниз">↓</button>
+    </div>
+  </div>
+</main>
+<script type="module" src="{{ '/assets/js/rogue/app.js' | relative_url }}"></script>
