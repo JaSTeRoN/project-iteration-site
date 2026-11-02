@@ -1,13 +1,47 @@
 {
   "primary": "tomsk",
   "zones": [
-    { "id": "tomsk", "title": "Томское время", "short": "Томск", "timeZone": "Asia/Tomsk" },
-    { "id": "kaliningrad", "title": "Калининградское время", "short": "Калининград", "timeZone": "Europe/Kaliningrad" }
+    {
+      "id": "tomsk",
+      "title": "Томское время",
+      "short": "Томск",
+      "timeZone": "Asia/Tomsk"
+    },
+    {
+      "id": "kaliningrad",
+      "title": "Калининградское время",
+      "short": "Калининград",
+      "timeZone": "Europe/Kaliningrad"
+    }
   ],
   "events": [
-    { "date": "2026-11-04", "time": "12:00", "kind": "maybe", "place": "", "link": "" },
-    { "date": "2026-11-04", "time": "18:00", "kind": "maybe", "place": "", "link": "" },
-    { "date": "2026-11-05", "time": "16:45", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
-    { "date": "2026-11-07", "time": "20:00", "kind": "remote", "place": "", "link": "" }
+    {
+      "date": "2026-11-04",
+      "time": "12:00",
+      "kind": "maybe",
+      "place": "",
+      "link": ""
+    },
+    {
+      "date": "2026-11-04",
+      "time": "18:00",
+      "kind": "maybe",
+      "place": "",
+      "link": ""
+    },
+    {
+      "date": "2026-11-05",
+      "time": "16:45",
+      "kind": "offline",
+      "place": "123 аудитория ФЭТ",
+      "link": "https://проект-итерация.рф"
+    },
+    {
+      "date": "2026-11-07",
+      "time": "20:00",
+      "kind": "remote",
+      "place": "",
+      "link": ""
+    }
   ]
 }
