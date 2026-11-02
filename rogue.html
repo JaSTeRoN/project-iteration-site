@@ -1,14 +1,27 @@
----
-layout: demo
-title: Подземелье Rogue — Итерация-8
-permalink: /rogue.html
----
-
-<main class="demo">
-  <header class="topbar">
-    <a class="home" href="{{ '/' | relative_url }}">Итерация-8</a>
-    <h1>Подземелье Rogue, 1980</h1>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Подземелье Rogue — Итерация-8</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/demo.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.png" alt="Итерация-8"></a>
+    <nav class="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+    </nav>
   </header>
+<main class="demo">
+  <h1 class="page-title">Подземелье Rogue, 1980</h1>
   <p class="explain">Уровень Rogue собирается по шагам: секторы, комнаты, связное дерево коридоров, двери и только потом вещи. После ролика символом @ можно пройтись по полу.</p>
   <div class="transport" id="transport">
     <button type="button" id="to-start">В начало</button>
@@ -41,4 +54,6 @@ permalink: /rogue.html
     </div>
   </div>
 </main>
-<script type="module" src="{{ '/assets/js/rogue/app.js' | relative_url }}"></script>
+<script type="module" src="assets/js/rogue/app.js"></script>
+</body>
+</html>
