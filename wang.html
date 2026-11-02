@@ -54,6 +54,9 @@
   <div class="tray" id="tray" aria-label="Плитки"></div>
   <p class="detail" id="detail"></p>
 </main>
-<script type="module" src="assets/js/wang/app.js"></script>
+<script type="module">
+  import { guardPage } from "./assets/js/access.js"
+  if (await guardPage("wang.html")) await import("./assets/js/wang/app.js")
+</script>
 </body>
 </html>

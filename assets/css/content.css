@@ -1,0 +1,42 @@
+.content-grid {
+  padding-top: 14px;
+}
+
+.card-meta {
+  margin: 0;
+  color: var(--blue);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.card-link {
+  margin-top: auto;
+  align-self: flex-start;
+  color: var(--blue-deep);
+  font-weight: 700;
+}
+
+.empty-card {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ink);
+}
+
+.card.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.tag.locked-tag {
+  background: #ffe6a8;
+  color: #5a4300;
+}
+
+.lock-card {
+  max-width: 640px;
+  margin: 28px auto;
+}
+
+.lock-card p {
+  margin: 0 0 14px;
+}

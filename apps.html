@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/content.css">
 </head>
 <body class="crystal">
   <header class="site-header">
@@ -20,17 +21,19 @@
     </nav>
   </header>
   <main class="wrap">
-    <section class="app-grid">
-      <a class="card" href="wang.html">
+    <section class="app-grid" id="apps">
+      <a class="card" data-gate="wang.html" href="wang.html">
         <span class="tag ready">4 уровня</span>
         <h2>Плитки Вана</h2>
         <p>Стороны должны совпасть: сначала цвет, потом дороги, трава и общая карта.</p>
+        <p class="gate-note" hidden></p>
         <img src="assets/brand/voxel/perlin1.webp" alt="">
       </a>
-      <a class="card" href="rogue.html">
+      <a class="card" data-gate="rogue.html" href="rogue.html">
         <span class="tag ready">По шагам</span>
         <h2>Подземелье Rogue, 1980</h2>
         <p>Секторы, комнаты, коридоры и двери. Потом по уровню можно пройтись.</p>
+        <p class="gate-note" hidden></p>
         <img src="assets/brand/voxel/dungeon1.webp" alt="">
       </a>
     </section>
@@ -38,5 +41,11 @@
   <footer class="site-footer">
     <p class="wrap">Специальный курс «Итерация-8». Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента», ТУСУР.</p>
   </footer>
+  <script type="module">
+    import { applyGates, guardPage } from "./assets/js/access.js"
+
+    const open = await guardPage("apps.html")
+    if (open) await applyGates()
+  </script>
 </body>
 </html>

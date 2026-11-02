@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Админка — Итерация-8</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/schedule.css">
+  <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"></a>
+    <nav class="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html">Приложения</a>
+      <a href="admin.html" aria-current="page">Админка</a>
+    </nav>
+  </header>
+  <main class="wrap editor">
+    <div class="page-lead">
+      <div>
+        <h1>Админка</h1>
+        <p>Расписание, проекты, материалы и доступ. Вход — токеном GitHub с правом Contents: Read and write на этот репозиторий.</p>
+      </div>
+    </div>
+    <section class="editor-card" id="login" hidden>
+      <p>Создайте <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer">fine-grained token</a> с правом Contents: Read and write только для репозитория project-iteration-site. Токен хранится в этом браузере 12 часов и дальше никуда не уходит.</p>
+      <div class="token-row">
+        <input id="token" type="password" autocomplete="off" placeholder="github_pat_...">
+        <button type="button" id="signin">Войти</button>
+      </div>
+      <p id="login-status" class="status" role="status"></p>
+    </section>
+    <div class="admin-bar" id="bar" hidden>
+      <nav class="admin-tabs" id="tabs" aria-label="Разделы админки">
+        <a href="#schedule" data-tab="schedule">Расписание</a>
+        <a href="#projects" data-tab="projects">Проекты</a>
+        <a href="#materials" data-tab="materials">Материалы</a>
+        <a href="#access" data-tab="access">Доступ</a>
+      </nav>
+      <div class="session" id="session"></div>
+    </div>
+    <p class="admin-note" id="bar-note" hidden>Переключение раздела перечитывает данные с GitHub — сохраните правки заранее.</p>
+    <div id="panel"></div>
+  </main>
+  <footer class="site-footer">
+    <p class="wrap">Специальный курс «Итерация-8». Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента», ТУСУР.</p>
+  </footer>
+  <script type="module" src="assets/js/admin.js"></script>
+</body>
+</html>

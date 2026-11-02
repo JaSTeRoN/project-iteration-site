@@ -54,6 +54,9 @@
     </div>
   </div>
 </main>
-<script type="module" src="assets/js/rogue/app.js"></script>
+<script type="module">
+  import { guardPage } from "./assets/js/access.js"
+  if (await guardPage("rogue.html")) await import("./assets/js/rogue/app.js")
+</script>
 </body>
 </html>

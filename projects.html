@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/content.css">
 </head>
 <body class="crystal">
   <header class="site-header">
@@ -20,14 +21,71 @@
     </nav>
   </header>
   <main class="wrap">
-    <article class="panel-card">
-      <img class="mascot" src="assets/brand/voxel/assistance1.webp" alt="">
-      <h1>Проекты и команды</h1>
-      <p>Состав команд и темы проектов добавим сюда отдельно. Раздел уже стоит в навигации, чтобы к нему было куда вернуться.</p>
-    </article>
+    <div class="page-lead">
+      <div>
+        <h1>Проекты и команды</h1>
+        <p>Кто над чем работает в этой итерации.</p>
+      </div>
+    </div>
+    <section class="section-grid content-grid" id="projects" aria-live="polite"></section>
   </main>
   <footer class="site-footer">
     <p class="wrap">Специальный курс «Итерация-8». Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента», ТУСУР.</p>
   </footer>
+  <script type="module">
+    const host = document.querySelector("#projects")
+
+    function card(project) {
+      const article = document.createElement("article")
+      article.className = "card"
+      const title = document.createElement("h2")
+      title.textContent = project.title
+      article.append(title)
+      if (project.team) {
+        const team = document.createElement("p")
+        team.className = "card-meta"
+        team.textContent = project.team
+        article.append(team)
+      }
+      if (project.description) {
+        const text = document.createElement("p")
+        text.textContent = project.description
+        article.append(text)
+      }
+      if (project.link) {
+        try {
+          const url = new URL(project.link)
+          if (url.protocol === "https:" || url.protocol === "http:") {
+            const link = document.createElement("a")
+            link.className = "card-link"
+            link.href = url.href
+            link.target = "_blank"
+            link.rel = "noopener noreferrer"
+            link.textContent = "Открыть"
+            article.append(link)
+          }
+        } catch {
+          /* невалидная ссылка — просто не показываем */
+        }
+      }
+      return article
+    }
+
+    try {
+      const response = await fetch("data/projects.json", { cache: "no-cache" })
+      const payload = response.ok ? await response.json() : { projects: [] }
+      const projects = Array.isArray(payload.projects) ? payload.projects : []
+      if (projects.length === 0) {
+        const empty = document.createElement("article")
+        empty.className = "panel-card empty-card"
+        empty.textContent = "Пока ни одного проекта — список появится здесь, как только его заполнят."
+        host.append(empty)
+      } else {
+        for (const project of projects) host.append(card(project))
+      }
+    } catch {
+      host.textContent = "Не удалось загрузить список проектов."
+    }
+  </script>
 </body>
 </html>
