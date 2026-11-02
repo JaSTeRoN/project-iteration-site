@@ -30,6 +30,14 @@
   font-weight: 700;
 }
 
+.board-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+}
+
 .week-nav {
   display: flex;
   flex-wrap: wrap;
@@ -37,11 +45,44 @@
   gap: 8px;
   width: fit-content;
   max-width: 100%;
-  margin: 14px 0;
+  margin: 0;
   padding: 6px 8px;
   border-radius: 16px;
   background: rgba(7, 17, 28, 0.84);
   color: white;
+}
+
+.time-switch {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px;
+  border-radius: 16px;
+  background: rgba(7, 17, 28, 0.84);
+  color: white;
+}
+
+.time-switch button {
+  min-height: 40px;
+  padding: 6px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.75);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.time-switch button[aria-pressed="true"] {
+  background: white;
+  color: var(--blue-deep);
+}
+
+.time-switch button:focus-visible {
+  outline: 2px solid #9dffb8;
+  outline-offset: 2px;
 }
 
 .week-range {
@@ -81,19 +122,13 @@
   text-transform: uppercase;
 }
 
-.zones {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding-bottom: 28px;
-}
-
 .zone {
   background: var(--paper);
   color: var(--ink);
   border-radius: 24px;
   overflow: hidden;
   box-shadow: var(--shadow);
+  margin-bottom: 28px;
 }
 
 .zone-head {
@@ -143,9 +178,10 @@
 .lesson-time { font-weight: 700; }
 .lesson-kind, .lesson-place, .lesson-note { line-height: 1.35; }
 .lesson-note { color: #5d6f84; font-size: 0.9rem; }
-.lesson a { display: inline-block; margin-top: 4px; color: var(--blue-deep); }
+.lesson a { display: inline-block; margin-top: 4px; color: var(--blue-deep); font-size: 0.85rem; }
 
 .lesson-offline { background: #efe8fb; }
+.lesson-possible-offline { background: #fff1d6; }
 .lesson-stream { background: #e5f0fb; }
 .lesson-remote, .lesson-maybe { background: #e7f6ee; }
 
@@ -173,6 +209,21 @@
 }
 
 .token-row input[type="password"] { flex: 1; min-width: 220px; }
+
+.default-link {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.default-link input { width: 100%; font-weight: 400; }
+
+.zone-select { flex: 0 0 auto; max-width: 10rem; }
+
+.event-edit-footer { gap: 8px 12px; }
+
+.event-edit-footer .event-hint { flex: 1 1 140px; }
 
 .editor input, .editor select, .editor button {
   min-height: 44px;
@@ -257,9 +308,12 @@
 .status.good { color: #146b3a; }
 
 @media (max-width: 900px) {
-  .zones, .days, .days-edit { grid-template-columns: 1fr; }
+  .days, .days-edit { grid-template-columns: 1fr; }
   .schedule-lead { flex-direction: column; align-items: stretch; }
   .zone-clock { margin-left: 0; }
+  .time-switch { margin-left: 0; }
+  .week-nav { width: 100%; flex-wrap: nowrap; }
+  .week-range { flex: 1 1 auto; min-width: 0; }
   .week-switch { flex: 1 1 100%; }
   .week-label { flex: 1 1 auto; }
   .week-jump { margin-left: 0; }

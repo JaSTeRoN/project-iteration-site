@@ -1,5 +1,6 @@
 export const KINDS = {
   offline: "Очно",
+  "possible-offline": "Возможное очное занятие",
   remote: "Дистанционно",
   maybe: "Возможное дистанционное",
   stream: "Стрим очного занятия",
@@ -125,6 +126,10 @@ export function pickWeekIndex(starts, today) {
 export function kindFor(event, zone, primaryZone) {
   if (!primaryZone || zone.id === primaryZone.id) return event.kind || "remote"
   return event.kind === "offline" ? "stream" : event.kind || "remote"
+}
+
+export function eventLink(event, defaultLink) {
+  return safeLink(event.link || defaultLink || "")
 }
 
 export function safeLink(value) {

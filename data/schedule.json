@@ -1,47 +1,35 @@
 {
   "primary": "tomsk",
+  "defaultLink": "",
   "zones": [
-    {
-      "id": "tomsk",
-      "title": "Томское время",
-      "short": "Томск",
-      "timeZone": "Asia/Tomsk"
-    },
-    {
-      "id": "kaliningrad",
-      "title": "Калининградское время",
-      "short": "Калининград",
-      "timeZone": "Europe/Kaliningrad"
-    }
+    { "id": "tomsk", "title": "Томское время", "short": "Томск", "timeZone": "Asia/Tomsk" },
+    { "id": "kaliningrad", "title": "Калининградское время", "short": "Калининград", "timeZone": "Europe/Kaliningrad" }
   ],
   "events": [
-    {
-      "date": "2026-11-04",
-      "time": "12:00",
-      "kind": "maybe",
-      "place": "",
-      "link": ""
-    },
-    {
-      "date": "2026-11-04",
-      "time": "18:00",
-      "kind": "maybe",
-      "place": "",
-      "link": ""
-    },
-    {
-      "date": "2026-11-05",
-      "time": "16:45",
-      "kind": "offline",
-      "place": "123 аудитория ФЭТ",
-      "link": ""
-    },
-    {
-      "date": "2026-11-07",
-      "time": "20:00",
-      "kind": "remote",
-      "place": "",
-      "link": "https://проект-итерация.рф"
-    }
+    { "date": "2026-11-04", "time": "12:00", "kind": "maybe", "place": "", "link": "", "zones": ["tomsk"] },
+    { "date": "2026-11-04", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-05", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-07", "time": "20:00", "kind": "remote", "place": "", "link": "" },
+    { "date": "2026-11-11", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-12", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-14", "time": "20:00", "kind": "remote", "place": "", "link": "" },
+    { "date": "2026-11-18", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-19", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-21", "time": "20:00", "kind": "remote", "place": "", "link": "" },
+    { "date": "2026-11-25", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-26", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-11-28", "time": "20:00", "kind": "remote", "place": "", "link": "" },
+    { "date": "2026-12-02", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-03", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-05", "time": "20:00", "kind": "remote", "place": "", "link": "" },
+    { "date": "2026-12-09", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-10", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-12", "time": "20:00", "kind": "remote", "place": "", "link": "" },
+    { "date": "2026-12-16", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-17", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-19", "time": "20:00", "kind": "remote", "place": "", "link": "" },
+    { "date": "2026-12-23", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-24", "time": "17:00", "kind": "offline", "place": "123 аудитория ФЭТ", "link": "" },
+    { "date": "2026-12-26", "time": "20:00", "kind": "remote", "place": "", "link": "" }
   ]
 }

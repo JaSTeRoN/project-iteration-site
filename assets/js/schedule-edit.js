@@ -22,6 +22,7 @@ const statusNode = document.querySelector("#edit-status")
 const tokenInput = document.querySelector("#token")
 const weekLabel = document.querySelector("#week-label")
 const weekDate = document.querySelector("#week-date")
+const defaultLinkInput = document.querySelector("#default-link")
 const host = document.querySelector("#week-body")
 
 let data = null
@@ -37,15 +38,23 @@ function setStatus(text, kind) {
 
 function zoneHint(event) {
   const instant = instantOf(event, primary.timeZone)
-  return data.zones
-    .filter((zone) => zone.id !== primary.id)
-    .map((zone) => {
-      const name = zone.short || zone.title
-      const time = formatTime(instant, zone.timeZone)
-      const date = formatDate(instant, zone.timeZone)
-      return date === event.date ? `${name} ${time}` : `${name} ${time}, ${shortDayTitle(date)}`
+  const parts = []
+  if (Array.isArray(event.zones) && event.zones.length > 0) {
+    const names = event.zones.map((id) => {
+      const zone = data.zones.find((item) => item.id === id)
+      return zone ? zone.short || zone.title : id
     })
-    .join(" · ")
+    parts.push(`Только ${names.join(", ")}`)
+  }
+  for (const zone of data.zones) {
+    if (zone.id === primary.id) continue
+    if (Array.isArray(event.zones) && !event.zones.includes(zone.id)) continue
+    const name = zone.short || zone.title
+    const time = formatTime(instant, zone.timeZone)
+    const date = formatDate(instant, zone.timeZone)
+    parts.push(date === event.date ? `${name} ${time}` : `${name} ${time}, ${shortDayTitle(date)}`)
+  }
+  return parts.join(" · ")
 }
 
 function eventRow(event) {
@@ -68,6 +77,25 @@ function eventRow(event) {
     option.selected = event.kind === value
     kind.append(option)
   }
+  const zonesSelect = document.createElement("select")
+  zonesSelect.className = "zone-select"
+  zonesSelect.setAttribute("aria-label", "Где показывать занятие")
+  const allZones = document.createElement("option")
+  allZones.value = ""
+  allZones.textContent = "Все зоны"
+  zonesSelect.append(allZones)
+  for (const zone of data.zones) {
+    const option = document.createElement("option")
+    option.value = zone.id
+    option.textContent = `Только ${zone.short || zone.title}`
+    option.selected = Array.isArray(event.zones) && event.zones.length === 1 && event.zones[0] === zone.id
+    zonesSelect.append(option)
+  }
+  zonesSelect.addEventListener("change", () => {
+    if (zonesSelect.value) event.zones = [zonesSelect.value]
+    else delete event.zones
+    hint.textContent = zoneHint(event)
+  })
   head.append(time, kind)
 
   const extra = document.createElement("div")
@@ -79,9 +107,9 @@ function eventRow(event) {
   place.setAttribute("aria-label", "Аудитория")
   const link = document.createElement("input")
   link.type = "url"
-  link.placeholder = "Ссылка https://…"
+  link.placeholder = "Своя ссылка (необязательно)"
   link.value = event.link || ""
-  link.setAttribute("aria-label", "Ссылка на конференцию")
+  link.setAttribute("aria-label", "Своя ссылка на конференцию")
   const remove = document.createElement("button")
   remove.type = "button"
   remove.className = "quiet"
@@ -95,6 +123,10 @@ function eventRow(event) {
   const hint = document.createElement("p")
   hint.className = "event-hint"
   hint.textContent = zoneHint(event)
+
+  const footer = document.createElement("div")
+  footer.className = "event-edit-row event-edit-footer"
+  footer.append(hint, zonesSelect)
 
   time.addEventListener("input", () => {
     event.time = time.value
@@ -110,7 +142,7 @@ function eventRow(event) {
     event.link = link.value
   })
 
-  row.append(head, extra, hint)
+  row.append(head, extra, footer)
   return row
 }
 
@@ -161,7 +193,12 @@ function normalized() {
     }),
     primary.timeZone,
   )
-  return { primary: data.primary, zones: data.zones, events }
+  return {
+    primary: data.primary,
+    defaultLink: String(data.defaultLink || "").trim(),
+    zones: data.zones,
+    events,
+  }
 }
 
 function githubHeaders() {
@@ -221,6 +258,7 @@ async function loadFromGithub() {
   primary = data.zones.find((zone) => zone.id === data.primary) || data.zones[0]
   fileSha = remote.sha
   weekStart = mondayOf(todayIn(primary.timeZone))
+  defaultLinkInput.value = data.defaultLink || ""
   renderWeek()
   setStatus("Загружено из репозитория.", "good")
 }
@@ -253,6 +291,7 @@ async function saveToGithub() {
   fileSha = payload.content.sha
   data = next
   baseline = JSON.stringify(next)
+  defaultLinkInput.value = next.defaultLink || ""
   renderWeek()
   setStatus("Сохранено. На сайте появится через минуту, когда GitHub Pages обновит страницу.", "good")
 }
@@ -278,6 +317,10 @@ async function main() {
   baseline = JSON.stringify(data)
   primary = data.zones.find((zone) => zone.id === data.primary) || data.zones[0]
   weekStart = mondayOf(todayIn(primary.timeZone))
+  defaultLinkInput.value = data.defaultLink || ""
+  defaultLinkInput.addEventListener("input", () => {
+    data.defaultLink = defaultLinkInput.value
+  })
   renderWeek()
   document.querySelector("#remember").addEventListener("click", () => {
     sessionStorage.setItem(TOKEN_KEY, tokenInput.value.trim())

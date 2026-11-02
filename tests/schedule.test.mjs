@@ -1,7 +1,9 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import {
+  KINDS,
   addDays,
+  eventLink,
   formatDate,
   formatTime,
   instantOf,
@@ -79,6 +81,15 @@ test("офлайн-занятие для второй зоны становит�
   assert.equal(kindFor({ kind: "offline" }, kaliningrad, tomsk), "stream")
   assert.equal(kindFor({ kind: "maybe" }, kaliningrad, tomsk), "maybe")
   assert.equal(kindFor({}, kaliningrad, tomsk), "remote")
+})
+
+test("ссылка по умолчанию подставляется, своя — важнее", () => {
+  const fallback = "https://meet.example/room"
+  assert.equal(eventLink({ link: "" }, fallback), fallback)
+  assert.equal(eventLink({ link: "https://example.com/a" }, fallback), "https://example.com/a")
+  assert.equal(eventLink({ link: "javascript:alert(1)" }, fallback), "")
+  assert.equal(eventLink({}, ""), "")
+  assert.equal(KINDS["possible-offline"], "Возможное очное занятие")
 })
 
 test("занятия одного дня сортируются по моменту", () => {
