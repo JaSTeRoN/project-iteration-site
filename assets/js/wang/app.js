@@ -22,7 +22,7 @@ import { cellAt, drawMap, fitMap, tileSvg, drawThumb } from "./render.js"
 
 const EXPLAIN = {
   1: "У плитки четыре стороны, и поворачивать её нельзя. Соседними становятся только стороны с одним и тем же цветом. Первая плитка встаёт в центр, следующая — только вплотную к уже стоящей.",
-  2: "Вместо цвета у стороны 0 или 1. Единица значит: из этой стороны выходит дорога. Дорога продолжается у соседа только при такой же единице. На шве написано это число. Дорога чаще идёт прямо и обходит уже проложенную, поэтому пересечений мало. Цвет земли здесь только рисунок, в правило он не входит.",
+  2: "Вместо цвета у стороны 0 или 1. Единица значит: из этой стороны выходит дорога. Дорога продолжается у соседа только при такой же единице. На шве написано это число. Дорога чаще идёт прямо, иногда поворачивает и расходится развилкой. Цвет земли здесь только рисунок, в правило он не входит.",
   3: "К дороге добавляются цвет земли от 0 до 10 и высота травы от 0 до 5. Короткая подпись на шве: дорога, затем цвет/высота, например 1 7/3. Совпасть должны все числа примыкающих сторон. Общее ребро записывается один раз, поэтому готовая карта не спорит сама с собой.",
   4: "Здесь вместе дороги, цвет, высота, вода и объекты. Подпись на шве короткая: 1 7/3 — дорога, цвет и высота, буква «в» — вода. Выберите плитку внизу и нажмите клетку: чужие стороны не встанут. Камень, дерево и камыш к сторонам Вана не относятся и меняются отдельно.",
 }
@@ -521,32 +521,35 @@ function resize() {
 }
 
 function frame(now) {
-  if (state.level > 1 && state.map) {
-    if (state.playing) {
-      const delta = now - (frame.last || now)
-      frame.bank = (frame.bank || 0) + delta
-      const step = 1000 / Number(speedInput.value || 14)
-      while (frame.bank > step && state.reveal < state.map.revealOrder.length) {
-        frame.bank -= step
-        state.reveal += 1
+  try {
+    if (state.level > 1 && state.map) {
+      if (state.playing) {
+        const delta = now - (frame.last || now)
+        frame.bank = (frame.bank || 0) + delta
+        const step = 1000 / Number(speedInput.value || 14)
+        while (frame.bank > step && state.reveal < state.map.revealOrder.length) {
+          frame.bank -= step
+          state.reveal += 1
+        }
+        if (state.reveal >= state.map.revealOrder.length) state.playing = false
       }
-      if (state.reveal >= state.map.revealOrder.length) state.playing = false
+      frame.last = now
+      drawMap(ctx, state.cssW, state.cssH, {
+        map: state.map,
+        view: state.view,
+        reveal: state.reveal,
+        showLabels: params[state.level].labels,
+        level: state.level,
+        selected: state.selectedCell,
+        accepts: acceptSet(),
+        channels: state.map.channels,
+        extrude: LEVEL_PRESETS[state.level].extrude,
+      })
+      playButton.textContent = state.playing ? "Пауза" : "Пуск"
     }
-    frame.last = now
-    drawMap(ctx, state.cssW, state.cssH, {
-      map: state.map,
-      view: state.view,
-      reveal: state.reveal,
-      showLabels: params[state.level].labels,
-      level: state.level,
-      selected: state.selectedCell,
-      accepts: acceptSet(),
-      channels: state.map.channels,
-      extrude: LEVEL_PRESETS[state.level].extrude,
-    })
-    playButton.textContent = state.playing ? "Пауза" : "Пуск"
+  } finally {
+    requestAnimationFrame(frame)
   }
-  requestAnimationFrame(frame)
 }
 
 document.querySelectorAll("[data-level]").forEach((button) => {

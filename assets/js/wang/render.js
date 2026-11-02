@@ -187,31 +187,48 @@ function edgeMids(top) {
   }
 }
 
-// Полоса в координатах клетки. Проекция кладёт её на верхнюю грань, а не рисует экранную черту.
-function roadBands(tile, half) {
-  const near = 0.5 - half
-  const far = 0.5 + half
+// Один контур на клетку: угол и развилка залиты целиком, без шва между двумя полосами.
+function roadPolygon(tile, half) {
   const lip = 0.03
-  const bands = []
-  if (tile.n.road === 1) bands.push([[near, -lip], [far, -lip], [far, 0.5], [near, 0.5]])
-  if (tile.e.road === 1) bands.push([[1 + lip, near], [1 + lip, far], [0.5, far], [0.5, near]])
-  if (tile.s.road === 1) bands.push([[far, 1 + lip], [near, 1 + lip], [near, 0.5], [far, 0.5]])
-  if (tile.w.road === 1) bands.push([[-lip, far], [-lip, near], [0.5, near], [0.5, far]])
-  return bands
+  const a = 0.5 - half
+  const b = 0.5 + half
+  const n = tile.n.road === 1
+  const e = tile.e.road === 1
+  const s = tile.s.road === 1
+  const w = tile.w.road === 1
+  const mask = (n ? 1 : 0) | (e ? 2 : 0) | (s ? 4 : 0) | (w ? 8 : 0)
+  const shape = {
+    1: [[a, -lip], [b, -lip], [b, 0.5], [a, 0.5]],
+    2: [[1 + lip, a], [1 + lip, b], [0.5, b], [0.5, a]],
+    4: [[b, 1 + lip], [a, 1 + lip], [a, 0.5], [b, 0.5]],
+    8: [[-lip, b], [-lip, a], [0.5, a], [0.5, b]],
+    5: [[a, -lip], [b, -lip], [b, 1 + lip], [a, 1 + lip]],
+    10: [[-lip, a], [1 + lip, a], [1 + lip, b], [-lip, b]],
+    3: [[a, -lip], [b, -lip], [b, a], [1 + lip, a], [1 + lip, b], [a, b]],
+    6: [[1 + lip, a], [1 + lip, b], [b, b], [b, 1 + lip], [a, 1 + lip], [a, a]],
+    12: [[b, 1 + lip], [a, 1 + lip], [a, b], [-lip, b], [-lip, a], [b, a]],
+    9: [[b, -lip], [a, -lip], [a, a], [-lip, a], [-lip, b], [b, b]],
+    7: [[a, -lip], [b, -lip], [b, a], [1 + lip, a], [1 + lip, b], [b, b], [b, 1 + lip], [a, 1 + lip]],
+    11: [[a, -lip], [b, -lip], [b, a], [1 + lip, a], [1 + lip, b], [-lip, b], [-lip, a], [a, a]],
+    13: [[a, -lip], [b, -lip], [b, 1 + lip], [a, 1 + lip], [a, b], [-lip, b], [-lip, a], [a, a]],
+    14: [[-lip, a], [1 + lip, a], [1 + lip, b], [b, b], [b, 1 + lip], [a, 1 + lip], [a, b], [-lip, b]],
+    15: [[a, -lip], [b, -lip], [b, a], [1 + lip, a], [1 + lip, b], [b, b], [b, 1 + lip], [a, 1 + lip], [a, b], [-lip, b], [-lip, a], [a, a]],
+  }
+  return shape[mask] ?? null
 }
 
 function paintRoad(ctx, tile, x, y, z, view, width, height) {
   if (!DIRS.some((side) => tile[side].road === 1)) return
   for (const [half, color] of [[0.26, "#c8ae7e"], [0.045, "#f3e6c4"]]) {
+    const poly = roadPolygon(tile, half)
+    if (!poly) continue
     ctx.fillStyle = color
-    for (const band of roadBands(tile, half)) {
-      path(ctx, band.map(([u, v]) => worldToScreen(project(x + u, y + v, z), view, width, height)))
-      ctx.fill()
-    }
+    path(ctx, poly.map(([u, v]) => worldToScreen(project(x + u, y + v, z), view, width, height)))
+    ctx.fill()
   }
 }
 
-function paintTileFace(ctx, map, x, y, top, ground, view, level, extrude, accepts) {
+function paintTileFace(ctx, map, x, y, top, ground, view, level, extrude, accepts, width, height) {
   const tile = map.cells[y][x]
   if (extrude) {
     const base = cellColor(level, Math.round(DIRS.reduce((sum, side) => sum + (tile[side].grassColor ?? 0), 0) / 4))
@@ -398,7 +415,7 @@ export function drawMap(ctx, width, height, model) {
       width,
       height,
     )
-    paintTileFace(ctx, map, fx, fy, top, ground, view, level, extrude, accepts)
+    paintTileFace(ctx, map, fx, fy, top, ground, view, level, extrude, accepts, width, height)
     ctx.strokeStyle = "#f2d56b"
     ctx.lineWidth = 4
     path(ctx, top)

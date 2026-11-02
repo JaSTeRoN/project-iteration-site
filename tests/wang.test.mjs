@@ -173,11 +173,13 @@ test("дороги чаще идут прямо, чем поворачивают
   assert.ok(straight > corner, `прямых ${straight}, поворотов ${corner}`)
 })
 
-test("дороги почти не пересекаются", () => {
-  let junctions = 0
+test("на дорогах есть развилки, но это не решётка", () => {
+  let thin = 0
+  let worst = 0
   let roadCells = 0
   for (let seed = 1; seed <= 12; seed += 1) {
     const map = generateMap({ ...LEVEL_PRESETS[2], seed })
+    let junctions = 0
     for (const row of map.cells) {
       for (const tile of row) {
         const count = ["n", "e", "s", "w"].filter((side) => tile[side].road === 1).length
@@ -185,8 +187,11 @@ test("дороги почти не пересекаются", () => {
         if (count >= 3) junctions += 1
       }
     }
+    if (junctions < 2) thin += 1
+    worst = Math.max(worst, junctions)
   }
-  assert.equal(junctions, 0)
+  assert.equal(thin, 0, `карт с меньше чем двумя развилками: ${thin}`)
+  assert.ok(worst <= 8, `слишком частые развилки: ${worst}`)
   assert.ok(roadCells > 30, `клеток с дорогой ${roadCells}`)
 })
 

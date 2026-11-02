@@ -287,6 +287,84 @@ function roadBlocked(hEdges, vEdges, width, height) {
   }
 }
 
+function branchRoads(hEdges, vEdges, width, height, rng, wanted) {
+  const inside = (x, y) => x >= 0 && y >= 0 && x < width && y < height
+  const openSides = (x, y) => DIRS.filter((side) => edgeRecord(hEdges, vEdges, x, y, side).road === 1)
+  const straights = []
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const open = openSides(x, y)
+      if (open.length === 2 && OPPOSITE[open[0]] === open[1]) straights.push([x, y])
+    }
+  }
+  let made = 0
+  for (const [x, y] of shuffle(rng, straights)) {
+    if (made >= wanted) break
+    const open = openSides(x, y)
+    if (open.length !== 2 || OPPOSITE[open[0]] !== open[1]) continue
+    const perps = shuffle(rng, open[0] === "n" || open[0] === "s" ? ["e", "w"] : ["n", "s"])
+    for (const side of perps) {
+      if (growBranch(hEdges, vEdges, width, height, rng, x, y, side, inside, openSides)) {
+        made += 1
+        break
+      }
+    }
+  }
+}
+
+function growBranch(hEdges, vEdges, width, height, rng, x, y, side, inside, openSides) {
+  const nx = x + DELTA[side][0]
+  const ny = y + DELTA[side][1]
+  if (!inside(nx, ny) || cellHasRoad(hEdges, vEdges, nx, ny)) return false
+  const marks = []
+  const paint = (mx, my, dir) => {
+    edgeRecord(hEdges, vEdges, mx, my, dir).road = 1
+    marks.push([mx, my, dir])
+  }
+  const undo = () => {
+    for (const [mx, my, dir] of marks) edgeRecord(hEdges, vEdges, mx, my, dir).road = 0
+  }
+  let cx = x
+  let cy = y
+  let heading = side
+  const steps = randInt(rng, 3, 5)
+  for (let step = 0; step < steps; step += 1) {
+    const options = DIRS.filter((dir) => {
+      if (dir === OPPOSITE[heading]) return false
+      const tx = cx + DELTA[dir][0]
+      const ty = cy + DELTA[dir][1]
+      if (!inside(tx, ty) || edgeRecord(hEdges, vEdges, cx, cy, dir).road === 1) return false
+      const existing = openSides(tx, ty)
+      if (existing.length === 0) return true
+      return existing.length === 2 && OPPOSITE[existing[0]] === existing[1] && dir !== existing[0] && dir !== existing[1]
+    })
+    if (step === 0 && !options.includes(side)) {
+      undo()
+      return false
+    }
+    const straight = options.includes(heading) ? heading : null
+    const turns = options.filter((dir) => dir !== heading)
+    let dir
+    if (step === 0) dir = side
+    else if (straight && (turns.length === 0 || rng() >= 0.18)) dir = straight
+    else if (turns.length > 0) dir = pick(rng, turns)
+    else break
+    const tx = cx + DELTA[dir][0]
+    const ty = cy + DELTA[dir][1]
+    const joining = cellHasRoad(hEdges, vEdges, tx, ty)
+    paint(cx, cy, dir)
+    if (joining) break
+    cx = tx
+    cy = ty
+    heading = dir
+  }
+  if (marks.length < 2) {
+    undo()
+    return false
+  }
+  return true
+}
+
 function carveWalks(width, height, count, rng, visit, walk = {}) {
   const turnChance = walk.turnChance
   const blocked = walk.blocked
@@ -392,6 +470,7 @@ export function generateMap(options) {
     blocked: roadBlocked(hEdges, vEdges, width, height),
     occupied: (x, y) => cellHasRoad(hEdges, vEdges, x, y),
   })
+  branchRoads(hEdges, vEdges, width, height, rng, Math.max(2, options.roadPaths ?? 2))
   if (channels.includes("water") && (options.waterPaths ?? 0) > 0) {
     carveWalks(width, height, options.waterPaths, rng, (x, y, side) => {
       const record = edgeRecord(hEdges, vEdges, x, y, side)

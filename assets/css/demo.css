@@ -283,16 +283,18 @@ button:disabled {
     flex: none;
     min-height: auto;
     grid-template-columns: 1fr;
-    order: 2;
+    order: 5;
   }
   .stage.iso-mode { height: 52dvh; }
   .side { max-height: none; }
   .topbar { order: 0; }
   .level-tabs { order: 1; }
-  .transport, .dpad-wrap { order: 3; }
-  .tray { order: 4; }
-  .message, .caption { order: 5; }
-  .explain, .detail { order: 6; }
+  .explain { order: 2; }
+  .message { order: 3; }
+  .transport { order: 4; }
+  .dpad-wrap { order: 6; }
+  .tray { order: 7; }
+  .detail { order: 8; }
 }
 
 @media (prefers-reduced-motion: reduce) {
