@@ -86,7 +86,10 @@ function zoneHeader(zone) {
   const clock = document.createElement("p")
   clock.className = "zone-clock"
   clocks.set(clock, zone.timeZone)
-  head.append(title, date, clock)
+  const meta = document.createElement("div")
+  meta.className = "zone-meta"
+  meta.append(date, clock)
+  head.append(title, meta)
   return head
 }
 
