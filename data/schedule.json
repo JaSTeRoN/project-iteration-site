@@ -31,13 +31,6 @@
     },
     {
       "date": "2026-11-05",
-      "time": "12:00",
-      "kind": "remote",
-      "place": "",
-      "link": "https://xn----8sbnbocj4aikguc3dyh.xn--p1ai/"
-    },
-    {
-      "date": "2026-11-05",
       "time": "16:45",
       "kind": "offline",
       "place": "123 аудитория ФЭТ",
@@ -48,7 +41,7 @@
       "time": "20:00",
       "kind": "remote",
       "place": "",
-      "link": ""
+      "link": "https://проект-итерация.рф"
     }
   ]
 }
