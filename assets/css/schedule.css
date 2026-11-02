@@ -30,14 +30,55 @@
   font-weight: 700;
 }
 
-.week-range {
-  display: inline-block;
+.week-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
   margin: 14px 0;
-  padding: 6px 14px;
+  padding: 6px 8px;
   border-radius: 16px;
   background: rgba(7, 17, 28, 0.84);
   color: white;
+}
+
+.week-range {
+  margin: 0;
+  padding: 0 4px;
+  color: white;
   font-weight: 700;
+}
+
+.week-step {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 12px;
+  background: transparent;
+  color: white;
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.week-step:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.week-badge {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #ffd76a;
+  color: #3a2a00;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .zones {
@@ -100,7 +141,8 @@
 
 .lesson p { margin: 0; }
 .lesson-time { font-weight: 700; }
-.lesson-kind, .lesson-place { line-height: 1.35; }
+.lesson-kind, .lesson-place, .lesson-note { line-height: 1.35; }
+.lesson-note { color: #5d6f84; font-size: 0.9rem; }
 .lesson a { display: inline-block; margin-top: 4px; color: var(--blue-deep); }
 
 .lesson-offline { background: #efe8fb; }
@@ -123,7 +165,7 @@
 
 .editor-card h1, .day-edit h3 { margin: 0 0 8px; }
 
-.token-row, .event-edit, .week-tools {
+.token-row, .week-tools {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -181,6 +223,31 @@
   align-items: center;
 }
 
+.event-hint {
+  margin: 0;
+  color: #5d6f84;
+  font-size: 0.9rem;
+}
+
+.week-label {
+  margin: 0;
+  font-weight: 700;
+}
+
+.week-switch {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.week-jump {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
 .event-edit input[type="time"] { width: 7.2rem; flex: 0 0 auto; }
 .event-edit select { flex: 1 1 160px; min-width: 0; }
 .event-edit input[type="text"], .event-edit input[type="url"] { flex: 1 1 140px; min-width: 0; }
@@ -193,4 +260,7 @@
   .zones, .days, .days-edit { grid-template-columns: 1fr; }
   .schedule-lead { flex-direction: column; align-items: stretch; }
   .zone-clock { margin-left: 0; }
+  .week-switch { flex: 1 1 100%; }
+  .week-label { flex: 1 1 auto; }
+  .week-jump { margin-left: 0; }
 }

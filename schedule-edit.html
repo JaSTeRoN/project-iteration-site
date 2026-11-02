@@ -25,6 +25,7 @@
     <section class="editor-card">
       <h1>Правка расписания</h1>
       <p>Токен нужен только вам. Создайте на GitHub <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer">fine-grained token</a> с правом Contents: Read and write только для репозитория project-iteration-site. Он останется в этой вкладке и в файлы сайта не попадёт. Сохранение делает коммит прямо в main — сайт обновится через минуту.</p>
+      <p>Время вводится по Томску, калининградское пересчитывается само.</p>
       <div class="token-row">
         <input id="token" type="password" autocomplete="off" placeholder="github_pat_...">
         <button type="button" id="remember" class="quiet">Запомнить</button>
@@ -32,10 +33,15 @@
       </div>
       <p id="edit-status" class="status" role="status"></p>
       <div class="week-tools">
-        <label>Неделя <select id="week"></select></label>
-        <input id="week-date" type="date" aria-label="Дата недели">
-        <button type="button" id="add-week" class="quiet">Добавить неделю</button>
-        <button type="button" id="delete-week" class="quiet">Удалить неделю</button>
+        <div class="week-switch">
+          <button type="button" id="prev-week" class="quiet" aria-label="Предыдущая неделя">‹</button>
+          <p id="week-label" class="week-label"></p>
+          <button type="button" id="next-week" class="quiet" aria-label="Следующая неделя">›</button>
+        </div>
+        <div class="week-jump">
+          <input id="week-date" type="date" aria-label="Перейти к неделе">
+          <button type="button" id="go-week" class="quiet">Перейти</button>
+        </div>
       </div>
     </section>
     <div id="week-body"></div>

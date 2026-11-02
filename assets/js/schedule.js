@@ -1,7 +1,28 @@
-import { KINDS, dayTitle, pickWeek, safeLink, sortEvents, todayIn } from "./schedule-data.js"
+import {
+  KINDS,
+  dayTitle,
+  formatDate,
+  formatTime,
+  instantOf,
+  kindFor,
+  pickWeekIndex,
+  safeLink,
+  shortDayTitle,
+  sortEvents,
+  todayIn,
+  weekDays,
+  weekRangeTitle,
+  weekStarts,
+  weekState,
+} from "./schedule-data.js"
 
 const board = document.querySelector("#schedule-board")
 const clocks = new Map()
+
+let data = null
+let weeks = []
+let index = 0
+let primary = null
 
 function zoneNow(timeZone) {
   return new Intl.DateTimeFormat("ru-RU", {
@@ -12,17 +33,26 @@ function zoneNow(timeZone) {
   }).format(new Date())
 }
 
-function eventCard(event) {
+function eventCard(event, zone, columnDate) {
+  const instant = instantOf(event, primary.timeZone)
   const card = document.createElement("article")
-  card.className = `lesson lesson-${event.kind || "remote"}`
+  const kindValue = kindFor(event, zone, primary)
+  card.className = `lesson lesson-${kindValue}`
   const time = document.createElement("p")
   time.className = "lesson-time"
-  time.textContent = event.time || "без времени"
+  time.textContent = formatTime(instant, zone.timeZone)
   const kind = document.createElement("p")
   kind.className = "lesson-kind"
-  kind.textContent = KINDS[event.kind] || "Занятие"
+  kind.textContent = KINDS[kindValue] || "Занятие"
   card.append(time, kind)
-  if (event.place) {
+  const localDate = formatDate(instant, zone.timeZone)
+  if (localDate !== columnDate) {
+    const note = document.createElement("p")
+    note.className = "lesson-note"
+    note.textContent = shortDayTitle(localDate)
+    card.append(note)
+  }
+  if (event.place && zone.id === primary.id) {
     const place = document.createElement("p")
     place.className = "lesson-place"
     place.textContent = event.place
@@ -40,17 +70,13 @@ function eventCard(event) {
   return card
 }
 
-function renderZone(zone, week) {
+function renderZone(zone, weekStart) {
   const section = document.createElement("section")
   section.className = `zone zone-${zone.id}`
   const head = document.createElement("header")
   head.className = "zone-head"
   const title = document.createElement("h2")
   title.textContent = zone.title
-  const clock = document.createElement("p")
-  clock.className = "zone-clock"
-  clock.dataset.zone = zone.timeZone
-  const today = todayIn(zone.timeZone)
   const date = document.createElement("p")
   date.className = "zone-date"
   date.textContent = new Intl.DateTimeFormat("ru-RU", {
@@ -58,26 +84,32 @@ function renderZone(zone, week) {
     day: "numeric",
     month: "long",
   }).format(new Date())
-  head.append(title, date, clock)
+  const clock = document.createElement("p")
+  clock.className = "zone-clock"
   clocks.set(clock, zone.timeZone)
+  head.append(title, date, clock)
 
   const days = document.createElement("div")
   days.className = "days"
-  for (const day of week.days) {
+  const zoneToday = todayIn(zone.timeZone)
+  for (const dayDate of weekDays(weekStart)) {
     const column = document.createElement("section")
     column.className = "day"
-    if (day.date === today) column.classList.add("today")
+    if (dayDate === zoneToday) column.classList.add("today")
     const heading = document.createElement("h3")
-    heading.textContent = dayTitle(day.date)
+    heading.textContent = dayTitle(dayDate)
     column.append(heading)
-    const events = sortEvents(day[zone.id] || [])
-    if (events.length === 0) {
+    const events = data.events.filter(
+      (event) => event.date === dayDate && (!event.zones || event.zones.includes(zone.id)),
+    )
+    const sorted = sortEvents(events, primary.timeZone)
+    if (sorted.length === 0) {
       const empty = document.createElement("p")
       empty.className = "day-empty"
       empty.textContent = "Нет занятий"
       column.append(empty)
     } else {
-      for (const event of events) column.append(eventCard(event))
+      for (const event of sorted) column.append(eventCard(event, zone, dayDate))
     }
     days.append(column)
   }
@@ -85,35 +117,85 @@ function renderZone(zone, week) {
   return section
 }
 
-function tick() {
-  for (const [node, timeZone] of clocks) node.textContent = zoneNow(timeZone)
+function weekBadge(weekStart, today) {
+  const state = weekState(weekStart, today)
+  if (state === "past") return "Архив"
+  if (state === "future") return "Скоро"
+  return ""
 }
 
-function showWeek(data, week) {
+function renderWeek() {
+  clocks.clear()
   board.replaceChildren()
-  const range = document.createElement("p")
-  range.className = "week-range"
-  const first = week.days[0]?.date
-  const last = week.days.at(-1)?.date
-  range.textContent = first && last ? `${dayTitle(first)} — ${dayTitle(last)}` : ""
+  const weekStart = weeks[index]
+  const today = todayIn(primary.timeZone)
+
+  const nav = document.createElement("div")
+  nav.className = "week-nav"
+
+  const prev = document.createElement("button")
+  prev.type = "button"
+  prev.className = "week-step"
+  prev.textContent = "‹"
+  prev.setAttribute("aria-label", "Предыдущая неделя")
+  prev.disabled = index === 0
+  prev.addEventListener("click", () => {
+    index -= 1
+    renderWeek()
+  })
+
+  const label = document.createElement("p")
+  label.className = "week-range"
+  label.textContent = weekRangeTitle(weekStart)
+
+  const next = document.createElement("button")
+  next.type = "button"
+  next.className = "week-step"
+  next.textContent = "›"
+  next.setAttribute("aria-label", "Следующая неделя")
+  next.disabled = index === weeks.length - 1
+  next.addEventListener("click", () => {
+    index += 1
+    renderWeek()
+  })
+
+  nav.append(prev, label)
+  const badgeText = weekBadge(weekStart, today)
+  if (badgeText) {
+    const badge = document.createElement("span")
+    badge.className = "week-badge"
+    badge.textContent = badgeText
+    nav.append(badge)
+  }
+  nav.append(next)
+
   const zones = document.createElement("div")
   zones.className = "zones"
-  for (const zone of data.zones) zones.append(renderZone(zone, week))
-  board.append(range, zones)
+  for (const zone of data.zones) zones.append(renderZone(zone, weekStart))
+
+  board.append(nav, zones)
   tick()
+}
+
+function tick() {
+  for (const [node, timeZone] of clocks) node.textContent = zoneNow(timeZone)
 }
 
 async function main() {
   try {
     const response = await fetch("data/schedule.json", { cache: "no-cache" })
     if (!response.ok) throw new Error(String(response.status))
-    const data = await response.json()
-    const week = pickWeek(data.weeks || [], todayIn("Asia/Tomsk"))
-    if (!week) {
+    data = await response.json()
+    data.events = data.events || []
+    primary = data.zones.find((zone) => zone.id === data.primary) || data.zones[0]
+    const today = todayIn(primary.timeZone)
+    weeks = weekStarts(data.events, today)
+    index = pickWeekIndex(weeks, today)
+    if (data.events.length === 0) {
       board.textContent = "Расписание пока пустое."
       return
     }
-    showWeek(data, week)
+    renderWeek()
     window.setInterval(tick, 1000)
   } catch {
     board.textContent = "Не удалось загрузить расписание."
