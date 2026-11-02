@@ -222,7 +222,18 @@ h1, h2, .page-title {
 
 .admin-dot {
   color: inherit;
-  text-decoration: none;
+  text-decoration: none !important;
+}
+
+.footer-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.footer-link:hover {
+  text-decoration-thickness: 2px;
 }
 
 .page-lead {
