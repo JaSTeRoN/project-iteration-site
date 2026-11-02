@@ -1,0 +1,196 @@
+.schedule-lead {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: end;
+  margin: 18px auto 0;
+  padding: 18px 22px;
+  border-radius: 24px;
+  background: rgba(7, 17, 28, 0.84);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow);
+}
+
+.schedule-lead h1 {
+  margin: 0 0 6px;
+  color: white;
+}
+
+.schedule-lead p { margin: 0; color: #d9e6f4; }
+
+.edit-link {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: white;
+  color: var(--blue-deep);
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.week-range {
+  display: inline-block;
+  margin: 14px 0;
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: rgba(7, 17, 28, 0.84);
+  color: white;
+  font-weight: 700;
+}
+
+.zones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding-bottom: 28px;
+}
+
+.zone {
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.zone-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+  padding: 14px 16px;
+  color: white;
+}
+
+.zone-tomsk .zone-head { background: #0b3f86; }
+.zone-kaliningrad .zone-head { background: #1f8f55; }
+
+.zone-head h2 { margin: 0; font-size: 1.25rem; }
+.zone-date, .zone-clock { margin: 0; }
+.zone-clock { margin-left: auto; font-variant-numeric: tabular-nums; font-size: 1.35rem; font-weight: 700; }
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.day {
+  padding: 12px;
+  border-top: 1px solid #e1e8f0;
+  min-width: 0;
+}
+
+.day.today { background: #e8f3ff; }
+
+.day h3 {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+}
+
+.day-empty { margin: 0; color: #6d7f95; }
+
+.lesson {
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #e7f6ee;
+}
+
+.lesson p { margin: 0; }
+.lesson-time { font-weight: 700; }
+.lesson-kind, .lesson-place { line-height: 1.35; }
+.lesson a { display: inline-block; margin-top: 4px; color: var(--blue-deep); }
+
+.lesson-offline { background: #efe8fb; }
+.lesson-stream { background: #e5f0fb; }
+.lesson-remote, .lesson-maybe { background: #e7f6ee; }
+
+.editor {
+  display: grid;
+  gap: 14px;
+  padding: 18px 0 28px;
+  color-scheme: light;
+}
+
+.editor-card, .day-edit {
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.editor-card h1, .day-edit h3 { margin: 0 0 8px; }
+
+.token-row, .event-edit, .week-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.token-row input[type="password"] { flex: 1; min-width: 220px; }
+
+.editor input, .editor select, .editor button {
+  min-height: 44px;
+  font: inherit;
+  font-size: 16px;
+  border-radius: 10px;
+  border: 1px solid #c5d3e2;
+  padding: 8px 10px;
+  background: white;
+  color: var(--ink);
+}
+
+.editor input::placeholder { color: #74869b; }
+
+.editor button {
+  background: var(--blue-deep);
+  color: white;
+  border-color: var(--blue-deep);
+  cursor: pointer;
+}
+
+.editor button.quiet {
+  background: white;
+  color: var(--ink);
+}
+
+.days-edit {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 10px;
+  align-items: start;
+}
+
+.event-edit {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #e1e8f0;
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+
+.event-edit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.event-edit input[type="time"] { width: 7.2rem; flex: 0 0 auto; }
+.event-edit select { flex: 1 1 160px; min-width: 0; }
+.event-edit input[type="text"], .event-edit input[type="url"] { flex: 1 1 140px; min-width: 0; }
+.event-edit button { flex: 0 0 auto; }
+.status { min-height: 1.4em; font-weight: 700; }
+.status.bad { color: #8d1d1d; }
+.status.good { color: #146b3a; }
+
+@media (max-width: 900px) {
+  .zones, .days, .days-edit { grid-template-columns: 1fr; }
+  .schedule-lead { flex-direction: column; align-items: stretch; }
+  .zone-clock { margin-left: 0; }
+}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Правка расписания — Итерация-8</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/schedule.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"></a>
+    <nav class="site-nav" aria-label="Разделы">
+      <a href="schedule.html" aria-current="page">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html">Приложения</a>
+    </nav>
+  </header>
+  <main class="wrap editor" id="editor">
+    <section class="editor-card">
+      <h1>Правка расписания</h1>
+      <p>Токен нужен только вам. Создайте на GitHub <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer">fine-grained token</a> с правом Contents: Read and write только для репозитория project-iteration-site. Он останется в этой вкладке и в файлы сайта не попадёт. Сохранение делает коммит прямо в main — сайт обновится через минуту.</p>
+      <div class="token-row">
+        <input id="token" type="password" autocomplete="off" placeholder="github_pat_...">
+        <button type="button" id="remember" class="quiet">Запомнить</button>
+        <button type="button" id="load">Загрузить с GitHub</button>
+      </div>
+      <p id="edit-status" class="status" role="status"></p>
+      <div class="week-tools">
+        <label>Неделя <select id="week"></select></label>
+        <input id="week-date" type="date" aria-label="Дата недели">
+        <button type="button" id="add-week" class="quiet">Добавить неделю</button>
+        <button type="button" id="delete-week" class="quiet">Удалить неделю</button>
+      </div>
+    </section>
+    <div id="week-body"></div>
+    <div class="week-tools">
+      <button type="button" id="save">Сохранить на сайт</button>
+      <button type="button" id="download" class="quiet">Скачать JSON</button>
+      <a class="edit-link" href="schedule.html">К расписанию</a>
+    </div>
+  </main>
+  <footer class="site-footer">
+    <p class="wrap">Специальный курс «Итерация-8». Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента», ТУСУР.</p>
+  </footer>
+  <script type="module" src="assets/js/schedule-edit.js"></script>
+</body>
+</html>
