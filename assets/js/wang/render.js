@@ -187,6 +187,30 @@ function edgeMids(top) {
   }
 }
 
+// Полоса в координатах клетки. Проекция кладёт её на верхнюю грань, а не рисует экранную черту.
+function roadBands(tile, half) {
+  const near = 0.5 - half
+  const far = 0.5 + half
+  const lip = 0.03
+  const bands = []
+  if (tile.n.road === 1) bands.push([[near, -lip], [far, -lip], [far, 0.5], [near, 0.5]])
+  if (tile.e.road === 1) bands.push([[1 + lip, near], [1 + lip, far], [0.5, far], [0.5, near]])
+  if (tile.s.road === 1) bands.push([[far, 1 + lip], [near, 1 + lip], [near, 0.5], [far, 0.5]])
+  if (tile.w.road === 1) bands.push([[-lip, far], [-lip, near], [0.5, near], [0.5, far]])
+  return bands
+}
+
+function paintRoad(ctx, tile, x, y, z, view, width, height) {
+  if (!DIRS.some((side) => tile[side].road === 1)) return
+  for (const [half, color] of [[0.26, "#c8ae7e"], [0.045, "#f3e6c4"]]) {
+    ctx.fillStyle = color
+    for (const band of roadBands(tile, half)) {
+      path(ctx, band.map(([u, v]) => worldToScreen(project(x + u, y + v, z), view, width, height)))
+      ctx.fill()
+    }
+  }
+}
+
 function paintTileFace(ctx, map, x, y, top, ground, view, level, extrude, accepts) {
   const tile = map.cells[y][x]
   if (extrude) {
@@ -246,22 +270,8 @@ function paintTileFace(ctx, map, x, y, top, ground, view, level, extrude, accept
       ctx.stroke()
     }
   }
-  for (const side of DIRS) {
-    if (tile[side].road !== 1) continue
-    ctx.strokeStyle = "#c8ae7e"
-    ctx.lineWidth = Math.max(6, 18 * view.zoom)
-    ctx.lineCap = "butt"
-    ctx.beginPath()
-    ctx.moveTo(center.x, center.y)
-    ctx.lineTo(mids[side].x, mids[side].y)
-    ctx.stroke()
-    ctx.strokeStyle = "#f0e2c0"
-    ctx.lineWidth = Math.max(3, 10 * view.zoom)
-    ctx.beginPath()
-    ctx.moveTo(center.x, center.y)
-    ctx.lineTo(mids[side].x, mids[side].y)
-    ctx.stroke()
-  }
+  const faceZ = extrude ? averageHeight(tile) * HEIGHT_STEP : 0
+  paintRoad(ctx, tile, x, y, faceZ, view, width, height)
   drawObject(ctx, tile, center, view.zoom)
   if (accepts?.has(`${x},${y}`)) {
     ctx.strokeStyle = "#9dffb8"
@@ -360,28 +370,19 @@ export function drawMap(ctx, width, height, model) {
         ctx.stroke()
       }
     }
-    for (const side of DIRS) {
-      if (tile[side].road !== 1) continue
-      ctx.strokeStyle = "#c8ae7e"
-      ctx.lineWidth = Math.max(6, 18 * view.zoom)
-      ctx.lineCap = "butt"
-      ctx.beginPath()
-      ctx.moveTo(center.x, center.y)
-      ctx.lineTo(mids[side].x, mids[side].y)
-      ctx.stroke()
-      ctx.strokeStyle = "#f0e2c0"
-      ctx.lineWidth = Math.max(3, 10 * view.zoom)
-      ctx.beginPath()
-      ctx.moveTo(center.x, center.y)
-      ctx.lineTo(mids[side].x, mids[side].y)
-      ctx.stroke()
-    }
+    if (extrude) paintRoad(ctx, tile, x, y, averageHeight(tile) * HEIGHT_STEP, view, width, height)
     drawObject(ctx, tile, center, view.zoom)
     if (accepts?.has(key)) {
       ctx.strokeStyle = "#9dffb8"
       ctx.lineWidth = 3
       path(ctx, top)
       ctx.stroke()
+    }
+  }
+  if (!extrude) {
+    for (const [x, y] of painterOrder(map)) {
+      if (!revealed.has(`${x},${y}`)) continue
+      paintRoad(ctx, map.cells[y][x], x, y, 0, view, width, height)
     }
   }
   const focus = selected && revealed.has(`${selected[0]},${selected[1]}`) ? selected : null
