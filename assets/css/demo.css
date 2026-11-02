@@ -63,6 +63,10 @@ button:disabled {
   padding: 10px;
 }
 
+.demo.level-1 .tray { order: 4; }
+.demo.level-1 .layout { order: 5; }
+.demo.level-1 .detail { order: 6; }
+
 .topbar, .level-tabs, .transport, .zoom-controls, .dpad-wrap {
   display: flex;
   flex-wrap: wrap;

@@ -1,4 +1,4 @@
-import { DIRS, averageHeight, waterEdges } from "./engine.js"
+import { DIRS, DELTA, averageHeight, waterEdges } from "./engine.js"
 import { worldToScreen } from "../camera.js"
 
 export const PALETTE = ["#d64545", "#e2b33c", "#3aaa5a", "#3d7fe0", "#9a57d6", "#e07a32", "#2aa7a0", "#d45d9b"]
@@ -142,12 +142,21 @@ function paintEdgeLabel(ctx, text, x, y) {
   ctx.fillText(text, x, y)
 }
 
-function seamSides(map, x, y, revealed) {
+function seamSides(map, x, y, revealed, extrude) {
   const sides = []
-  if (y === 0) sides.push("n")
-  if (x === 0) sides.push("w")
-  if (x + 1 >= map.width || revealed.has(`${x + 1},${y}`)) sides.push("e")
-  if (y + 1 >= map.height || revealed.has(`${x},${y + 1}`)) sides.push("s")
+  const here = extrude ? averageHeight(map.cells[y][x]) : 0
+  for (const side of DIRS) {
+    const nx = x + DELTA[side][0]
+    const ny = y + DELTA[side][1]
+    const outside = nx < 0 || ny < 0 || nx >= map.width || ny >= map.height
+    if (outside || !revealed.has(`${nx},${ny}`)) {
+      sides.push(side)
+      continue
+    }
+    const neighbor = extrude ? averageHeight(map.cells[ny][nx]) : here
+    // Одно общее ребро — одна подпись. При разной высоте её рисует более высокая грань.
+    if (here > neighbor || ((here === neighbor) && (side === "e" || side === "s"))) sides.push(side)
+  }
   return sides
 }
 
@@ -465,10 +474,9 @@ export function drawMap(ctx, width, height, model) {
     for (const [x, y] of painterOrder(map)) {
       if (!revealed.has(`${x},${y}`)) continue
       const tile = map.cells[y][x]
-      // Anchor to the flat footprint. Raised tops sit at different heights and would slide the chips together.
-      const top = screenPoly(topPoints(tile, x, y, false), view, width, height)
+      const top = screenPoly(topPoints(tile, x, y, extrude), view, width, height)
       const mids = edgeMids(top)
-      for (const side of seamSides(map, x, y, revealed)) {
+      for (const side of seamSides(map, x, y, revealed, extrude)) {
         pending.push({ text: shortEdge(tile[side], channels), x: mids[side].x, y: mids[side].y })
       }
     }

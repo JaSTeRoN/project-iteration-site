@@ -266,8 +266,8 @@ function rebuild() {
     state.tray = deal.tray
     setMessage(
       deal.clamped
-        ? `На поле помещается ${deal.tileCount} плиток, лишние убраны. Выберите плитку внизу.`
-        : "Выберите плитку внизу. Первая встанет в центр.",
+        ? `На поле помещается ${deal.tileCount} плиток, лишние убраны. Выберите плитку наверху.`
+        : "Выберите плитку наверху. Первая встанет в центр.",
     )
   } else {
     const preset = LEVEL_PRESETS[state.level]
@@ -300,6 +300,7 @@ function rebuild() {
 
 function setLevel(level) {
   state.level = level
+  document.querySelector(".demo").classList.toggle("level-1", level === 1)
   document.querySelectorAll("[data-level]").forEach((button) => {
     button.setAttribute("aria-selected", button.dataset.level === String(level) ? "true" : "false")
   })
@@ -333,7 +334,7 @@ function onTray(index) {
 
 function onCell(x, y) {
   if (state.selected === null) {
-    setMessage("Сначала выберите плитку внизу.")
+    setMessage("Сначала выберите плитку наверху.")
     return
   }
   commitPlace(state.selected, x, y)
