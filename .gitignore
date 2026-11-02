@@ -1,0 +1,5 @@
+# Исходные PNG картинок: сайт использует WebP, исходники лежат локально
+assets/brand/_originals/
+
+Thumbs.db
+.DS_Store
