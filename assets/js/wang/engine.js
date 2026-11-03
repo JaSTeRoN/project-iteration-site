@@ -154,6 +154,55 @@ export function deadEnd(board, tray, channels) {
   )
 }
 
+/**
+ * Ищет полный порядок укладки всех плиток из лотка.
+ * Возвращает массив ходов `{ index, tile, x, y }` или null, если до конца не собрать.
+ * Перебор идёт от плитки с наименьшим числом подходящих клеток — так ветвление заметно меньше.
+ */
+export function solveLevel1(board, tray, channels, budget = 20000) {
+  const left = { nodes: budget }
+  const search = (grid, remaining) => {
+    if (remaining.length === 0) return []
+    if (left.nodes <= 0) return null
+    left.nodes -= 1
+    const spots = candidateCells(grid)
+    if (spots.length === 0) return null
+    const choices = []
+    for (const item of remaining) {
+      const options = spots.filter(([x, y]) =>
+        placementCheck(item.tile, neighborsOf(grid, x, y), channels).ok,
+      )
+      if (options.length > 0) choices.push({ item, options })
+    }
+    if (choices.length === 0) return null
+    choices.sort((a, b) => a.options.length - b.options.length)
+    const tried = new Set()
+    for (const { item, options } of choices) {
+      const key = signature(item.tile, channels)
+      if (tried.has(key)) continue
+      tried.add(key)
+      for (const [x, y] of options) {
+        const nextGrid = grid.map((row) => row.slice())
+        nextGrid[y][x] = item.tile
+        const rest = search(nextGrid, remaining.filter((other) => other !== item))
+        if (rest) return [{ index: item.index, tile: item.tile, x, y }, ...rest]
+      }
+    }
+    return null
+  }
+  return search(board.map((row) => row.slice()), tray.map((tile, index) => ({ tile, index })))
+}
+
+export function canComplete(board, tray, channels, budget) {
+  if (tray.length === 0) return true
+  return solveLevel1(board, tray, channels, budget) !== null
+}
+
+export function findMove(board, tray, channels, budget) {
+  const moves = solveLevel1(board, tray, channels, budget)
+  return moves ? moves[0] : null
+}
+
 function growBlob(width, height, originX, originY, count, rng) {
   const key = (x, y) => `${x},${y}`
   const cells = [[originX, originY]]

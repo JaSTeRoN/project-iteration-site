@@ -5,11 +5,13 @@ import {
   anyPlaced,
   applyObject,
   candidateCells,
+  canComplete,
   catalog,
   centerCell,
   deadEnd,
   dealLevel1,
   describeTile,
+  findMove,
   signature,
   emptyBoard,
   generateMap,
@@ -21,7 +23,7 @@ import {
 import { cellAt, drawMap, fitMap, tileSvg, drawThumb } from "./render.js"
 
 const EXPLAIN = {
-  1: "У плитки четыре стороны, и поворачивать её нельзя. Соседними становятся только стороны с одним и тем же цветом. Первая плитка встаёт в центр, следующая — только вплотную к уже стоящей.",
+  1: "У плитки четыре стороны, и поворачивать её нельзя. Соседними становятся только стороны с одним и тем же цветом. Первая плитка встаёт в центр, следующая — только вплотную к уже стоящей. Если стало тесно, нажмите «Подсказка» или «Отмена».",
   2: "Вместо цвета у стороны 0 или 1. Единица значит: из этой стороны выходит дорога. Дорога продолжается у соседа только при такой же единице. На шве написано это число. Дорога чаще идёт прямо, иногда поворачивает и расходится развилкой. Цвет земли здесь только рисунок, в правило он не входит.",
   3: "К дороге добавляются цвет земли от 0 до 10 и высота травы от 0 до 5. Короткая подпись на шве: дорога, затем цвет/высота, например 1 7/3. Совпасть должны все числа примыкающих сторон. Общее ребро записывается один раз, поэтому готовая карта не спорит сама с собой.",
   4: "Здесь вместе дороги, цвет, высота, вода и объекты. Подпись на шве короткая: 1 7/3 — дорога, цвет и высота, буква «в» — вода. Выберите плитку внизу и нажмите клетку: чужие стороны не встанут. Камень, дерево и камыш к сторонам Вана не относятся и меняются отдельно.",
@@ -46,7 +48,7 @@ const playButton = document.querySelector("#play")
 const speedInput = document.querySelector("#speed")
 
 const params = {
-  1: { seed: 1, tiles: 9, colors: 4, width: 4, height: 4, hints: true },
+  1: { seed: 1, tiles: 12, colors: 3, width: 4, height: 4, hints: true },
   2: { seed: 1, labels: true },
   3: { seed: 2, labels: true },
   4: { seed: 3, labels: true, width: 12, height: 9, roads: 3, waters: 3, colorMax: 10, heightMax: 5, objects: 18 },
@@ -57,6 +59,7 @@ const state = {
   board: emptyBoard(4, 4),
   tray: [],
   selected: null,
+  hintCell: null,
   history: [],
   map: null,
   reveal: 0,
@@ -110,6 +113,7 @@ function renderSide() {
       ${field("height", "Высота поля", current.height, 3, 6)}
       <label class="check"><input id="p-hints" type="checkbox" ${current.hints ? "checked" : ""}> Подсказка клеток</label>
       <div class="row">
+        <button type="button" data-action="hint">Подсказка</button>
         <button type="button" data-action="random">Случайный сид</button>
         <button type="button" data-action="redeal">Новая раздача</button>
         <button type="button" data-action="undo">Отмена</button>
@@ -164,6 +168,9 @@ function renderBoard() {
       } else if (current.hints && !anyPlaced(state.board)) {
         const [cx, cy] = centerCell(state.board[0].length, state.board.length)
         if (x === cx && y === cy) button.classList.add("fit")
+      }
+      if (!tile && state.hintCell && state.hintCell[0] === x && state.hintCell[1] === y) {
+        button.classList.add("hint")
       }
       button.addEventListener("click", () => onCell(x, y))
       boardEl.append(button)
@@ -251,6 +258,7 @@ function rebuild() {
   state.history = []
   state.historyMap = []
   state.selected = null
+  state.hintCell = null
   state.catalogIndex = null
   state.selectedCell = null
   if (state.level === 1) {
@@ -361,9 +369,12 @@ function commitPlace(index, x, y) {
   state.board[y][x] = tile
   state.tray.splice(index, 1)
   state.selected = null
+  state.hintCell = null
   if (state.tray.length === 0) setMessage("Все плитки встали по правилам Вана.", "good")
   else if (deadEnd(state.board, state.tray, CHANNELS[1])) {
     setMessage("Тупик: ни одна оставшаяся плитка не подходит ни к одной свободной клетке. Отмените ход или возьмите новую раздачу.", "warn")
+  } else if (!canComplete(state.board, state.tray, CHANNELS[1])) {
+    setMessage("Ходы ещё есть, но полную схему уже не собрать: отмените ход или возьмите новую раздачу.", "warn")
   } else setMessage("Плитка встала.", "good")
   renderDynamic()
 }
@@ -494,6 +505,19 @@ function changeObject(option) {
   renderDetail()
 }
 
+function hint() {
+  if (state.level !== 1) return
+  const move = findMove(state.board, state.tray, CHANNELS[1])
+  if (!move) {
+    setMessage("Полную схему из этой позиции уже не собрать: отмените ход или возьмите новую раздачу.", "warn")
+    return
+  }
+  state.selected = move.index
+  state.hintCell = [move.x, move.y]
+  setMessage(`Подсказка: плитка ${move.index + 1} подойдёт в подсвеченную клетку.`, "good")
+  renderDynamic()
+}
+
 function undo() {
   if (state.level === 1) {
     const snap = state.history.pop()
@@ -504,6 +528,7 @@ function undo() {
     state.board = snap.board
     state.tray = snap.tray
     state.selected = null
+    state.hintCell = null
     setMessage("Ход отменён.")
     renderDynamic()
     return
@@ -577,6 +602,7 @@ side.addEventListener("change", (event) => {
 side.addEventListener("click", (event) => {
   const action = event.target.dataset?.action
   if (!action) return
+  if (action === "hint") hint()
   if (action === "undo") undo()
   if (action === "random" || action === "redeal") {
     params[state.level].seed = action === "random"

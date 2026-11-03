@@ -7,12 +7,15 @@ import {
   averageHeight,
   badSeams,
   candidateCells,
+  canComplete,
   catalog,
+  centerCell,
   deadEnd,
   dealLevel1,
   describeEdge,
   edgesEqual,
   emptyBoard,
+  findMove,
   generateMap,
   makeTile,
   neighborsOf,
@@ -56,6 +59,41 @@ test("число плиток не больше поля", () => {
   assert.equal(deal.tileCount, 9)
   assert.equal(deal.clamped, true)
   assert.equal(deal.tray.length, 9)
+})
+
+test("подсказка доводит новую раздачу до конца", () => {
+  const deal = dealLevel1({ width: 4, height: 4, tileCount: 12, colorCount: 3, seed: 11 })
+  const board = emptyBoard(deal.width, deal.height)
+  let tray = deal.tray.slice()
+  assert.equal(canComplete(board, tray, COLOR), true)
+  let guard = 0
+  while (tray.length > 0) {
+    const move = findMove(board, tray, COLOR)
+    assert.ok(move, "решатель должен находить ход")
+    const check = placementCheck(move.tile, neighborsOf(board, move.x, move.y), COLOR)
+    assert.equal(check.ok, true, check.text)
+    board[move.y][move.x] = move.tile
+    tray = tray.filter((_, index) => index !== move.index)
+    guard += 1
+    assert.ok(guard < 40, "плитки должны кончиться")
+  }
+  assert.equal(tray.length, 0)
+})
+
+test("решатель видит непроходимую позицию", () => {
+  const tile = makeTile(
+    { n: edge({ color: 0 }), e: edge({ color: 0 }), s: edge({ color: 0 }), w: edge({ color: 0 }) },
+    "zero",
+  )
+  const alien = makeTile(
+    { n: edge({ color: 1 }), e: edge({ color: 1 }), s: edge({ color: 1 }), w: edge({ color: 1 }) },
+    "one",
+  )
+  const board = emptyBoard(3, 3)
+  const [cx, cy] = centerCell(3, 3)
+  board[cy][cx] = tile
+  assert.equal(canComplete(board, [alien], COLOR), false)
+  assert.equal(findMove(board, [alien], COLOR), null)
 })
 
 test("первая клетка только центр, тупик распознаётся", () => {
