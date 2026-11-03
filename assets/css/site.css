@@ -204,6 +204,7 @@ h1, h2, .page-title {
   height: auto;
   z-index: 1;
   pointer-events: none;
+  transform: scaleX(-1);
   filter: drop-shadow(0 12px 18px rgba(7, 17, 28, 0.3));
 }
 
@@ -340,11 +341,11 @@ h1, h2, .page-title {
 
 .lead-mascot {
   position: absolute;
-  top: -78px;
+  top: -80px;
   left: 50%;
   transform: translateX(-50%);
-  width: 118px;
-  height: auto;
+  width: auto;
+  height: 150px;
   pointer-events: none;
   filter: drop-shadow(0 10px 16px rgba(7, 17, 28, 0.32));
 }
@@ -365,7 +366,7 @@ h1, h2, .page-title {
   .hero-card { padding: 22px 20px 20px; }
   .hero-mascot { width: 84px; top: -92px; right: 8px; }
   .page-lead.with-mascot { margin-top: 78px; padding-top: 66px; }
-  .lead-mascot { width: 92px; top: -62px; }
+  .lead-mascot { width: auto; height: 118px; top: -62px; }
 }
 
 @media (hover: hover) {
