@@ -126,11 +126,8 @@ a { color: inherit; }
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(180px, 280px);
-  gap: 18px;
-  align-items: end;
-  padding: 8px 0 8px;
+  position: relative;
+  padding: 84px 0 8px;
 }
 
 .hero-brand {
@@ -175,7 +172,7 @@ a { color: inherit; }
   box-shadow: var(--shadow);
 }
 
-.hero-card { padding: 28px 28px 22px; }
+.hero-card { position: relative; padding: 26px 190px 24px 28px; }
 
 .kicker {
   margin: 0 0 8px;
@@ -199,16 +196,15 @@ h1, h2, .page-title {
 
 .hero p, .panel-card p { margin: 0; line-height: 1.45; }
 
-.hero-figure {
-  margin: 0;
-  justify-self: center;
-}
-
-.hero-figure img {
-  display: block;
-  width: min(260px, 70vw);
+.hero-mascot {
+  position: absolute;
+  top: -78px;
+  right: 10px;
+  width: 150px;
   height: auto;
-  filter: drop-shadow(0 12px 16px rgba(7, 17, 28, 0.28));
+  z-index: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 18px rgba(7, 17, 28, 0.3));
 }
 
 @keyframes hero-float {
@@ -324,16 +320,33 @@ h1, h2, .page-title {
 }
 
 .page-lead {
+  position: relative;
   display: flex;
   justify-content: space-between;
   gap: 16px;
   align-items: end;
-  margin: 18px auto 0;
+  margin: 18px 0 0;
   padding: 18px 22px;
   border-radius: 24px;
   background: rgba(7, 17, 28, 0.84);
   backdrop-filter: blur(6px);
   box-shadow: var(--shadow);
+}
+
+.page-lead.with-mascot {
+  margin-top: 92px;
+  padding-top: 38px;
+}
+
+.lead-mascot {
+  position: absolute;
+  top: -78px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 118px;
+  height: auto;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 16px rgba(7, 17, 28, 0.32));
 }
 
 .page-lead h1 {
@@ -345,10 +358,14 @@ h1, h2, .page-title {
 
 @media (max-width: 900px) {
   .hero, .section-grid, .app-grid { grid-template-columns: 1fr; }
-  .hero-figure { order: -1; }
   .page-lead { flex-direction: column; align-items: stretch; }
   .brand img { height: 64px; }
   .brand-home { font-size: 0.92rem; }
+  .hero { padding: 104px 0 8px; }
+  .hero-card { padding: 22px 20px 20px; }
+  .hero-mascot { width: 84px; top: -92px; right: 8px; }
+  .page-lead.with-mascot { margin-top: 78px; padding-top: 66px; }
+  .lead-mascot { width: 92px; top: -62px; }
 }
 
 @media (hover: hover) {
