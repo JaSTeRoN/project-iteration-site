@@ -48,7 +48,7 @@ const playButton = document.querySelector("#play")
 const speedInput = document.querySelector("#speed")
 
 const params = {
-  1: { seed: 1, tiles: 12, colors: 3, width: 4, height: 4, hints: true },
+  1: { seed: 1, tiles: 12, colors: 4, width: 4, height: 4, hints: true },
   2: { seed: 1, labels: true },
   3: { seed: 2, labels: true },
   4: { seed: 3, labels: true, width: 12, height: 9, roads: 3, waters: 3, colorMax: 10, heightMax: 5, objects: 18 },
