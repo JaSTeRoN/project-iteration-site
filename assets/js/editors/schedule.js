@@ -10,6 +10,7 @@ import {
   sortEvents,
   todayIn,
   weekDays,
+  weekNumber,
   weekRangeTitle,
 } from "../schedule-data.js"
 
@@ -34,6 +35,13 @@ export async function mountSchedule(host, api) {
         </div>
         <button type="button" data-save>Сохранить</button>
       </div>
+      <div class="week-tools">
+        <label class="week-topic">
+          <span>Тема всех занятий недели</span>
+          <input type="text" data-week-topic placeholder="Например, «Плитки Вана»">
+        </label>
+        <button type="button" class="quiet" data-apply-topic>Заполнить неделю</button>
+      </div>
       <p class="status" data-status role="status"></p>
     </section>
     <div data-week></div>
@@ -45,6 +53,7 @@ export async function mountSchedule(host, api) {
   const weekBody = field("[data-week]")
   const label = field("[data-label]")
   const weekDate = field("[data-date]")
+  const weekTopicInput = field("[data-week-topic]")
   const saveButton = field("[data-save]")
 
   let data = null
@@ -133,6 +142,17 @@ export async function mountSchedule(host, api) {
     hint.className = "event-hint"
     hint.textContent = zoneHint(event)
 
+    const topic = document.createElement("input")
+    topic.type = "text"
+    topic.className = "event-topic"
+    topic.placeholder = "Тема занятия"
+    topic.value = event.topic || ""
+    topic.setAttribute("aria-label", "Тема занятия")
+    topic.addEventListener("input", () => {
+      event.topic = topic.value
+      markDirty()
+    })
+
     const zonesSelect = document.createElement("select")
     zonesSelect.className = "zone-select"
     zonesSelect.setAttribute("aria-label", "Где показывать занятие")
@@ -176,13 +196,20 @@ export async function mountSchedule(host, api) {
       markDirty()
     })
 
-    row.append(head, extra, footer)
+    row.append(head, topic, extra, footer)
     return row
   }
 
   function renderWeek() {
-    label.textContent = weekRangeTitle(weekStart)
+    const number = weekNumber(weekStart, data.termStart)
+    label.textContent = number > 0
+      ? `Неделя №${number} · ${weekRangeTitle(weekStart)}`
+      : weekRangeTitle(weekStart)
     weekDate.value = weekStart
+    const weekEvents = data.events.filter((item) => weekDays(weekStart).includes(item.date))
+    if (document.activeElement !== weekTopicInput) {
+      weekTopicInput.value = weekEvents.find((item) => item.topic)?.topic || ""
+    }
     weekBody.replaceChildren()
     const grid = document.createElement("div")
     grid.className = "days-edit"
@@ -201,7 +228,7 @@ export async function mountSchedule(host, api) {
       add.className = "quiet"
       add.textContent = "Добавить занятие"
       add.addEventListener("click", () => {
-        data.events.push({ date, time: "17:00", kind: "offline", place: "", link: "" })
+        data.events.push({ date, time: "17:00", kind: "offline", place: "", link: "", topic: "" })
         markDirty()
         renderWeek()
       })
@@ -224,6 +251,8 @@ export async function mountSchedule(host, api) {
           place: String(event.place || "").trim(),
           link: String(event.link || "").trim(),
         }
+        const topic = String(event.topic || "").trim()
+        if (topic) copy.topic = topic
         if (event.zones) copy.zones = event.zones
         return copy
       }),
@@ -231,6 +260,7 @@ export async function mountSchedule(host, api) {
     )
     return {
       primary: data.primary,
+      termStart: data.termStart,
       defaultLink: String(data.defaultLink || "").trim(),
       zones: data.zones,
       events,
@@ -253,6 +283,21 @@ export async function mountSchedule(host, api) {
   defaultInput.addEventListener("input", () => {
     data.defaultLink = defaultInput.value
     markDirty()
+  })
+  field("[data-apply-topic]").addEventListener("click", () => {
+    const value = weekTopicInput.value.trim()
+    const days = weekDays(weekStart)
+    for (const event of data.events) {
+      if (!days.includes(event.date)) continue
+      if (value) event.topic = value
+      else delete event.topic
+    }
+    markDirty()
+    renderWeek()
+    setStatus(
+      value ? "Тема заполнена для всех занятий недели." : "Темы занятий этой недели очищены.",
+      "good",
+    )
   })
 
   saveButton.addEventListener("click", async () => {

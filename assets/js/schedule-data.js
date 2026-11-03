@@ -101,6 +101,15 @@ export function weekRangeTitle(start) {
   return `${dayTitle(start)} — ${dayTitle(addDays(start, 5))}`
 }
 
+export const TERM_START = "2026-11-02"
+
+export function weekNumber(weekStart, termStart = TERM_START) {
+  const anchor = mondayOf(termStart)
+  const start = new Date(`${mondayOf(weekStart)}T12:00:00Z`)
+  const first = new Date(`${anchor}T12:00:00Z`)
+  return Math.round((start - first) / (7 * 86400000)) + 1
+}
+
 export function sortEvents(events, timeZone) {
   return [...events].sort((a, b) => instantOf(a, timeZone).getTime() - instantOf(b, timeZone).getTime())
 }

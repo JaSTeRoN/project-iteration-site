@@ -65,6 +65,23 @@
   outline-offset: 2px;
 }
 
+.week-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.week-number {
+  margin: 0;
+  padding: 0 4px;
+  color: #9dffb8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .week-range {
   margin: 0;
   padding: 0 4px;
@@ -174,6 +191,12 @@
 .lesson-time { font-weight: 700; }
 .lesson-kind, .lesson-place, .lesson-note { line-height: 1.35; }
 .lesson-note { color: #5d6f84; font-size: 0.9rem; }
+.lesson-topic {
+  margin: 5px 0 0;
+  color: #26384f;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
 .lesson a { display: inline-block; margin-top: 4px; color: var(--blue-deep); font-size: 0.85rem; }
 
 .lesson-offline { background: #efe8fb; }
@@ -206,6 +229,18 @@
 }
 
 .token-row input[type="password"] { flex: 1; min-width: 220px; }
+
+.week-topic {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 260px;
+  color: #33455c;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.week-topic input { width: 100%; }
 
 .default-link {
   display: flex;

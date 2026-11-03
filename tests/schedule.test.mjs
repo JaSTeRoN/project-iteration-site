@@ -12,6 +12,7 @@ import {
   pickWeekIndex,
   sortEvents,
   weekDays,
+  weekNumber,
   weekRangeTitle,
   weekStarts,
   weekState,
@@ -34,6 +35,16 @@ test("неделя начинается с понедельника и длит�
   ])
   assert.equal(addDays("2026-11-02", 5), "2026-11-07")
   assert.equal(weekRangeTitle("2026-11-02"), "понедельник, 2 ноября — суббота, 7 ноября")
+})
+
+test("недели нумеруются от 2 ноября 2026 года", () => {
+  assert.equal(weekNumber("2026-11-02"), 1)
+  assert.equal(weekNumber("2026-11-05"), 1)
+  assert.equal(weekNumber("2026-11-09"), 2)
+  assert.equal(weekNumber("2026-11-16"), 3)
+  assert.equal(weekNumber("2026-11-30"), 5)
+  assert.equal(weekNumber("2026-10-26"), 0)
+  assert.equal(weekNumber("2026-11-09", "2026-11-09"), 1)
 })
 
 test("занятие хранится одним моментом и пересчитывается во вторую зону", () => {

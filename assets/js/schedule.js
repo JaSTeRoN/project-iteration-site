@@ -12,6 +12,7 @@ import {
   todayIn,
   weekDays,
   weekRangeTitle,
+  weekNumber,
   weekStarts,
   weekState,
 } from "./schedule-data.js"
@@ -46,6 +47,12 @@ function eventCard(event, zone, columnDate) {
   kind.className = "lesson-kind"
   kind.textContent = KINDS[kindValue] || "Занятие"
   card.append(time, kind)
+  if (event.topic) {
+    const topic = document.createElement("p")
+    topic.className = "lesson-topic"
+    topic.textContent = event.topic
+    card.append(topic)
+  }
   const localDate = formatDate(instant, zone.timeZone)
   if (localDate !== columnDate) {
     const note = document.createElement("p")
@@ -140,9 +147,16 @@ function weekNav(weekStart, today) {
     render()
   })
 
-  const label = document.createElement("p")
-  label.className = "week-range"
-  label.textContent = weekRangeTitle(weekStart)
+  const label = document.createElement("div")
+  label.className = "week-caption"
+  const number = document.createElement("p")
+  number.className = "week-number"
+  const value = weekNumber(weekStart, data.termStart)
+  number.textContent = value > 0 ? `Неделя №${value}` : "До начала курса"
+  const range = document.createElement("p")
+  range.className = "week-range"
+  range.textContent = weekRangeTitle(weekStart)
+  label.append(number, range)
 
   const next = document.createElement("button")
   next.type = "button"
