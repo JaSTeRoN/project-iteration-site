@@ -36,6 +36,12 @@ body {
 
 main { flex: 1 0 auto; }
 
+main:not(.demo):not(.editor) {
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+}
+
 body.crystal {
   background: #2b6cb3 url("../brand/crystal.svg") center / cover no-repeat fixed;
   color: var(--ink);
@@ -218,7 +224,7 @@ h1, h2, .page-title {
   margin-top: auto;
 }
 
-.site-footer p { margin: 0; line-height: 1.4; text-align: center; }
+.site-footer p { margin: 0 auto; line-height: 1.4; text-align: center; }
 
 .admin-dot {
   color: inherit;
