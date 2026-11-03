@@ -40,19 +40,25 @@ function eventCard(event, zone, columnDate) {
   const card = document.createElement("article")
   const kindValue = kindFor(event, zone, primary)
   card.className = `lesson lesson-${kindValue}`
+
+  const head = document.createElement("div")
+  head.className = "lesson-head"
   const time = document.createElement("p")
   time.className = "lesson-time"
   time.textContent = formatTime(instant, zone.timeZone)
-  const kind = document.createElement("p")
-  kind.className = "lesson-kind"
-  kind.textContent = KINDS[kindValue] || "Занятие"
-  card.append(time, kind)
+  const format = document.createElement("span")
+  format.className = "lesson-format"
+  format.textContent = KINDS[kindValue] || "Занятие"
+  head.append(time, format)
+  card.append(head)
+
   if (event.topic) {
     const topic = document.createElement("p")
     topic.className = "lesson-topic"
     topic.textContent = event.topic
     card.append(topic)
   }
+
   const localDate = formatDate(instant, zone.timeZone)
   if (localDate !== columnDate) {
     const note = document.createElement("p")
@@ -60,21 +66,26 @@ function eventCard(event, zone, columnDate) {
     note.textContent = shortDayTitle(localDate)
     card.append(note)
   }
+
+  const foot = document.createElement("div")
+  foot.className = "lesson-foot"
   if (event.place && zone.id === primary.id) {
     const place = document.createElement("p")
     place.className = "lesson-place"
     place.textContent = event.place
-    card.append(place)
+    foot.append(place)
   }
   const href = eventLink(event, data.defaultLink)
   if (href) {
     const link = document.createElement("a")
+    link.className = "lesson-link"
     link.href = href
     link.target = "_blank"
     link.rel = "noopener noreferrer"
-    link.textContent = "подключиться"
-    card.append(link)
+    link.innerHTML = 'Подключиться <span aria-hidden="true">→</span>'
+    foot.append(link)
   }
+  if (foot.childNodes.length > 0) card.append(foot)
   return card
 }
 
