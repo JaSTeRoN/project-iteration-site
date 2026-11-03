@@ -1,10 +1,10 @@
 import { screenToWorld, worldToScreen } from "../camera.js"
 
 const SCHEME = {
-  wall: "#171c15",
-  room: "#6d5b3c",
-  corridor: "#31402e",
-  door: "#e0b15a",
+  wall: "#08131f",
+  room: "#1d4165",
+  corridor: "#14304a",
+  door: "#ffd76a",
 }
 
 export function fitDungeon(dungeon, width, height) {
@@ -34,7 +34,7 @@ function glyph(cell, playerHere) {
 export function drawDungeon(ctx, width, height, model) {
   const { dungeon, view, frame, style, showSectors, player } = model
   ctx.clearRect(0, 0, width, height)
-  ctx.fillStyle = style === "terminal" ? "#050805" : "#0c100c"
+  ctx.fillStyle = style === "terminal" ? "#050a12" : "#07111c"
   ctx.fillRect(0, 0, width, height)
   const size = view.cell * view.zoom
   for (let y = 0; y < dungeon.height; y += 1) {
@@ -44,7 +44,7 @@ export function drawDungeon(ctx, width, height, model) {
       const here = player && player.x === x && player.y === y
       if (style === "terminal") {
         if (cell.kind === "wall" && !here) continue
-        ctx.fillStyle = here ? "#f4fff0" : "#b6e86a"
+        ctx.fillStyle = here ? "#ffffff" : "#9fd8ff"
         ctx.font = `${Math.max(10, size * 0.82)}px Consolas, monospace`
         ctx.textAlign = "center"
         ctx.textBaseline = "middle"
@@ -60,7 +60,7 @@ export function drawDungeon(ctx, width, height, model) {
         ctx.fill()
       }
       if (cell.stairs || here) {
-        ctx.fillStyle = here ? "#ffffff" : "#d7ff8a"
+        ctx.fillStyle = here ? "#ffffff" : "#9dffb8"
         ctx.font = `700 ${Math.max(10, size * 0.7)}px Consolas, monospace`
         ctx.textAlign = "center"
         ctx.textBaseline = "middle"
@@ -72,7 +72,7 @@ export function drawDungeon(ctx, width, height, model) {
   if (frame.showPlan) {
     for (const item of frame.decided) {
       const sector = dungeon.sectors[item.index]
-      ctx.fillStyle = item.gone ? "rgba(210, 214, 200, 0.2)" : "rgba(157, 255, 184, 0.22)"
+      ctx.fillStyle = item.gone ? "rgba(150, 180, 210, 0.16)" : "rgba(157, 255, 184, 0.2)"
       for (let y = sector.y; y < sector.y + sector.h; y += 1) {
         for (let x = sector.x; x < sector.x + sector.w; x += 1) {
           if (frame.grid[y][x].kind !== "wall") continue
@@ -87,7 +87,7 @@ export function drawDungeon(ctx, width, height, model) {
           width,
           height,
         )
-        ctx.fillStyle = "#f4fff0"
+        ctx.fillStyle = "#eef5fc"
         ctx.font = `${Math.max(11, 13 * view.zoom)}px Segoe UI, sans-serif`
         ctx.textAlign = "center"
         ctx.textBaseline = "middle"
@@ -101,7 +101,7 @@ export function drawDungeon(ctx, width, height, model) {
         width,
         height,
       )
-      ctx.fillStyle = "#f2d56b"
+      ctx.fillStyle = "#ffd76a"
       ctx.beginPath()
       ctx.arc(point.x, point.y, Math.max(4, size * 0.28), 0, Math.PI * 2)
       ctx.fill()
@@ -122,7 +122,7 @@ export function drawDungeon(ctx, width, height, model) {
         width,
         height,
       )
-      ctx.strokeStyle = link.extra ? "#e0b15a" : latest ? "#f2d56b" : "#9dffb8"
+      ctx.strokeStyle = link.extra ? "#ffd76a" : latest ? "#9dffb8" : "#4f8fd0"
       ctx.lineWidth = latest ? 4 : 2
       ctx.beginPath()
       ctx.moveTo(start.x, start.y)
@@ -131,7 +131,7 @@ export function drawDungeon(ctx, width, height, model) {
     })
   }
   if (showSectors) {
-    ctx.strokeStyle = "rgba(181, 232, 83, 0.45)"
+    ctx.strokeStyle = "rgba(120, 180, 255, 0.4)"
     ctx.lineWidth = 2
     for (const sector of dungeon.sectors) {
       const point = worldToScreen({ x: sector.x * view.cell, y: sector.y * view.cell }, view, width, height)
@@ -143,17 +143,17 @@ export function drawDungeon(ctx, width, height, model) {
 
 function strokeFocus(ctx, frame, style, dungeon, view, width, height, size) {
   const focus = frame.focus
-  ctx.strokeStyle = "#f2d56b"
+  ctx.strokeStyle = "#ffd76a"
   ctx.lineWidth = 3
   if (focus.kind === "cell") {
     const point = worldToScreen({ x: focus.x * view.cell, y: focus.y * view.cell }, view, width, height)
-    ctx.fillStyle = "rgba(242, 213, 107, 0.55)"
+    ctx.fillStyle = "rgba(255, 215, 106, 0.45)"
     ctx.fillRect(point.x, point.y, size, size)
     ctx.strokeRect(point.x + 1, point.y + 1, Math.max(1, size - 2), Math.max(1, size - 2))
     const cell = frame.grid[focus.y][focus.x]
     const mark = style === "terminal" ? glyph(cell, false) : cell.stairs === "up" ? "<" : cell.stairs === "down" ? ">" : ""
     if (mark) {
-      ctx.fillStyle = "#17200c"
+      ctx.fillStyle = "#0b1622"
       ctx.font = `700 ${Math.max(10, size * 0.7)}px Consolas, monospace`
       ctx.textAlign = "center"
       ctx.textBaseline = "middle"

@@ -373,14 +373,22 @@ function startDrag(event, index) {
   const startX = event.clientX
   const startY = event.clientY
   let dragging = false
+  const detach = () => {
+    window.removeEventListener("pointermove", move)
+    window.removeEventListener("pointerup", up)
+    window.removeEventListener("pointercancel", cancel)
+  }
+  const cancel = () => {
+    detach()
+    ghost.classList.add("hidden")
+  }
   const move = (ev) => {
     const dx = ev.clientX - startX
     const dy = ev.clientY - startY
     if (!dragging) {
       if (Math.hypot(dx, dy) < 10) return
       if (Math.abs(dx) > Math.abs(dy)) {
-        window.removeEventListener("pointermove", move)
-        window.removeEventListener("pointerup", up)
+        detach()
         return
       }
       dragging = true
@@ -397,8 +405,7 @@ function startDrag(event, index) {
     ghost.style.top = `${ev.clientY}px`
   }
   const up = (ev) => {
-    window.removeEventListener("pointermove", move)
-    window.removeEventListener("pointerup", up)
+    detach()
     ghost.classList.add("hidden")
     if (!dragging) return
     const target = document.elementFromPoint(ev.clientX, ev.clientY)?.closest?.(".cell")
@@ -410,6 +417,7 @@ function startDrag(event, index) {
   }
   window.addEventListener("pointermove", move)
   window.addEventListener("pointerup", up)
+  window.addEventListener("pointercancel", cancel)
 }
 
 function selectCatalog(index) {
