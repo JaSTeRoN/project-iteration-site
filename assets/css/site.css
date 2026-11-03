@@ -43,8 +43,12 @@ main:not(.demo):not(.editor) {
 }
 
 body.crystal {
-  background: #2b6cb3 url("../brand/crystal.svg") center / cover no-repeat fixed;
+  background: #2b6cb3 url("../brand/crystal.svg") center / cover no-repeat;
   color: var(--ink);
+}
+
+@media (min-width: 901px) {
+  body.crystal { background-attachment: fixed; }
 }
 
 a { color: inherit; }
@@ -66,15 +70,25 @@ a { color: inherit; }
 .brand {
   display: inline-flex;
   align-items: center;
+  gap: 10px;
   min-height: 44px;
 }
 
 .brand img {
   display: block;
-  height: 72px;
+  height: 84px;
   width: auto;
   max-width: min(340px, 70vw);
 }
+
+.brand-home {
+  color: rgba(255, 255, 255, 0.72);
+  font-weight: 700;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.brand:hover .brand-home { color: white; }
 
 .site-nav {
   display: flex;
@@ -83,16 +97,18 @@ a { color: inherit; }
 }
 
 .site-nav a {
-  min-height: 44px;
+  min-height: 48px;
   display: inline-flex;
   align-items: center;
-  padding: 8px 14px;
+  padding: 10px 18px;
   border-radius: 999px;
   color: var(--text);
   text-decoration: none;
+  font-size: 1.02rem;
+  transition: background-color 0.18s ease, color 0.18s ease;
 }
 
-.site-nav a:hover { background: rgba(255, 255, 255, 0.08); }
+.site-nav a:hover { background: rgba(255, 255, 255, 0.14); }
 
 .site-nav a[aria-current="page"] {
   background: var(--accent);
@@ -181,6 +197,7 @@ h1, h2, .page-title {
   border-radius: 24px;
   text-decoration: none;
   box-shadow: var(--shadow);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
 .card h2, .panel-card h1 { margin: 0; font-size: 1.45rem; }
@@ -220,11 +237,17 @@ h1, h2, .page-title {
 .site-footer {
   background: var(--blue-deep);
   color: white;
-  padding: 16px;
+  padding: 9px 16px;
   margin-top: auto;
 }
 
-.site-footer p { margin: 0 auto; line-height: 1.4; text-align: center; }
+.site-footer p {
+  max-width: 980px;
+  margin: 0 auto;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  text-align: center;
+}
 
 .admin-dot {
   color: inherit;
@@ -266,4 +289,22 @@ h1, h2, .page-title {
   .hero, .section-grid, .app-grid { grid-template-columns: 1fr; }
   .hero-figure { order: -1; }
   .page-lead { flex-direction: column; align-items: stretch; }
+  .brand img { height: 64px; }
+  .brand-home { font-size: 0.92rem; }
+}
+
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 48px rgba(4, 16, 36, 0.34);
+  }
+
+  .site-nav a:hover {
+    background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .site-nav a { transition: none; }
+  .card:hover { transform: none; }
 }
