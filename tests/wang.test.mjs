@@ -61,7 +61,7 @@ test("число плиток не больше поля", () => {
   assert.equal(deal.tray.length, 9)
 })
 
-test("подсказка доводит новую раздачу до конца", () => {
+test("подсказка доводит раздачу до конца", () => {
   const deal = dealLevel1({ width: 4, height: 4, tileCount: 12, colorCount: 3, seed: 11 })
   const board = emptyBoard(deal.width, deal.height)
   let tray = deal.tray.slice()

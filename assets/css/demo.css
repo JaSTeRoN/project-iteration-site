@@ -50,7 +50,7 @@ button:disabled {
 .demo.level-1 .layout { order: 5; }
 .demo.level-1 .detail { order: 6; }
 
-.topbar, .level-tabs, .transport, .zoom-controls, .dpad-wrap {
+.topbar, .level-tabs, .transport, .actions, .zoom-controls, .dpad-wrap {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -287,6 +287,7 @@ button:disabled {
   .explain { order: 2; }
   .message { order: 3; }
   .transport { order: 4; }
+  .actions { order: 4; }
   .dpad-wrap { order: 6; }
   .tray { order: 7; }
   .detail { order: 8; }

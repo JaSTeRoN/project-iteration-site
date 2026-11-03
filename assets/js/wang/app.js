@@ -41,6 +41,7 @@ const boardEl = document.querySelector("#board")
 const canvas = document.querySelector("#iso")
 const zoomControls = document.querySelector("#zoom-controls")
 const side = document.querySelector("#side")
+const actions = document.querySelector("#actions")
 const transport = document.querySelector("#transport")
 const tray = document.querySelector("#tray")
 const detail = document.querySelector("#detail")
@@ -72,6 +73,8 @@ const state = {
   cssW: 1,
   cssH: 1,
 }
+
+let suppressClick = false
 
 const ctx = canvas.getContext("2d")
 const ghost = document.createElement("div")
@@ -111,13 +114,7 @@ function renderSide() {
       ${field("colors", "Цветов", current.colors, 2, 8)}
       ${field("width", "Ширина поля", current.width, 3, 6)}
       ${field("height", "Высота поля", current.height, 3, 6)}
-      <label class="check"><input id="p-hints" type="checkbox" ${current.hints ? "checked" : ""}> Подсказка клеток</label>
-      <div class="row">
-        <button type="button" data-action="hint">Подсказка</button>
-        <button type="button" data-action="random">Случайный сид</button>
-        <button type="button" data-action="redeal">Новая раздача</button>
-        <button type="button" data-action="undo">Отмена</button>
-      </div>`
+      <label class="check"><input id="p-hints" type="checkbox" ${current.hints ? "checked" : ""}> Подсказка клеток</label>`
     return
   }
   const extra = level === 4
@@ -133,11 +130,17 @@ function renderSide() {
     ${field("seed", "Сид", current.seed, 1, 999999)}
     ${extra}
     <label class="check"><input id="p-labels" type="checkbox" ${current.labels ? "checked" : ""}> Подписи</label>
-    <div class="row">
-      <button type="button" data-action="random">Случайный сид</button>
-      <button type="button" data-action="undo">Отмена</button>
-    </div>
     <p class="explain">Один палец двигает карту, щипок меняет масштаб. Нажмите клетку: она останется яркой, остальные уйдут в тень. Повторное нажатие возвращает всю карту.</p>`
+}
+
+function renderActions() {
+  const level = state.level
+  const items = []
+  if (level === 1) items.push('<button type="button" data-action="hint">Подсказка</button>')
+  if (level === 1 || level === 4) items.push('<button type="button" data-action="undo">Отмена</button>')
+  items.push('<button type="button" data-action="random">Случайный сид</button>')
+  actions.innerHTML = items.join("")
+  actions.hidden = false
 }
 
 function renderBoard() {
@@ -322,6 +325,7 @@ function setLevel(level) {
   stage.classList.toggle("flat-mode", !iso)
   stage.classList.toggle("iso-mode", iso)
   renderSide()
+  renderActions()
   rebuild()
   resize()
   if (state.map) {
@@ -330,6 +334,7 @@ function setLevel(level) {
 }
 
 function onTray(index) {
+  if (suppressClick) return
   if (!anyPlaced(state.board)) {
     const [x, y] = centerCell(state.board[0].length, state.board.length)
     commitPlace(index, x, y)
@@ -341,6 +346,7 @@ function onTray(index) {
 }
 
 function onCell(x, y) {
+  if (suppressClick) return
   if (state.selected === null) {
     setMessage("Сначала выберите плитку наверху.")
     return
@@ -372,9 +378,9 @@ function commitPlace(index, x, y) {
   state.hintCell = null
   if (state.tray.length === 0) setMessage("Все плитки встали по правилам Вана.", "good")
   else if (deadEnd(state.board, state.tray, CHANNELS[1])) {
-    setMessage("Тупик: ни одна оставшаяся плитка не подходит ни к одной свободной клетке. Отмените ход или возьмите новую раздачу.", "warn")
+    setMessage("Тупик: ни одна оставшаяся плитка не подходит ни к одной свободной клетке. Отмените ход.", "warn")
   } else if (solveLevel1Detailed(state.board, state.tray, CHANNELS[1], 20000).status === "impossible") {
-    setMessage("Ходы ещё есть, но полную схему уже не собрать: отмените ход или возьмите новую раздачу.", "warn")
+    setMessage("Ходы ещё есть, но полную схему уже не собрать: нажмите «Отмена».", "warn")
   } else setMessage("Плитка встала.", "good")
   renderDynamic()
 }
@@ -405,12 +411,6 @@ function startDrag(event, index) {
       dragging = true
       ghost.innerHTML = tileSvg(state.tray[index])
       ghost.classList.remove("hidden")
-      const stopClick = (clickEvent) => {
-        clickEvent.preventDefault()
-        clickEvent.stopPropagation()
-        document.removeEventListener("click", stopClick, true)
-      }
-      document.addEventListener("click", stopClick, true)
     }
     ghost.style.left = `${ev.clientX}px`
     ghost.style.top = `${ev.clientY}px`
@@ -419,6 +419,8 @@ function startDrag(event, index) {
     detach()
     ghost.classList.add("hidden")
     if (!dragging) return
+    suppressClick = true
+    window.setTimeout(() => { suppressClick = false }, 300)
     const target = document.elementFromPoint(ev.clientX, ev.clientY)?.closest?.(".cell")
     if (!target) {
       setMessage("Плитка вернулась в панель.", "warn")
@@ -509,7 +511,7 @@ function hint() {
   if (state.level !== 1) return
   const move = findMove(state.board, state.tray, CHANNELS[1])
   if (!move) {
-    setMessage("Подсказка не нашлась: попробуйте «Отмену» или новую раздачу.", "warn")
+    setMessage("Подсказка не нашлась: попробуйте «Отмену».", "warn")
     return
   }
   state.selected = move.index
@@ -599,15 +601,13 @@ side.addEventListener("change", (event) => {
   rebuild()
 })
 
-side.addEventListener("click", (event) => {
+actions.addEventListener("click", (event) => {
   const action = event.target.dataset?.action
   if (!action) return
   if (action === "hint") hint()
   if (action === "undo") undo()
-  if (action === "random" || action === "redeal") {
-    params[state.level].seed = action === "random"
-      ? Math.floor(Math.random() * 999983) + 1
-      : (Number(params[state.level].seed) + 1) >>> 0
+  if (action === "random") {
+    params[state.level].seed = Math.floor(Math.random() * 999983) + 1
     renderSide()
     rebuild()
   }
