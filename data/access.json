@@ -1,3 +1,14 @@
 {
-  "gates": []
+  "gates": [
+    {
+      "target": "wang.html",
+      "open": "2026-11-04T18:00",
+      "zone": "Asia/Tomsk"
+    },
+    {
+      "target": "rogue.html",
+      "open": "2026-11-04T18:00",
+      "zone": "Asia/Tomsk"
+    }
+  ]
 }
