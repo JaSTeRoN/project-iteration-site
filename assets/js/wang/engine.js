@@ -159,7 +159,7 @@ export function deadEnd(board, tray, channels) {
  * Возвращает массив ходов `{ index, tile, x, y }` или null, если до конца не собрать.
  * Перебор идёт от плитки с наименьшим числом подходящих клеток — так ветвление заметно меньше.
  */
-export function solveLevel1(board, tray, channels, budget = 20000) {
+export function solveLevel1Detailed(board, tray, channels, budget = 50000) {
   const left = { nodes: budget }
   const search = (grid, remaining) => {
     if (remaining.length === 0) return []
@@ -190,7 +190,12 @@ export function solveLevel1(board, tray, channels, budget = 20000) {
     }
     return null
   }
-  return search(board.map((row) => row.slice()), tray.map((tile, index) => ({ tile, index })))
+  const moves = search(board.map((row) => row.slice()), tray.map((tile, index) => ({ tile, index })))
+  return { moves, status: moves ? "solved" : left.nodes <= 0 ? "unknown" : "impossible" }
+}
+
+export function solveLevel1(board, tray, channels, budget) {
+  return solveLevel1Detailed(board, tray, channels, budget).moves
 }
 
 export function canComplete(board, tray, channels, budget) {

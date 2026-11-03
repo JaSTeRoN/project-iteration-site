@@ -5,7 +5,6 @@ import {
   anyPlaced,
   applyObject,
   candidateCells,
-  canComplete,
   catalog,
   centerCell,
   deadEnd,
@@ -13,6 +12,7 @@ import {
   describeTile,
   findMove,
   signature,
+  solveLevel1Detailed,
   emptyBoard,
   generateMap,
   neighborsOf,
@@ -48,7 +48,7 @@ const playButton = document.querySelector("#play")
 const speedInput = document.querySelector("#speed")
 
 const params = {
-  1: { seed: 1, tiles: 12, colors: 4, width: 4, height: 4, hints: true },
+  1: { seed: 1, tiles: 11, colors: 4, width: 4, height: 4, hints: true },
   2: { seed: 1, labels: true },
   3: { seed: 2, labels: true },
   4: { seed: 3, labels: true, width: 12, height: 9, roads: 3, waters: 3, colorMax: 10, heightMax: 5, objects: 18 },
@@ -373,7 +373,7 @@ function commitPlace(index, x, y) {
   if (state.tray.length === 0) setMessage("Все плитки встали по правилам Вана.", "good")
   else if (deadEnd(state.board, state.tray, CHANNELS[1])) {
     setMessage("Тупик: ни одна оставшаяся плитка не подходит ни к одной свободной клетке. Отмените ход или возьмите новую раздачу.", "warn")
-  } else if (!canComplete(state.board, state.tray, CHANNELS[1])) {
+  } else if (solveLevel1Detailed(state.board, state.tray, CHANNELS[1], 20000).status === "impossible") {
     setMessage("Ходы ещё есть, но полную схему уже не собрать: отмените ход или возьмите новую раздачу.", "warn")
   } else setMessage("Плитка встала.", "good")
   renderDynamic()
@@ -509,7 +509,7 @@ function hint() {
   if (state.level !== 1) return
   const move = findMove(state.board, state.tray, CHANNELS[1])
   if (!move) {
-    setMessage("Полную схему из этой позиции уже не собрать: отмените ход или возьмите новую раздачу.", "warn")
+    setMessage("Подсказка не нашлась: попробуйте «Отмену» или новую раздачу.", "warn")
     return
   }
   state.selected = move.index
