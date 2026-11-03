@@ -185,6 +185,27 @@
       "kind": "remote",
       "place": "",
       "link": ""
+    },
+    {
+      "date": "2027-01-13",
+      "time": "17:00",
+      "kind": "offline",
+      "place": "",
+      "link": ""
+    },
+    {
+      "date": "2027-01-14",
+      "time": "17:00",
+      "kind": "offline",
+      "place": "",
+      "link": ""
+    },
+    {
+      "date": "2027-01-16",
+      "time": "20:00",
+      "kind": "remote",
+      "place": "",
+      "link": ""
     }
   ]
 }
