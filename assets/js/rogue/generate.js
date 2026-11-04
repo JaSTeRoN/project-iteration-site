@@ -110,11 +110,8 @@ function linkCellText(x, y, from, to, door) {
   return `Копаем клетку (${x}, ${y}) между ${pair}. Коридор идёт уголком, сгиб в зазоре, комнату он не режет.`
 }
 
-function carveLink(westOrNorth, eastOrSouth, axis, grid, events, rng, sectorSpan, inset, width, height) {
+function carveLink(westOrNorth, eastOrSouth, axis, grid, events, rng, sectorSpan, inset, width, height, bend) {
   if (axis === "h") {
-    const gapStart = (westOrNorth.c + 1) * sectorSpan - inset
-    const gapEnd = (westOrNorth.c + 1) * sectorSpan + inset - 1
-    const bend = randInt(rng, gapStart, gapEnd)
     const start = exitPoint(westOrNorth, "e", rng)
     const end = exitPoint(eastOrSouth, "w", rng)
     const path = dedupePath([
@@ -137,9 +134,6 @@ function carveLink(westOrNorth, eastOrSouth, axis, grid, events, rng, sectorSpan
     })
     return
   }
-  const gapStart = (westOrNorth.r + 1) * sectorSpan - inset
-  const gapEnd = (westOrNorth.r + 1) * sectorSpan + inset - 1
-  const bend = randInt(rng, gapStart, gapEnd)
   const start = exitPoint(westOrNorth, "s", rng)
   const end = exitPoint(eastOrSouth, "n", rng)
   const path = dedupePath([
@@ -430,29 +424,42 @@ export function generateDungeon(params) {
   }
   for (const key of links) {
     const [a, b] = key.split("-").map(Number)
-    events.push({
-      type: "link",
-      a,
-      b,
-      extra: extra.has(key),
-      text: extra.has(key)
-        ? `Лишний коридор между секторами ${a + 1} и ${b + 1}. Уровень уже связный, эта петля выпала по вероятности.`
-        : `Обязательная связь секторов ${a + 1} и ${b + 1}. Секторы собираются в дерево: без петель, но из каждого можно дойти до каждого.`,
-    })
-  }
-
-  for (const key of links) {
-    const [a, b] = key.split("-").map(Number)
     const first = sectors[a]
     const second = sectors[b]
     if (first.r === second.r) {
       const west = first.c < second.c ? first : second
       const east = first.c < second.c ? second : first
-      carveLink(west, east, "h", grid, events, rng, sectorW, inset, width, height)
+      const gapStart = (west.c + 1) * sectorW - inset
+      const gapEnd = (west.c + 1) * sectorW + inset - 1
+      const bend = randInt(rng, gapStart, gapEnd)
+      events.push({
+        type: "link",
+        a,
+        b,
+        extra: extra.has(key),
+        bend: { axis: "x", value: bend, from: gapStart, to: gapEnd },
+        text: extra.has(key)
+          ? `Лишний коридор между секторами ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре: столбец ${bend} из диапазона ${gapStart}–${gapEnd}.`
+          : `Связь секторов ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре между ними: столбец ${bend} из диапазона ${gapStart}–${gapEnd}.`,
+      })
+      carveLink(west, east, "h", grid, events, rng, sectorW, inset, width, height, bend)
     } else {
       const north = first.r < second.r ? first : second
       const south = first.r < second.r ? second : first
-      carveLink(north, south, "v", grid, events, rng, sectorH, inset, width, height)
+      const gapStart = (north.r + 1) * sectorH - inset
+      const gapEnd = (north.r + 1) * sectorH + inset - 1
+      const bend = randInt(rng, gapStart, gapEnd)
+      events.push({
+        type: "link",
+        a,
+        b,
+        extra: extra.has(key),
+        bend: { axis: "y", value: bend, from: gapStart, to: gapEnd },
+        text: extra.has(key)
+          ? `Лишний коридор между секторами ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре: ряд ${bend} из диапазона ${gapStart}–${gapEnd}.`
+          : `Связь секторов ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре между ними: ряд ${bend} из диапазона ${gapStart}–${gapEnd}.`,
+      })
+      carveLink(north, south, "v", grid, events, rng, sectorH, inset, width, height, bend)
     }
   }
 
@@ -469,6 +476,7 @@ export function generateDungeon(params) {
     rows,
     sectorW,
     sectorH,
+    inset,
     sectors,
     events,
     grid,

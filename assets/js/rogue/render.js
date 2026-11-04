@@ -136,12 +136,28 @@ export function drawDungeon(ctx, width, height, model) {
     for (const sector of dungeon.sectors) {
       const point = worldToScreen({ x: sector.x * view.cell, y: sector.y * view.cell }, view, width, height)
       ctx.strokeRect(point.x, point.y, sector.w * size, sector.h * size)
+      drawSectorGaps(ctx, sector, dungeon.inset ?? 2, view, width, height)
     }
   }
   if (showGrid) drawGrid(ctx, dungeon, view, width, height)
   if (hover) drawCellMarker(ctx, hover, view, width, height, "#9dffb8", "rgba(157, 255, 184, 0.18)")
   if (selected) drawCellMarker(ctx, selected, view, width, height, "#ffd76a", "rgba(255, 215, 106, 0.2)")
   if (!player && frame.focus) strokeFocus(ctx, frame, style, dungeon, view, width, height, size)
+}
+
+function drawSectorGaps(ctx, sector, inset, view, width, height) {
+  const size = view.cell * view.zoom
+  const point = worldToScreen({ x: sector.x * view.cell, y: sector.y * view.cell }, view, width, height)
+  const margin = inset * size
+  const w = sector.w * size
+  const h = sector.h * size
+  ctx.save()
+  ctx.strokeStyle = "rgba(255, 215, 106, 0.42)"
+  ctx.lineWidth = 1
+  ctx.setLineDash([4, 4])
+  ctx.strokeRect(point.x + margin, point.y + margin, w - margin * 2, h - margin * 2)
+  ctx.setLineDash([])
+  ctx.restore()
 }
 
 function drawGrid(ctx, dungeon, view, width, height) {
@@ -229,6 +245,44 @@ function strokeFocus(ctx, frame, style, dungeon, view, width, height, size) {
   if (focus.kind === "rect") {
     const point = worldToScreen({ x: focus.x * view.cell, y: focus.y * view.cell }, view, width, height)
     ctx.strokeRect(point.x + 1, point.y + 1, focus.w * size - 2, focus.h * size - 2)
+    return
+  }
+  if (focus.kind === "link") {
+    const a = dungeon.sectors[focus.a]
+    const b = dungeon.sectors[focus.b]
+    const inset = dungeon.inset ?? 2
+    ctx.save()
+    ctx.fillStyle = "rgba(255, 215, 106, 0.14)"
+    ctx.strokeStyle = "#ffd76a"
+    ctx.lineWidth = 2
+    ctx.setLineDash([5, 4])
+    if (a.r === b.r) {
+      const boundary = (Math.min(a.c, b.c) + 1) * dungeon.sectorW
+      const point = worldToScreen(
+        { x: (boundary - inset) * view.cell, y: Math.min(a.y, b.y) * view.cell },
+        view,
+        width,
+        height,
+      )
+      const w = inset * 2 * size
+      const h = a.h * size
+      ctx.fillRect(point.x, point.y, w, h)
+      ctx.strokeRect(point.x, point.y, w, h)
+    } else {
+      const boundary = (Math.min(a.r, b.r) + 1) * dungeon.sectorH
+      const point = worldToScreen(
+        { x: Math.min(a.x, b.x) * view.cell, y: (boundary - inset) * view.cell },
+        view,
+        width,
+        height,
+      )
+      const w = a.w * size
+      const h = inset * 2 * size
+      ctx.fillRect(point.x, point.y, w, h)
+      ctx.strokeRect(point.x, point.y, w, h)
+    }
+    ctx.setLineDash([])
+    ctx.restore()
     return
   }
   if (focus.kind === "sector") {

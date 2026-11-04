@@ -71,7 +71,7 @@ function renderSide() {
       </select>
     </label>
     <div class="row"><button type="button" id="random">Случайный сид</button></div>
-    <p class="explain">В оригинале секторов 3×3. Пустая клетка сетки всё равно участвует в проходах. Коридор копается уголком.</p>`
+    <p class="explain">В оригинале секторов 3×3. Пустая клетка сетки всё равно участвует в проходах. Внутри сектора оставлен зазор в 2 клетки: комнаты в него не заходят, а изгиб коридора выбирается именно там — одна из четырёх клеток зазора.</p>`
 }
 
 function readSide() {
@@ -192,8 +192,10 @@ function frame(now) {
   requestAnimationFrame(frame)
 }
 
-side.addEventListener("change", () => {
+side.addEventListener("change", (event) => {
   readSide()
+  const id = event.target?.id || ""
+  if (id === "p-grid" || id === "p-sectors" || id === "p-style") return
   renderSide()
   rebuild()
 })
