@@ -236,9 +236,9 @@ h1, h2, .page-title {
 
 .hero-mascot {
   position: absolute;
-  top: -78px;
-  right: 10px;
-  width: 150px;
+  top: -84px;
+  right: 8px;
+  width: 170px;
   height: auto;
   z-index: 1;
   pointer-events: none;
@@ -379,11 +379,11 @@ h1, h2, .page-title {
 
 .lead-mascot {
   position: absolute;
-  top: -80px;
+  top: -88px;
   left: 50%;
   transform: translateX(-50%);
   width: auto;
-  height: 150px;
+  height: 164px;
   pointer-events: none;
   filter: drop-shadow(0 10px 16px rgba(7, 17, 28, 0.32));
 }
@@ -425,9 +425,9 @@ h1, h2, .page-title {
   }
   .hero { padding: 84px 0 8px; }
   .hero-card { padding: 22px 20px 20px; }
-  .hero-mascot { width: 84px; top: -70px; right: 8px; }
+  .hero-mascot { width: 104px; top: -78px; right: 8px; }
   .page-lead.with-mascot { margin-top: 78px; padding-top: 66px; }
-  .lead-mascot { width: auto; height: 118px; top: -62px; }
+  .lead-mascot { width: auto; height: 126px; top: -70px; }
 }
 
 @media (hover: hover) {
@@ -452,7 +452,7 @@ h1, h2, .page-title {
   .hero-card { padding: 16px 170px 14px 20px; }
   .hero h1 { font-size: clamp(1.6rem, 2.4vw, 2.1rem); }
   .hero-card p { font-size: 0.92rem; }
-  .hero-mascot { width: 130px; top: -58px; }
+  .hero-mascot { width: 140px; top: -66px; }
   .card h2 { font-size: 1.15rem; }
   .card p { font-size: 0.9rem; }
   .section-grid { padding: 10px 0 12px; }
