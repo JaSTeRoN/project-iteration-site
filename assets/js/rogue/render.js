@@ -107,7 +107,7 @@ export function drawDungeon(ctx, width, height, model) {
       ctx.fill()
     }
   }
-  if (!player) {
+  if (!player && frame.showPlan) {
     frame.links.forEach((link, index) => {
       const latest = index === frame.links.length - 1
       const from = dungeon.sectors[link.a]
@@ -143,6 +143,7 @@ export function drawDungeon(ctx, width, height, model) {
       ctx.restore()
     })
   }
+  if (!player && frame.corners) drawBend(ctx, frame.corners, view, width, height)
   if (showSectors) {
     ctx.strokeStyle = "rgba(120, 180, 255, 0.4)"
     ctx.lineWidth = 2
@@ -170,6 +171,33 @@ function drawSectorGaps(ctx, sector, inset, view, width, height) {
   ctx.setLineDash([4, 4])
   ctx.strokeRect(point.x + margin, point.y + margin, w - margin * 2, h - margin * 2)
   ctx.setLineDash([])
+  ctx.restore()
+}
+
+function drawBend(ctx, corners, view, width, height) {
+  const size = view.cell * view.zoom
+  const points = corners.map(([x, y]) => worldToScreen(
+    { x: x * view.cell + view.cell / 2, y: y * view.cell + view.cell / 2 },
+    view,
+    width,
+    height,
+  ))
+  ctx.save()
+  if (points.length > 1) {
+    ctx.strokeStyle = "#ffd76a"
+    ctx.lineWidth = 2
+    ctx.setLineDash([4, 3])
+    ctx.beginPath()
+    points.forEach((point, index) => (index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y)))
+    ctx.stroke()
+    ctx.setLineDash([])
+  }
+  ctx.fillStyle = "#ffd76a"
+  for (const point of points) {
+    ctx.beginPath()
+    ctx.arc(point.x, point.y, Math.max(3, size * 0.22), 0, Math.PI * 2)
+    ctx.fill()
+  }
   ctx.restore()
 }
 
@@ -260,89 +288,7 @@ function strokeFocus(ctx, frame, style, dungeon, view, width, height, size) {
     ctx.strokeRect(point.x + 1, point.y + 1, focus.w * size - 2, focus.h * size - 2)
     return
   }
-  if (focus.kind === "link") {
-    const a = dungeon.sectors[focus.a]
-    const b = dungeon.sectors[focus.b]
-    const inset = dungeon.inset ?? 2
-    const event = [...frame.links].reverse().find((item) => item.a === focus.a && item.b === focus.b)
-    ctx.save()
-    ctx.fillStyle = "rgba(255, 215, 106, 0.08)"
-    ctx.strokeStyle = "rgba(255, 215, 106, 0.7)"
-    ctx.lineWidth = 1
-    ctx.setLineDash([5, 4])
-    if (a.r === b.r) {
-      const boundary = (Math.min(a.c, b.c) + 1) * dungeon.sectorW
-      const point = worldToScreen(
-        { x: (boundary - inset) * view.cell, y: Math.min(a.y, b.y) * view.cell },
-        view,
-        width,
-        height,
-      )
-      const w = inset * 2 * size
-      const h = a.h * size
-      ctx.fillRect(point.x, point.y, w, h)
-      ctx.strokeRect(point.x, point.y, w, h)
-      if (event?.bend) {
-        const line = worldToScreen(
-          { x: event.bend.value * view.cell, y: Math.min(a.y, b.y) * view.cell },
-          view,
-          width,
-          height,
-        )
-        ctx.setLineDash([])
-        ctx.strokeStyle = "#ffd76a"
-        ctx.lineWidth = 3
-        ctx.beginPath()
-        ctx.moveTo(line.x, line.y)
-        ctx.lineTo(line.x, line.y + h)
-        ctx.stroke()
-      }
-    } else {
-      const boundary = (Math.min(a.r, b.r) + 1) * dungeon.sectorH
-      const point = worldToScreen(
-        { x: Math.min(a.x, b.x) * view.cell, y: (boundary - inset) * view.cell },
-        view,
-        width,
-        height,
-      )
-      const w = a.w * size
-      const h = inset * 2 * size
-      ctx.fillRect(point.x, point.y, w, h)
-      ctx.strokeRect(point.x, point.y, w, h)
-      if (event?.bend) {
-        const line = worldToScreen(
-          { x: Math.min(a.x, b.x) * view.cell, y: event.bend.value * view.cell },
-          view,
-          width,
-          height,
-        )
-        ctx.setLineDash([])
-        ctx.strokeStyle = "#ffd76a"
-        ctx.lineWidth = 3
-        ctx.beginPath()
-        ctx.moveTo(line.x, line.y)
-        ctx.lineTo(line.x + w, line.y)
-        ctx.stroke()
-      }
-    }
-    ctx.setLineDash([])
-    if (event?.corners) {
-      for (const [cx, cy] of event.corners) {
-        const point = worldToScreen(
-          { x: cx * view.cell + view.cell / 2, y: cy * view.cell + view.cell / 2 },
-          view,
-          width,
-          height,
-        )
-        ctx.fillStyle = "#ffd76a"
-        ctx.beginPath()
-        ctx.arc(point.x, point.y, Math.max(3, size * 0.2), 0, Math.PI * 2)
-        ctx.fill()
-      }
-    }
-    ctx.restore()
-    return
-  }
+  if (focus.kind === "link") return
   if (focus.kind === "sector") {
     const sector = dungeon.sectors[focus.index]
     const point = worldToScreen({ x: sector.x * view.cell, y: sector.y * view.cell }, view, width, height)

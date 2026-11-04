@@ -81,20 +81,20 @@ function exitPoint(sector, side, rng) {
   return { x: randInt(rng, room.x, room.x + room.w - 1), y: room.y - 1, door: true }
 }
 
-function carveCell(grid, events, x, y, asDoor, width, height, text) {
+function carveCell(grid, events, x, y, asDoor, width, height, text, linkInfo) {
   if (x < 0 || y < 0 || x >= width || y >= height) return
   const cell = grid[y][x]
   if (cell.kind === "room") return
   if (asDoor) {
     if (cell.kind !== "door") {
       cell.kind = "door"
-      events.push({ type: "door", x, y, text })
+      events.push({ type: "door", x, y, text, link: linkInfo })
     }
     return
   }
   if (cell.kind === "wall") {
     cell.kind = "corridor"
-    events.push({ type: "dig", x, y, text })
+    events.push({ type: "dig", x, y, text, link: linkInfo })
   }
 }
 
@@ -110,7 +110,7 @@ function linkCellText(x, y, from, to, door) {
   return `Копаем клетку (${x}, ${y}) между ${pair}. Коридор идёт уголком, сгиб в зазоре, комнату он не режет.`
 }
 
-function carveLink(from, to, axis, grid, events, start, end, bend, width, height) {
+function carveLink(from, to, axis, grid, events, start, end, bend, width, height, linkInfo) {
   if (axis === "h") {
     const path = dedupePath([
       ...hLine(start.x, bend, start.y),
@@ -128,6 +128,7 @@ function carveLink(from, to, axis, grid, events, start, end, bend, width, height
         width,
         height,
         linkCellText(point[0], point[1], from, to, isDoor),
+        linkInfo,
       )
     })
     return
@@ -148,6 +149,7 @@ function carveLink(from, to, axis, grid, events, start, end, bend, width, height
       width,
       height,
       linkCellText(point[0], point[1], from, to, isDoor),
+      linkInfo,
     )
   })
 }
@@ -431,18 +433,20 @@ export function generateDungeon(params) {
       const bend = randInt(rng, gapStart, gapEnd)
       const start = exitPoint(west, "e", rng)
       const end = exitPoint(east, "w", rng)
+      const corners = dedupePath([[bend, start.y], [bend, end.y]])
+      const linkInfo = { a, b, bend: { axis: "x", value: bend, from: gapStart, to: gapEnd }, corners }
       events.push({
         type: "link",
         a,
         b,
         extra: extra.has(key),
-        bend: { axis: "x", value: bend, from: gapStart, to: gapEnd },
-        corners: dedupePath([[bend, start.y], [bend, end.y]]),
+        bend: linkInfo.bend,
+        corners,
         text: extra.has(key)
           ? `Лишний коридор между секторами ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре: столбец ${bend} из диапазона ${gapStart}–${gapEnd}.`
           : `Связь секторов ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре между ними: столбец ${bend} из диапазона ${gapStart}–${gapEnd}.`,
       })
-      planned.push({ from: west, to: east, axis: "h", bend, start, end })
+      planned.push({ from: west, to: east, axis: "h", bend, start, end, link: linkInfo })
     } else {
       const north = first.r < second.r ? first : second
       const south = first.r < second.r ? second : first
@@ -451,23 +455,25 @@ export function generateDungeon(params) {
       const bend = randInt(rng, gapStart, gapEnd)
       const start = exitPoint(north, "s", rng)
       const end = exitPoint(south, "n", rng)
+      const corners = dedupePath([[start.x, bend], [end.x, bend]])
+      const linkInfo = { a, b, bend: { axis: "y", value: bend, from: gapStart, to: gapEnd }, corners }
       events.push({
         type: "link",
         a,
         b,
         extra: extra.has(key),
-        bend: { axis: "y", value: bend, from: gapStart, to: gapEnd },
-        corners: dedupePath([[start.x, bend], [end.x, bend]]),
+        bend: linkInfo.bend,
+        corners,
         text: extra.has(key)
           ? `Лишний коридор между секторами ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре: ряд ${bend} из диапазона ${gapStart}–${gapEnd}.`
           : `Связь секторов ${a + 1} и ${b + 1}. Изгиб выбирается в зазоре между ними: ряд ${bend} из диапазона ${gapStart}–${gapEnd}.`,
       })
-      planned.push({ from: north, to: south, axis: "v", bend, start, end })
+      planned.push({ from: north, to: south, axis: "v", bend, start, end, link: linkInfo })
     }
   }
 
   for (const item of planned) {
-    carveLink(item.from, item.to, item.axis, grid, events, item.start, item.end, item.bend, width, height)
+    carveLink(item.from, item.to, item.axis, grid, events, item.start, item.end, item.bend, width, height, item.link)
   }
 
   repairConnectivity(grid, events)
@@ -502,6 +508,8 @@ export function playback(dungeon, eventCount) {
   let focus = null
   let digs = 0
   let showPlan = true
+  let bend = null
+  let corners = null
   const count = Math.max(0, Math.min(eventCount, dungeon.events.length))
   for (let i = 0; i < count; i += 1) {
     const event = dungeon.events[i]
@@ -523,15 +531,21 @@ export function playback(dungeon, eventCount) {
     } else if (event.type === "link") {
       links.push(event)
       focus = { kind: "link", a: event.a, b: event.b }
+      bend = null
+      corners = null
     } else if (event.type === "dig") {
       if (grid[event.y][event.x].kind === "wall") grid[event.y][event.x].kind = "corridor"
       digs += 1
       showPlan = false
       focus = { kind: "cell", x: event.x, y: event.y }
+      bend = event.link?.bend || null
+      corners = event.link?.corners || null
     } else if (event.type === "door") {
       grid[event.y][event.x].kind = "door"
       showPlan = false
       focus = { kind: "cell", x: event.x, y: event.y }
+      bend = event.link?.bend || null
+      corners = event.link?.corners || null
     } else if (event.type === "stairs") {
       grid[event.y][event.x].stairs = event.dir
       showPlan = false
@@ -553,6 +567,8 @@ export function playback(dungeon, eventCount) {
     digs,
     focus,
     showPlan,
+    bend,
+    corners,
     done: count >= dungeon.events.length,
   }
 }
