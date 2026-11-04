@@ -106,6 +106,8 @@ export function drawDungeon(ctx, width, height, model) {
       ctx.arc(point.x, point.y, Math.max(4, size * 0.28), 0, Math.PI * 2)
       ctx.fill()
     }
+  }
+  if (!player) {
     frame.links.forEach((link, index) => {
       const latest = index === frame.links.length - 1
       const from = dungeon.sectors[link.a]
@@ -122,12 +124,23 @@ export function drawDungeon(ctx, width, height, model) {
         width,
         height,
       )
+      ctx.save()
+      ctx.globalAlpha = latest ? 1 : 0.7
       ctx.strokeStyle = link.extra ? "#ffd76a" : latest ? "#9dffb8" : "#4f8fd0"
       ctx.lineWidth = latest ? 4 : 2
       ctx.beginPath()
       ctx.moveTo(start.x, start.y)
       ctx.lineTo(end.x, end.y)
       ctx.stroke()
+      if (latest) {
+        ctx.fillStyle = "#9dffb8"
+        for (const point of [start, end]) {
+          ctx.beginPath()
+          ctx.arc(point.x, point.y, 5, 0, Math.PI * 2)
+          ctx.fill()
+        }
+      }
+      ctx.restore()
     })
   }
   if (showSectors) {
