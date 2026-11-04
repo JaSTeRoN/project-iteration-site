@@ -82,7 +82,7 @@ export function mondayOf(iso) {
 }
 
 export function weekDays(start) {
-  return Array.from({ length: 6 }, (_, index) => addDays(start, index))
+  return Array.from({ length: 7 }, (_, index) => addDays(start, index))
 }
 
 export function dayTitle(iso) {
@@ -97,8 +97,26 @@ export function shortDayTitle(iso) {
   return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" }).format(date)
 }
 
+export function dayMonth(iso) {
+  const date = new Date(`${iso}T12:00:00Z`)
+  const parts = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" }).formatToParts(date)
+  const day = Number(parts.find((part) => part.type === "day").value)
+  const month = parts.find((part) => part.type === "month").value
+  return { day, month }
+}
+
 export function weekRangeTitle(start) {
-  return `${dayTitle(start)} — ${dayTitle(addDays(start, 5))}`
+  const first = dayMonth(start)
+  const last = dayMonth(addDays(start, 6))
+  const from = `${first.day === 2 || first.day === 3 ? "со" : "с"} ${first.day}`
+  return first.month === last.month
+    ? `${from} по ${last.day} ${last.month}`
+    : `${from} ${first.month} по ${last.day} ${last.month}`
+}
+
+export function visibleWeekDays(start, includeSunday) {
+  const days = weekDays(start)
+  return includeSunday ? days : days.slice(0, 6)
 }
 
 export const TERM_START = "2026-11-02"

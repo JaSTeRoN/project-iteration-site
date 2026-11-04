@@ -16,13 +16,14 @@ import {
   weekRangeTitle,
   weekStarts,
   weekState,
+  visibleWeekDays,
   zonedToUtc,
 } from "../assets/js/schedule-data.js"
 
 const TOMSK = "Asia/Tomsk"
 const KALININGRAD = "Europe/Kaliningrad"
 
-test("неделя начинается с понедельника и длится шесть дней", () => {
+test("неделя начинается с понедельника и длится семь дней", () => {
   assert.equal(mondayOf("2026-11-04"), "2026-11-02")
   assert.equal(mondayOf("2026-11-08"), "2026-11-02")
   assert.deepEqual(weekDays("2026-11-02"), [
@@ -32,9 +33,12 @@ test("неделя начинается с понедельника и длит�
     "2026-11-05",
     "2026-11-06",
     "2026-11-07",
+    "2026-11-08",
   ])
-  assert.equal(addDays("2026-11-02", 5), "2026-11-07")
-  assert.equal(weekRangeTitle("2026-11-02"), "понедельник, 2 ноября — суббота, 7 ноября")
+  assert.equal(addDays("2026-11-02", 6), "2026-11-08")
+  assert.equal(weekRangeTitle("2026-11-02"), "со 2 по 8 ноября")
+  assert.equal(weekRangeTitle("2026-11-30"), "с 30 ноября по 6 декабря")
+  assert.equal(weekRangeTitle("2026-12-07"), "с 7 по 13 декабря")
 })
 
 test("недели нумеруются от 2 ноября 2026 года", () => {
@@ -45,6 +49,13 @@ test("недели нумеруются от 2 ноября 2026 года", () =
   assert.equal(weekNumber("2026-11-30"), 5)
   assert.equal(weekNumber("2026-10-26"), 0)
   assert.equal(weekNumber("2026-11-09", "2026-11-09"), 1)
+})
+
+test("воскресенье появляется в сетке только при наличии занятия", () => {
+  assert.equal(visibleWeekDays("2026-11-02", false).length, 6)
+  const withSunday = visibleWeekDays("2026-11-02", true)
+  assert.equal(withSunday.length, 7)
+  assert.equal(withSunday[6], "2026-11-08")
 })
 
 test("занятие хранится одним моментом и пересчитывается во вторую зону", () => {

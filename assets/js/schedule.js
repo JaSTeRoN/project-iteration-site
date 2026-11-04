@@ -15,6 +15,7 @@ import {
   weekNumber,
   weekStarts,
   weekState,
+  visibleWeekDays,
 } from "./schedule-data.js"
 
 const board = document.querySelector("#schedule-board")
@@ -118,10 +119,16 @@ function renderZone(zone, weekStart, today) {
 
   const days = document.createElement("div")
   days.className = "days"
-  for (const dayDate of weekDays(weekStart)) {
+  const allDays = weekDays(weekStart)
+  const sunday = allDays[6]
+  const hasSunday = data.events.some(
+    (event) => event.date === sunday && (!event.zones || event.zones.includes(zone.id)),
+  )
+  for (const dayDate of visibleWeekDays(weekStart, hasSunday)) {
     const column = document.createElement("section")
     column.className = "day"
     if (dayDate === today) column.classList.add("today")
+    if (dayDate === sunday) column.classList.add("sunday")
     const heading = document.createElement("h3")
     heading.textContent = dayTitle(dayDate)
     column.append(heading)

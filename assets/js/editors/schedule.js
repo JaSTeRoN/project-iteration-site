@@ -217,6 +217,8 @@ export async function mountSchedule(host, api) {
       const column = document.createElement("section")
       column.className = "day-edit"
       column.dataset.date = date
+      const sunday = new Date(`${date}T12:00:00Z`).getUTCDay() === 0
+      if (sunday) column.classList.add("sunday")
       const heading = document.createElement("h3")
       heading.textContent = dayTitle(date)
       const list = document.createElement("div")
@@ -233,6 +235,12 @@ export async function mountSchedule(host, api) {
         renderWeek()
       })
       column.append(heading, list, add)
+      if (sunday) {
+        const note = document.createElement("p")
+        note.className = "day-note"
+        note.textContent = "Воскресенье исключительное: попадёт в расписание, только если здесь есть занятие."
+        column.append(note)
+      }
       grid.append(column)
     }
     const card = document.createElement("section")
