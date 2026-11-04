@@ -24,6 +24,7 @@ const params = {
   loot: true,
   style: "scheme",
   sectors: true,
+  grid: false,
 }
 
 const state = {
@@ -33,6 +34,8 @@ const state = {
   playing: false,
   view: { camX: 0, camY: 0, zoom: 1, cell: 18 },
   player: null,
+  hover: null,
+  selected: null,
   cssW: 1,
   cssH: 1,
 }
@@ -60,6 +63,7 @@ function renderSide() {
     ${field("extraChance", "Лишний коридор, %", params.extraChance, 0, 100)}
     <label class="check"><input id="p-loot" type="checkbox" ${params.loot ? "checked" : ""}> Добыча после геометрии</label>
     <label class="check"><input id="p-sectors" type="checkbox" ${params.sectors ? "checked" : ""}> Сетка секторов</label>
+    <label class="check"><input id="p-grid" type="checkbox" ${params.grid ? "checked" : ""}> Координатная сетка</label>
     <label class="field">Вид
       <select id="p-style">
         <option value="scheme" ${params.style === "scheme" ? "selected" : ""}>Схема</option>
@@ -97,6 +101,8 @@ function rebuild() {
   })
   state.index = 0
   state.player = null
+  state.hover = null
+  state.selected = null
   state.playing = !reduced
   frame.bank = 0
   state.frame = playback(state.dungeon, 0)
@@ -175,7 +181,10 @@ function frame(now) {
       frame: state.frame,
       style: params.style,
       showSectors: params.sectors,
+      showGrid: params.grid,
       player: state.player,
+      hover: state.hover,
+      selected: state.selected,
     })
   }
   if (finished) setMessage(READY)
@@ -252,10 +261,29 @@ bindPointer(canvas, state.view, {
   onTap: (sx, sy) => {
     const hit = cellAt(state.view, sx, sy, state.cssW, state.cssH, state.dungeon)
     if (!hit || !state.frame) return
-    const cell = state.frame.grid[hit[1]][hit[0]]
+    state.selected = hit
+    const [x, y] = hit
+    const cell = state.frame.grid[y][x]
     const kind = { wall: "порода", room: "пол комнаты", corridor: "коридор", door: "дверь" }[cell.kind]
-    setMessage(`${kind}. ${cell.stairs === "up" ? "Лестница вверх." : cell.stairs === "down" ? "Лестница вниз." : cell.gold ? "Здесь добыча." : ""}`.trim())
+    const extra = cell.stairs === "up"
+      ? "Лестница вверх."
+      : cell.stairs === "down"
+        ? "Лестница вниз."
+        : cell.gold
+          ? "Здесь добыча."
+          : ""
+    setMessage(`Клетка (${x}, ${y}) — ${kind}. ${extra}`.trim())
   },
+})
+
+canvas.addEventListener("pointermove", (event) => {
+  if (event.pointerType !== "mouse" || !state.dungeon || !state.frame) return
+  const rect = canvas.getBoundingClientRect()
+  state.hover = cellAt(state.view, event.clientX - rect.left, event.clientY - rect.top, state.cssW, state.cssH, state.dungeon)
+})
+
+canvas.addEventListener("pointerleave", () => {
+  state.hover = null
 })
 
 window.addEventListener("resize", resize)

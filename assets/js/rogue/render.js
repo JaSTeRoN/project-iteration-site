@@ -32,7 +32,7 @@ function glyph(cell, playerHere) {
 }
 
 export function drawDungeon(ctx, width, height, model) {
-  const { dungeon, view, frame, style, showSectors, player } = model
+  const { dungeon, view, frame, style, showSectors, showGrid, player, hover, selected } = model
   ctx.clearRect(0, 0, width, height)
   ctx.fillStyle = style === "terminal" ? "#050a12" : "#07111c"
   ctx.fillRect(0, 0, width, height)
@@ -138,7 +138,72 @@ export function drawDungeon(ctx, width, height, model) {
       ctx.strokeRect(point.x, point.y, sector.w * size, sector.h * size)
     }
   }
+  if (showGrid) drawGrid(ctx, dungeon, view, width, height)
+  if (hover) drawCellMarker(ctx, hover, view, width, height, "#9dffb8", "rgba(157, 255, 184, 0.18)")
+  if (selected) drawCellMarker(ctx, selected, view, width, height, "#ffd76a", "rgba(255, 215, 106, 0.2)")
   if (!player && frame.focus) strokeFocus(ctx, frame, style, dungeon, view, width, height, size)
+}
+
+function drawGrid(ctx, dungeon, view, width, height) {
+  ctx.save()
+  ctx.strokeStyle = "rgba(150, 195, 240, 0.16)"
+  ctx.lineWidth = 1
+  for (let x = 0; x <= dungeon.width; x += 1) {
+    const top = worldToScreen({ x: x * view.cell, y: 0 }, view, width, height)
+    const bottom = worldToScreen({ x: x * view.cell, y: dungeon.height * view.cell }, view, width, height)
+    ctx.beginPath()
+    ctx.moveTo(top.x, top.y)
+    ctx.lineTo(bottom.x, bottom.y)
+    ctx.stroke()
+  }
+  for (let y = 0; y <= dungeon.height; y += 1) {
+    const left = worldToScreen({ x: 0, y: y * view.cell }, view, width, height)
+    const right = worldToScreen({ x: dungeon.width * view.cell, y: y * view.cell }, view, width, height)
+    ctx.beginPath()
+    ctx.moveTo(left.x, left.y)
+    ctx.lineTo(right.x, right.y)
+    ctx.stroke()
+  }
+  ctx.fillStyle = "rgba(210, 232, 255, 0.7)"
+  ctx.font = "600 10px Segoe UI, sans-serif"
+  ctx.textAlign = "left"
+  ctx.textBaseline = "top"
+  for (let x = 5; x < dungeon.width; x += 5) {
+    const point = worldToScreen({ x: x * view.cell, y: 0 }, view, width, height)
+    ctx.fillText(String(x), point.x + 3, point.y + 2)
+  }
+  for (let y = 5; y < dungeon.height; y += 5) {
+    const point = worldToScreen({ x: 0, y: y * view.cell }, view, width, height)
+    ctx.fillText(String(y), point.x + 2, point.y + 2)
+  }
+  ctx.restore()
+}
+
+function drawCellMarker(ctx, cell, view, width, height, color, fill) {
+  const [x, y] = cell
+  const size = view.cell * view.zoom
+  const point = worldToScreen({ x: x * view.cell, y: y * view.cell }, view, width, height)
+  ctx.save()
+  ctx.fillStyle = fill
+  ctx.fillRect(point.x, point.y, size, size)
+  ctx.strokeStyle = color
+  ctx.lineWidth = 2
+  ctx.strokeRect(point.x + 1, point.y + 1, Math.max(1, size - 2), Math.max(1, size - 2))
+  const label = `${x}, ${y}`
+  ctx.font = "600 12px Segoe UI, sans-serif"
+  const textWidth = ctx.measureText(label).width
+  let left = point.x + size + 6
+  let top = point.y - 4
+  if (left + textWidth + 10 > width) left = point.x - textWidth - 14
+  if (top < 2) top = 2
+  if (top + 18 > height) top = height - 18
+  ctx.fillStyle = "rgba(7, 17, 28, 0.9)"
+  ctx.fillRect(left - 4, top, textWidth + 10, 18)
+  ctx.fillStyle = color
+  ctx.textAlign = "left"
+  ctx.textBaseline = "top"
+  ctx.fillText(label, left + 1, top + 3)
+  ctx.restore()
 }
 
 function strokeFocus(ctx, frame, style, dungeon, view, width, height, size) {
