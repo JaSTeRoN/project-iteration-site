@@ -108,7 +108,7 @@ export function dayMonth(iso) {
 export function weekRangeTitle(start) {
   const first = dayMonth(start)
   const last = dayMonth(addDays(start, 6))
-  const from = `${first.day === 2 || first.day === 3 ? "со" : "с"} ${first.day}`
+  const from = `${first.day === 2 ? "со" : "с"} ${first.day}`
   return first.month === last.month
     ? `${from} по ${last.day} ${last.month}`
     : `${from} ${first.month} по ${last.day} ${last.month}`

@@ -37,6 +37,7 @@ test("неделя начинается с понедельника и длит�
   ])
   assert.equal(addDays("2026-11-02", 6), "2026-11-08")
   assert.equal(weekRangeTitle("2026-11-02"), "со 2 по 8 ноября")
+  assert.equal(weekRangeTitle("2026-08-03"), "с 3 по 9 августа")
   assert.equal(weekRangeTitle("2026-11-30"), "с 30 ноября по 6 декабря")
   assert.equal(weekRangeTitle("2026-12-07"), "с 7 по 13 декабря")
 })
