@@ -160,8 +160,13 @@ export function eventLink(event, defaultLink) {
 }
 
 export function safeLink(value) {
+  const raw = String(value ?? "").trim()
+  if (!raw || /\s/.test(raw)) return ""
+  let candidate = raw
+  if (candidate.startsWith("//")) candidate = `https:${candidate}`
+  else if (!/^[a-z][a-z0-9+.-]*:/i.test(candidate)) candidate = `https://${candidate}`
   try {
-    const url = new URL(value)
+    const url = new URL(candidate)
     if (url.protocol === "https:" || url.protocol === "http:") return url.href
   } catch {
     return ""

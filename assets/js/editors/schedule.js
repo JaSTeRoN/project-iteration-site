@@ -8,6 +8,7 @@ import {
   mondayOf,
   shortDayTitle,
   sortEvents,
+  safeLink,
   todayIn,
   weekDays,
   weekNumber,
@@ -257,7 +258,7 @@ export async function mountSchedule(host, api) {
           time: event.time,
           kind: event.kind,
           place: String(event.place || "").trim(),
-          link: String(event.link || "").trim(),
+          link: safeLink(String(event.link || "").trim()),
         }
         const topic = String(event.topic || "").trim()
         if (topic) copy.topic = topic
@@ -269,7 +270,7 @@ export async function mountSchedule(host, api) {
     return {
       primary: data.primary,
       termStart: data.termStart,
-      defaultLink: String(data.defaultLink || "").trim(),
+      defaultLink: safeLink(String(data.defaultLink || "").trim()),
       zones: data.zones,
       events,
     }

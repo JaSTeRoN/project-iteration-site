@@ -110,6 +110,8 @@ test("ссылка по умолчанию подставляется, своя 
   const fallback = "https://meet.example/room"
   assert.equal(eventLink({ link: "" }, fallback), fallback)
   assert.equal(eventLink({ link: "https://example.com/a" }, fallback), "https://example.com/a")
+  assert.equal(eventLink({ link: "telemost.yandex.ru/j/1" }, fallback), "https://telemost.yandex.ru/j/1")
+  assert.equal(eventLink({ link: "//example.com/a" }, fallback), "https://example.com/a")
   assert.equal(eventLink({ link: "javascript:alert(1)" }, fallback), "")
   assert.equal(eventLink({}, ""), "")
   assert.equal(KINDS["possible-offline"], "Возможное очное занятие")
