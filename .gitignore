@@ -3,3 +3,7 @@ assets/brand/_originals/
 
 Thumbs.db
 .DS_Store
+
+# Личные данные наставников: в репозиторий попадают только зашифрованные файлы
+mentors.local.json
+
