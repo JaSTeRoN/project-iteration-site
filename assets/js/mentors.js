@@ -57,7 +57,12 @@ function buildCard(mentor, photoUrl) {
     link.href = href
     link.target = "_blank"
     link.rel = "noopener noreferrer"
-    link.textContent = "ВКонтакте"
+    const icon = document.createElement("img")
+    icon.src = "assets/brand/vk.webp"
+    icon.alt = ""
+    icon.width = 16
+    icon.height = 16
+    link.append(icon, document.createTextNode("ВК"))
     card.append(link)
   }
   return card
