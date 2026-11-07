@@ -40,3 +40,58 @@
 .lock-card p {
   margin: 0 0 14px;
 }
+
+.materials-section { margin-top: 24px; }
+
+.materials-head h2 {
+  margin: 0 0 10px;
+  color: white;
+  font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+}
+
+.materials-grid { padding: 0; }
+
+.material-card { gap: 6px; }
+
+.material-card h2 { font-size: 1.22rem; }
+
+.material-related {
+  margin: 2px 0 0;
+  color: #43556c;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.material-related-title {
+  margin: 0 0 4px;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.material-related ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.material-related li + li { margin-top: 2px; }
+
+.material-related a,
+.material-links a {
+  color: var(--blue-deep);
+}
+
+.material-links {
+  color: #4b5d73;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.material-card .card-link { margin-top: auto; }
+
+.materials-empty {
+  margin: 0;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(247, 249, 252, 0.88);
+  color: #33455c;
+}

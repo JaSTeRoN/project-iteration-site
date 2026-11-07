@@ -79,3 +79,35 @@
 .editor-note code {
   font-size: 0.95em;
 }
+
+.materials-edit { margin-top: 18px; }
+
+.materials-edit-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.materials-edit-head h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.material-links-edit {
+  display: grid;
+  gap: 6px;
+}
+
+.material-links-label {
+  margin: 0;
+  color: #33455c;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.material-link-row input { flex: 1 1 40%; }
+
+.material-link-row button { flex: 0 0 auto; }

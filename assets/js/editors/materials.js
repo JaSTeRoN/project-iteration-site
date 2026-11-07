@@ -1,5 +1,8 @@
+import { SECTIONS, newId, safeHref } from "../materials-data.js"
+
 const FILE = "data/materials.json"
 const MAX_FILE = 20 * 1024 * 1024
+const ID_PREFIX = { presentations: "p", recordings: "r", articles: "a", books: "b" }
 
 function readAsBase64(file) {
   return new Promise((resolve, reject) => {
@@ -25,10 +28,9 @@ function filePath(name) {
 export async function mountMaterials(host, api) {
   host.innerHTML = `
     <section class="editor-card">
-      <p class="editor-note">Карточка — это ссылка или файл. Файлы до 20 МБ загружаются в папку <code>materials/</code>.</p>
-      <div data-list></div>
+      <p class="editor-note">Материалы делятся на презентации, записи занятий, статьи и книги. У записи можно выбрать презентацию, по которой проходило занятие, а к любому материалу — добавить дополнительные ссылки. Файлы до 20 МБ загружаются в папку <code>materials/</code>.</p>
+      <div data-sections></div>
       <div class="week-tools">
-        <button type="button" class="quiet" data-add>Добавить материал</button>
         <button type="button" data-save>Сохранить</button>
       </div>
       <p class="status" data-status role="status"></p>
@@ -36,10 +38,10 @@ export async function mountMaterials(host, api) {
   `
 
   const statusNode = host.querySelector("[data-status]")
-  const list = host.querySelector("[data-list]")
+  const sectionsHost = host.querySelector("[data-sections]")
   const saveButton = host.querySelector("[data-save]")
 
-  let data = { materials: [] }
+  let data = { presentations: [], recordings: [], articles: [], books: [] }
   let sha = ""
 
   function setStatus(text, kind) {
@@ -47,7 +49,78 @@ export async function mountMaterials(host, api) {
     statusNode.className = `status ${kind || ""}`
   }
 
-  function materialCard(material) {
+  function presentationOptions(selected) {
+    const select = document.createElement("select")
+    select.setAttribute("aria-label", "Презентация занятия")
+    const none = document.createElement("option")
+    none.value = ""
+    none.textContent = "Без презентации"
+    select.append(none)
+    for (const presentation of data.presentations) {
+      const option = document.createElement("option")
+      option.value = presentation.id
+      option.textContent = presentation.title || "Без названия"
+      option.selected = presentation.id === selected
+      select.append(option)
+    }
+    return select
+  }
+
+  function linksEditor(material) {
+    const box = document.createElement("div")
+    box.className = "material-links-edit"
+
+    const render = () => {
+      box.replaceChildren()
+      const label = document.createElement("p")
+      label.className = "material-links-label"
+      label.textContent = "Дополнительные ссылки"
+      box.append(label)
+
+      material.links.forEach((link, index) => {
+        const row = document.createElement("div")
+        row.className = "event-edit-row material-link-row"
+        const title = document.createElement("input")
+        title.type = "text"
+        title.placeholder = "Подпись"
+        title.value = link.title || ""
+        title.setAttribute("aria-label", "Подпись ссылки")
+        const url = document.createElement("input")
+        url.type = "url"
+        url.placeholder = "https://…"
+        url.value = link.url || ""
+        url.setAttribute("aria-label", "Адрес ссылки")
+        const remove = document.createElement("button")
+        remove.type = "button"
+        remove.className = "quiet"
+        remove.textContent = "×"
+        remove.setAttribute("aria-label", "Удалить ссылку")
+        title.addEventListener("input", () => { material.links[index].title = title.value })
+        url.addEventListener("input", () => { material.links[index].url = url.value })
+        remove.addEventListener("click", () => {
+          material.links.splice(index, 1)
+          render()
+        })
+        row.append(title, url, remove)
+        box.append(row)
+      })
+
+      const add = document.createElement("button")
+      add.type = "button"
+      add.className = "quiet"
+      add.textContent = "Добавить ссылку"
+      add.addEventListener("click", () => {
+        material.links.push({ title: "", url: "" })
+        render()
+      })
+      box.append(add)
+    }
+
+    render()
+    return box
+  }
+
+  function materialEditor(material, section) {
     const card = document.createElement("div")
     card.className = "event-edit"
 
@@ -55,7 +128,7 @@ export async function mountMaterials(host, api) {
     rowOne.className = "event-edit-row"
     const title = document.createElement("input")
     title.type = "text"
-    title.placeholder = "Название материала"
+    title.placeholder = "Название"
     title.value = material.title || ""
     title.setAttribute("aria-label", "Название")
     const date = document.createElement("input")
@@ -68,10 +141,7 @@ export async function mountMaterials(host, api) {
     rowTwo.className = "event-edit-row"
     const kind = document.createElement("select")
     kind.setAttribute("aria-label", "Тип")
-    for (const [value, text] of [
-      ["link", "Ссылка"],
-      ["file", "Файл"],
-    ]) {
+    for (const [value, text] of [["link", "Ссылка"], ["file", "Файл"]]) {
       const option = document.createElement("option")
       option.value = value
       option.textContent = text
@@ -99,8 +169,19 @@ export async function mountMaterials(host, api) {
     note.setAttribute("aria-label", "Комментарий")
     rowThree.append(note)
 
-    const rowFour = document.createElement("div")
-    rowFour.className = "event-edit-row event-edit-footer"
+    let presentationRow = null
+    if (section.key === "recordings") {
+      presentationRow = document.createElement("div")
+      presentationRow.className = "event-edit-row"
+      const presentation = presentationOptions(material.presentation || "")
+      const wrap = document.createElement("label")
+      wrap.className = "field"
+      wrap.textContent = "Презентация занятия"
+      wrap.append(presentation)
+      presentationRow.append(wrap)
+      presentation.addEventListener("change", () => { material.presentation = presentation.value })
+    }
+
     const current = document.createElement("p")
     current.className = "event-hint"
     current.textContent = material.kind === "file" && material.url ? `Файл: ${material.url}` : ""
@@ -109,28 +190,28 @@ export async function mountMaterials(host, api) {
     remove.className = "quiet"
     remove.textContent = "Удалить"
     remove.addEventListener("click", () => {
-      data.materials.splice(data.materials.indexOf(material), 1)
+      const index = data[section.key].indexOf(material)
+      if (index >= 0) data[section.key].splice(index, 1)
+      if (section.key === "presentations") {
+        for (const recording of data.recordings) {
+          if (recording.presentation === material.id) recording.presentation = ""
+        }
+      }
       render()
     })
-    rowFour.append(current, remove)
+    const footer = document.createElement("div")
+    footer.className = "event-edit-row event-edit-footer"
+    footer.append(current, remove)
 
     kind.addEventListener("change", () => {
       material.kind = kind.value
       url.hidden = kind.value === "file"
       file.hidden = kind.value !== "file"
     })
-    url.addEventListener("input", () => {
-      material.url = url.value
-    })
-    note.addEventListener("input", () => {
-      material.note = note.value
-    })
-    title.addEventListener("input", () => {
-      material.title = title.value
-    })
-    date.addEventListener("input", () => {
-      material.date = date.value
-    })
+    url.addEventListener("input", () => { material.url = url.value })
+    note.addEventListener("input", () => { material.note = note.value })
+    title.addEventListener("input", () => { material.title = title.value })
+    date.addEventListener("input", () => { material.date = date.value })
     file.addEventListener("change", () => {
       const selected = file.files && file.files[0]
       if (!selected) return
@@ -144,35 +225,69 @@ export async function mountMaterials(host, api) {
       setStatus("Файл будет загружен при сохранении.", "")
     })
 
-    card.append(rowOne, rowTwo, rowThree, rowFour)
+    card.append(rowOne, rowTwo, rowThree)
+    if (presentationRow) card.append(presentationRow)
+    card.append(linksEditor(material), footer)
     return card
   }
 
-  function render() {
-    list.replaceChildren()
-    data.materials.forEach((material) => list.append(materialCard(material)))
-    if (!data.materials.length) {
+  function sectionBlock(section) {
+    const wrap = document.createElement("section")
+    wrap.className = "materials-edit"
+    const head = document.createElement("div")
+    head.className = "materials-edit-head"
+    const heading = document.createElement("h2")
+    heading.textContent = section.title
+    const add = document.createElement("button")
+    add.type = "button"
+    add.className = "quiet"
+    add.textContent = "Добавить"
+    add.addEventListener("click", () => {
+      const item = {
+        id: newId(ID_PREFIX[section.key] || "m"),
+        title: "",
+        date: "",
+        note: "",
+        kind: "link",
+        url: "",
+        links: [],
+      }
+      if (section.key === "recordings") item.presentation = ""
+      data[section.key].push(item)
+      render()
+    })
+    head.append(heading, add)
+    const list = document.createElement("div")
+    data[section.key].forEach((material) => list.append(materialEditor(material, section)))
+    if (!data[section.key].length) {
       const empty = document.createElement("p")
       empty.className = "day-empty"
-      empty.textContent = "Пока ни одного материала."
+      empty.textContent = "Пока пусто."
       list.append(empty)
     }
+    wrap.append(head, list)
+    return wrap
   }
 
-  function clean(material) {
-    return {
+  function render() {
+    sectionsHost.replaceChildren(...SECTIONS.map(sectionBlock))
+  }
+
+  function cleanMaterial(material, section) {
+    const result = {
+      id: material.id,
       title: String(material.title || "").trim(),
       date: String(material.date || "").trim(),
-      kind: material.kind === "file" ? "file" : "link",
-      url: String(material.url || "").trim(),
       note: String(material.note || "").trim(),
+      kind: material.kind === "file" ? "file" : "link",
+      url: safeHref(material.url) || String(material.url || "").trim(),
+      links: (material.links || [])
+        .map((link) => ({ title: String(link.title || "").trim(), url: safeHref(link.url) || String(link.url || "").trim() }))
+        .filter((link) => link.title || link.url),
     }
+    if (section.key === "recordings") result.presentation = String(material.presentation || "").trim()
+    return result
   }
-
-  host.querySelector("[data-add]").addEventListener("click", () => {
-    data.materials.push({ title: "", date: "", kind: "link", url: "", note: "" })
-    render()
-  })
 
   saveButton.addEventListener("click", async () => {
     if (!api.canWrite) {
@@ -181,17 +296,22 @@ export async function mountMaterials(host, api) {
     }
     setStatus("Сохраняем…")
     try {
-      for (const material of data.materials) {
-        if (!material.pendingFile) continue
-        const path = filePath(material.pendingFile.name)
-        setStatus(`Загружаем файл ${material.pendingFile.name}…`)
-        const base64 = await readAsBase64(material.pendingFile)
-        await api.upload(path, base64, `Upload ${material.pendingFile.name}`)
-        material.url = path
-        material.kind = "file"
-        delete material.pendingFile
+      for (const section of SECTIONS) {
+        for (const material of data[section.key]) {
+          if (!material.pendingFile) continue
+          const path = filePath(material.pendingFile.name)
+          setStatus(`Загружаем файл ${material.pendingFile.name}…`)
+          const base64 = await readAsBase64(material.pendingFile)
+          await api.upload(path, base64, `Upload ${material.pendingFile.name}`)
+          material.url = path
+          material.kind = "file"
+          delete material.pendingFile
+        }
       }
-      const next = { materials: data.materials.map(clean) }
+      const next = {}
+      for (const section of SECTIONS) {
+        next[section.key] = data[section.key].map((material) => cleanMaterial(material, section))
+      }
       const result = await api.save(FILE, next, "Update materials", sha)
       sha = result.sha
       data = next
@@ -203,7 +323,22 @@ export async function mountMaterials(host, api) {
   })
 
   const loaded = await api.load(FILE)
-  data = loaded.data && Array.isArray(loaded.data.materials) ? loaded.data : { materials: [] }
+  data = loaded.data && typeof loaded.data === "object" ? loaded.data : {}
+  for (const section of SECTIONS) {
+    if (!Array.isArray(data[section.key])) data[section.key] = []
+  }
+  if (Array.isArray(data.materials) && data.materials.length > 0) {
+    data.articles = data.materials.map((item) => ({
+      id: item.id || newId("a"),
+      title: item.title || "",
+      date: item.date || "",
+      note: item.note || "",
+      kind: item.kind === "file" ? "file" : "link",
+      url: item.url || "",
+      links: [],
+    }))
+    delete data.materials
+  }
   sha = loaded.sha
   render()
   if (!api.canWrite) {

@@ -33,75 +33,12 @@
         <p>Материалы, которые помогут тебе в освоении курса.</p>
       </div>
     </div>
-    <section class="section-grid content-grid" id="materials" aria-live="polite"></section>
+    <div id="materials-sections" aria-live="polite"></div>
   </main>
   <footer class="site-footer">
     <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
   </footer>
-  <script type="module">
-    const host = document.querySelector("#materials")
-
-    function safeUrl(value) {
-      try {
-        const url = new URL(value)
-        if (url.protocol === "https:" || url.protocol === "http:") return url.href
-      } catch {
-        return ""
-      }
-      return ""
-    }
-
-    function card(material) {
-      const article = document.createElement("article")
-      article.className = "card"
-      if (material.date) {
-        const date = document.createElement("p")
-        date.className = "card-meta"
-        date.textContent = new Intl.DateTimeFormat("ru-RU", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-          timeZone: "UTC",
-        }).format(new Date(`${material.date}T12:00:00Z`))
-        article.append(date)
-      }
-      const title = document.createElement("h2")
-      title.textContent = material.title || "Материал"
-      article.append(title)
-      if (material.note) {
-        const note = document.createElement("p")
-        note.textContent = material.note
-        article.append(note)
-      }
-      const href = safeUrl(material.url)
-      if (href) {
-        const link = document.createElement("a")
-        link.className = "card-link"
-        link.href = href
-        link.target = "_blank"
-        link.rel = "noopener noreferrer"
-        link.textContent = material.kind === "file" ? "Скачать" : "Открыть"
-        article.append(link)
-      }
-      return article
-    }
-
-    try {
-      const response = await fetch("data/materials.json", { cache: "no-cache" })
-      const payload = response.ok ? await response.json() : { materials: [] }
-      const materials = Array.isArray(payload.materials) ? payload.materials : []
-      if (materials.length === 0) {
-        const empty = document.createElement("article")
-        empty.className = "panel-card empty-card"
-        empty.textContent = "Пока ни одного материала — карточки появятся здесь, как только их добавят."
-        host.append(empty)
-      } else {
-        for (const material of materials) host.append(card(material))
-      }
-    } catch {
-      host.textContent = "Не удалось загрузить материалы."
-    }
-  </script>
+  <script type="module" src="assets/js/materials-page.js"></script>
   <script src="assets/js/nav.js" defer></script>
   <script src="assets/js/footer.js" defer></script>
 </body>
