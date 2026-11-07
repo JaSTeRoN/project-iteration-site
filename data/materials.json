@@ -1,5 +1,15 @@
 {
-  "presentations": [],
+  "presentations": [
+    {
+      "id": "p-423b753ae8",
+      "title": "Тема №1 - Процедурные алгоритмы и их история. Плитки Вана. Генерация подземелий на примере Rogue",
+      "date": "2026-11-05",
+      "note": "",
+      "kind": "file",
+      "url": "materials/1794064956493-8-1-.-.-rogue.pdf",
+      "links": []
+    }
+  ],
   "recordings": [],
   "articles": [],
   "books": []
