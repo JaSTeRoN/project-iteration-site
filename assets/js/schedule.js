@@ -17,6 +17,7 @@ import {
   weekState,
   visibleWeekDays,
 } from "./schedule-data.js"
+import { normalizeMaterials, recordingsForLesson } from "./materials-data.js"
 
 const board = document.querySelector("#schedule-board")
 const clocks = new Map()
@@ -26,6 +27,7 @@ let weeks = []
 let index = 0
 let zoneIndex = 0
 let primary = null
+let recordings = []
 
 function zoneNow(timeZone) {
   return new Intl.DateTimeFormat("ru-RU", {
@@ -84,6 +86,14 @@ function eventCard(event, zone, columnDate) {
     link.target = "_blank"
     link.rel = "noopener noreferrer"
     link.innerHTML = 'Подключиться <span aria-hidden="true">→</span>'
+    foot.append(link)
+  }
+  for (const recording of recordingsForLesson(recordings, event.id)) {
+    const link = document.createElement("a")
+    link.className = "lesson-recording"
+    link.href = `materials/recordings.html#material-${recording.id}`
+    link.textContent = "Посмотреть запись"
+    if (recording.title) link.setAttribute("aria-label", `Посмотреть запись: ${recording.title}`)
     foot.append(link)
   }
   if (foot.childNodes.length > 0) card.append(foot)
@@ -240,10 +250,20 @@ function tick() {
 
 async function main() {
   try {
-    const response = await fetch("data/schedule.json", { cache: "no-cache" })
-    if (!response.ok) throw new Error(String(response.status))
-    data = await response.json()
+    const [scheduleResponse, materialsResponse] = await Promise.all([
+      fetch("data/schedule.json", { cache: "no-cache" }),
+      fetch("data/materials.json", { cache: "no-cache" }).catch(() => null),
+    ])
+    if (!scheduleResponse.ok) throw new Error(String(scheduleResponse.status))
+    data = await scheduleResponse.json()
     data.events = data.events || []
+    if (materialsResponse?.ok) {
+      try {
+        recordings = normalizeMaterials(await materialsResponse.json()).recordings
+      } catch {
+        recordings = []
+      }
+    }
     primary = data.zones.find((zone) => zone.id === data.primary) || data.zones[0]
     zoneIndex = Math.max(0, data.zones.indexOf(primary))
     const today = todayIn(primary.timeZone)

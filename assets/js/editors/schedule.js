@@ -17,6 +17,11 @@ import {
 
 const FILE = "data/schedule.json"
 
+function newEventId() {
+  const random = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  return `ev-${random.replace(/-/g, "").slice(0, 12)}`
+}
+
 export async function mountSchedule(host, api) {
   host.innerHTML = `
     <section class="editor-card">
@@ -231,7 +236,7 @@ export async function mountSchedule(host, api) {
       add.className = "quiet"
       add.textContent = "Добавить занятие"
       add.addEventListener("click", () => {
-        data.events.push({ date, time: "17:00", kind: "offline", place: "", link: "", topic: "" })
+        data.events.push({ id: newEventId(), date, time: "17:00", kind: "offline", place: "", link: "", topic: "" })
         markDirty()
         renderWeek()
       })
@@ -254,6 +259,7 @@ export async function mountSchedule(host, api) {
     const events = sortEvents(
       data.events.map((event) => {
         const copy = {
+          id: event.id || newEventId(),
           date: event.date,
           time: event.time,
           kind: event.kind,

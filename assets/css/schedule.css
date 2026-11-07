@@ -279,6 +279,24 @@
 
 .lesson-link:hover { background: #0a2f63; }
 
+.lesson-recording {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #e7f0fb;
+  color: var(--blue-deep);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lesson-recording:hover { background: #d8e6f8; }
+
+.lesson-recording:focus-visible {
+  outline: 2px solid #9dffb8;
+  outline-offset: 2px;
+}
+
 .lesson-link:focus-visible {
   outline: 2px solid #9dffb8;
   outline-offset: 2px;

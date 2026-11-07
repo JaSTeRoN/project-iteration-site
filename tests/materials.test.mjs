@@ -7,6 +7,7 @@ import {
   normalizeMaterials,
   presentationFor,
   recordingsFor,
+  recordingsForLesson,
   safeHref,
 } from "../assets/js/materials-data.js"
 
@@ -61,4 +62,17 @@ test("дата материала выводится по-русски", () => {
   assert.equal(formatMaterialDate("2026-11-05"), "5 ноября 2026 г.")
   assert.equal(formatMaterialDate(""), "")
   assert.equal(formatMaterialDate("2026-13-40"), "")
+})
+
+test("запись занятия связывается с занятием расписания", () => {
+  const recordings = [
+    { id: "r-1", lessonId: "ev-2026-11-05-1700" },
+    { id: "r-2", lessonId: "" },
+  ]
+  assert.deepEqual(recordingsForLesson(recordings, "ev-2026-11-05-1700").map((item) => item.id), ["r-1"])
+  assert.deepEqual(recordingsForLesson(recordings, ""), [])
+  const data = normalizeMaterials({
+    recordings: [{ id: "r-1", title: "Запись", lessonId: "ev-2026-11-05-1700" }],
+  })
+  assert.equal(data.recordings[0].lessonId, "ev-2026-11-05-1700")
 })

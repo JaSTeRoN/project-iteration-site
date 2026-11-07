@@ -1,4 +1,5 @@
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 import test from "node:test"
 import {
   KINDS,
@@ -127,4 +128,11 @@ test("занятия одного дня сортируются по момен�
     sortEvents(events, TOMSK).map((event) => event.time),
     ["12:00", "16:45", "18:00"],
   )
+})
+
+test("у занятий расписания есть уникальные стабильные id", () => {
+  const payload = JSON.parse(readFileSync(new URL("../data/schedule.json", import.meta.url), "utf8"))
+  const ids = payload.events.map((event) => event.id)
+  assert.equal(ids.every((id) => typeof id === "string" && id.length > 0), true)
+  assert.equal(new Set(ids).size, ids.length)
 })

@@ -47,7 +47,10 @@ export function normalizeMaterial(material, kind) {
     kind: material?.kind === "file" ? "file" : "link",
     url: String(material?.url || "").trim(),
     links: normalizeLinks(material?.links),
-    ...(kind === "recordings" ? { presentation: String(material?.presentation || "").trim() } : {}),
+    ...(kind === "recordings" ? {
+      presentation: String(material?.presentation || "").trim(),
+      lessonId: String(material?.lessonId || "").trim(),
+    } : {}),
   }
 }
 
@@ -70,6 +73,11 @@ export function normalizeMaterials(payload) {
 export function recordingsFor(presentation, recordings) {
   if (!presentation?.id) return []
   return recordings.filter((recording) => recording.presentation === presentation.id)
+}
+
+export function recordingsForLesson(recordings, lessonId) {
+  if (!lessonId) return []
+  return recordings.filter((recording) => recording.lessonId === lessonId)
 }
 
 export function presentationFor(recording, presentations) {

@@ -4,6 +4,15 @@ const FILE = "data/materials.json"
 const MAX_FILE = 20 * 1024 * 1024
 const ID_PREFIX = { presentations: "p", recordings: "r", articles: "a", books: "b" }
 
+function lessonLabel(event) {
+  const date = new Date(`${event.date}T12:00:00Z`)
+  const day = Number.isNaN(date.getTime())
+    ? event.date
+    : new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", timeZone: "UTC" }).format(date)
+  const topic = String(event.topic || "").trim()
+  return `${day}, ${event.time}${topic ? ` — ${topic.length > 52 ? `${topic.slice(0, 52)}…` : topic}` : ""}`
+}
+
 function readAsBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -28,7 +37,7 @@ function filePath(name) {
 export async function mountMaterials(host, api) {
   host.innerHTML = `
     <section class="editor-card">
-      <p class="editor-note">Материалы делятся на презентации, записи занятий, статьи и книги. У записи можно выбрать презентацию, по которой проходило занятие, а к любому материалу — добавить дополнительные ссылки. Файлы до 20 МБ загружаются в папку <code>materials/</code>.</p>
+      <p class="editor-note">Материалы делятся на презентации, записи занятий, статьи и книги. У записи можно выбрать занятие в расписании и презентацию, по которой оно проходило, а к любому материалу — добавить дополнительные ссылки. Файлы до 20 МБ загружаются в папку <code>materials/</code>.</p>
       <div data-sections></div>
       <div class="week-tools">
         <button type="button" data-save>Сохранить</button>
@@ -43,6 +52,7 @@ export async function mountMaterials(host, api) {
 
   let data = { presentations: [], recordings: [], articles: [], books: [] }
   let sha = ""
+  let lessons = []
 
   function setStatus(text, kind) {
     statusNode.textContent = text
@@ -182,6 +192,31 @@ export async function mountMaterials(host, api) {
       presentation.addEventListener("change", () => { material.presentation = presentation.value })
     }
 
+    let lessonRow = null
+    if (section.key === "recordings") {
+      lessonRow = document.createElement("div")
+      lessonRow.className = "event-edit-row"
+      const select = document.createElement("select")
+      select.setAttribute("aria-label", "Занятие в расписании")
+      const none = document.createElement("option")
+      none.value = ""
+      none.textContent = "Не указано"
+      select.append(none)
+      for (const event of lessons) {
+        const option = document.createElement("option")
+        option.value = event.id || ""
+        option.textContent = lessonLabel(event)
+        option.selected = (event.id || "") === (material.lessonId || "")
+        select.append(option)
+      }
+      const wrap = document.createElement("label")
+      wrap.className = "field"
+      wrap.textContent = "Занятие в расписании"
+      wrap.append(select)
+      lessonRow.append(wrap)
+      select.addEventListener("change", () => { material.lessonId = select.value })
+    }
+
     const current = document.createElement("p")
     current.className = "event-hint"
     current.textContent = material.kind === "file" && material.url ? `Файл: ${material.url}` : ""
@@ -227,6 +262,7 @@ export async function mountMaterials(host, api) {
 
     card.append(rowOne, rowTwo, rowThree)
     if (presentationRow) card.append(presentationRow)
+    if (lessonRow) card.append(lessonRow)
     card.append(linksEditor(material), footer)
     return card
   }
@@ -252,7 +288,10 @@ export async function mountMaterials(host, api) {
         url: "",
         links: [],
       }
-      if (section.key === "recordings") item.presentation = ""
+      if (section.key === "recordings") {
+        item.presentation = ""
+        item.lessonId = ""
+      }
       data[section.key].push(item)
       render()
     })
@@ -285,7 +324,10 @@ export async function mountMaterials(host, api) {
         .map((link) => ({ title: String(link.title || "").trim(), url: safeHref(link.url) || String(link.url || "").trim() }))
         .filter((link) => link.title || link.url),
     }
-    if (section.key === "recordings") result.presentation = String(material.presentation || "").trim()
+    if (section.key === "recordings") {
+      result.presentation = String(material.presentation || "").trim()
+      result.lessonId = String(material.lessonId || "").trim()
+    }
     return result
   }
 
@@ -340,6 +382,13 @@ export async function mountMaterials(host, api) {
     delete data.materials
   }
   sha = loaded.sha
+  try {
+    const schedule = await api.load("data/schedule.json")
+    const events = Array.isArray(schedule?.data?.events) ? schedule.data.events : []
+    lessons = events.slice().sort((a, b) => `${a.date} ${a.time}`.localeCompare(`${b.date} ${b.time}`))
+  } catch {
+    lessons = []
+  }
   render()
   if (!api.canWrite) {
     saveButton.disabled = true
