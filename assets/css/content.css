@@ -2,6 +2,23 @@
   padding-top: 14px;
 }
 
+.materials-nav {
+  padding-top: 14px;
+}
+
+.page-back {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+}
+
+.page-back a {
+  color: #9dffb8;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.page-back a:hover { text-decoration: underline; }
+
 .card-meta {
   margin: 0;
   color: var(--blue);
