@@ -134,7 +134,7 @@ let renderQueued = false
 
 const params = { ...DEFAULTS }
 const linear = { count: 10, seed: 37, normalize: true, showLine: true, lines: null, fields: new Map() }
-const LINEAR_STEPS = [0, 1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
+const LINEAR_STEPS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 100, 1000, 10000]
 
 const terrainCanvas = document.createElement("canvas")
 const terrainCtx = terrainCanvas.getContext("2d", { willReadFrequently: true })
