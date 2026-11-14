@@ -1,0 +1,305 @@
+.life-page {
+  padding-bottom: 26px;
+}
+
+.life-card {
+  margin: 0 auto 20px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 24px;
+  background: rgba(247, 250, 253, 0.97);
+  box-shadow: 0 18px 40px rgba(7, 17, 28, 0.22);
+}
+
+.life-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 4px;
+}
+
+.life-tabs button {
+  flex: 0 0 auto;
+  min-height: 42px;
+  padding: 8px 14px;
+  border: 1px solid rgba(20, 45, 75, 0.16);
+  border-radius: 999px;
+  background: #eef4fb;
+  color: #24405f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.life-tabs button[aria-selected="true"] {
+  border-color: #146b3a;
+  background: #146b3a;
+  color: white;
+}
+
+.life-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 16px;
+  margin-top: 14px;
+  align-items: start;
+}
+
+.life-stage {
+  position: relative;
+  height: clamp(390px, 56vh, 620px);
+  border: 1px solid rgba(20, 45, 75, 0.14);
+  border-radius: 18px;
+  background: #eef4fb;
+  overflow: hidden;
+}
+
+.life-stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+.life-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.life-panel {
+  padding: 16px;
+  border: 1px solid rgba(20, 45, 75, 0.13);
+  border-radius: 18px;
+  background: #f8fbfe;
+  color: #1c324a;
+}
+
+.life-panel[hidden] {
+  display: none;
+}
+
+.life-panel h2 {
+  margin: 2px 0 8px;
+  font-family: "Literata", Georgia, serif;
+  font-size: 1.18rem;
+}
+
+.life-panel p {
+  margin: 0;
+  font-size: 0.93rem;
+  line-height: 1.45;
+}
+
+.life-panel p + p {
+  margin-top: 8px;
+}
+
+.life-kicker {
+  margin: 0;
+  color: #146b3a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.life-formula {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-left: 4px solid #146b3a;
+  border-radius: 8px;
+  background: #e8f1fb;
+  color: #173a2a;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
+.life-result {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-top: 8px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #e8f4ec;
+  color: #146b3a;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.life-result.bad {
+  background: #f9e9e6;
+  color: #a33b2c;
+}
+
+.life-result.born {
+  background: #e6f0ff;
+  color: #1d5c9e;
+}
+
+.life-result.neutral {
+  background: #eef4fb;
+  color: #4b657f;
+}
+
+.life-calc {
+  margin-top: 8px !important;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #eef4fb;
+  color: #334d68;
+  font-size: 0.84rem !important;
+}
+
+.life-cell-info {
+  margin-top: 8px !important;
+  color: #4b657f;
+  font-size: 0.82rem !important;
+}
+
+.life-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.life-panel button {
+  min-height: 40px;
+  padding: 7px 12px;
+  border: 1px solid rgba(20, 45, 75, 0.18);
+  border-radius: 10px;
+  background: #eef4fb;
+  color: #24405f;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.life-panel button.primary {
+  border-color: #146b3a;
+  background: #146b3a;
+  color: white;
+}
+
+.life-panel button.quiet {
+  margin-top: 10px;
+  border-color: transparent;
+  background: transparent;
+  color: #4b657f;
+  text-decoration: underline;
+}
+
+.life-panel button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.life-field {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-top: 12px;
+  color: #334d68;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.life-field output {
+  color: #0f4f2b;
+  font-weight: 800;
+}
+
+.life-field input[type="range"],
+.life-field select {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 38px;
+  border-radius: 8px;
+  border: 1px solid rgba(20, 45, 75, 0.18);
+  background: white;
+  padding: 4px 8px;
+  color: #24405f;
+}
+
+.life-field input[type="range"] {
+  padding: 0;
+  accent-color: #146b3a;
+}
+
+.life-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: #334d68;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.life-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: #146b3a;
+}
+
+.life-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.life-stats div {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #eef4fb;
+}
+
+.life-stats span {
+  display: block;
+  color: #5a7087;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.life-stats strong {
+  display: block;
+  margin-top: 2px;
+  color: #173a2a;
+  font-size: 1.15rem;
+}
+
+.life-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.life-buttons button {
+  flex: 1 1 44%;
+}
+
+.life-place {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.life-note {
+  color: #5a7087;
+  font-size: 0.84rem !important;
+}
+
+@media (max-width: 900px) {
+  .life-card { padding: 12px; }
+  .life-layout { grid-template-columns: 1fr; gap: 12px; }
+  .life-stage { height: clamp(340px, 48vh, 480px); }
+  .life-panel { padding: 14px; }
+}
+
+@media (max-width: 600px) {
+  .life-stage { height: 360px; }
+}

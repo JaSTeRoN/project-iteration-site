@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Игра «Жизнь» — Итерация-8</title>
+  <meta name="description" content="Интерактивное объяснение клеточного автомата Конвея: правила B3/S23, фигуры и песочница.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/life.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"><span class="brand-home">| Главная</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть разделы">
+      <span class="nav-toggle-title">Приложения</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+      <a href="about.html">О курсе</a>
+    </nav>
+  </header>
+
+  <main class="wrap life-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/building_blocks.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Игра «Жизнь»</h1>
+        <p>Клеточный автомат Конвея: четыре правила, из которых рождаются мигалки, планеры и целые колонии.</p>
+      </div>
+    </div>
+
+    <section class="life-card" aria-label="Интерактивное приложение">
+      <div class="life-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Правила</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Песочница</button>
+      </div>
+
+      <div class="life-layout">
+        <div class="life-stage">
+          <canvas id="life-canvas" aria-label="Поле игры «Жизнь»"></canvas>
+        </div>
+
+        <aside class="life-side">
+          <section class="life-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+            <p class="life-kicker" id="step-kicker">Шаг 1 из 7</p>
+            <h2 id="step-title">Восемь соседей</h2>
+            <p id="step-text">У каждой клетки ровно восемь соседей. Живые клетки считаются, пустые — нет.</p>
+            <div class="life-formula" id="step-formula">next = alive ? (2 ≤ n ≤ 3)
+       : (n = 3)</div>
+            <div class="life-result" id="step-result">останется живой</div>
+            <p class="life-calc" id="step-calc">n = 2 · клетка живая → остаётся живой.</p>
+            <p class="life-cell-info" id="cell-info">Наведите на клетку — покажу её состояние и число соседей.</p>
+            <div class="life-actions">
+              <button type="button" id="step-back">Назад</button>
+              <button type="button" class="primary" id="step-next">Дальше</button>
+            </div>
+            <button type="button" class="quiet" id="step-reset">Начать заново</button>
+          </section>
+
+          <section class="life-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="life-kicker">Песочница</p>
+            <h2>Запусти колонию</h2>
+            <p class="life-note">Рисуй клетки мышью или запусти готовую фигуру. Правила классические: B3/S23.</p>
+
+            <div class="life-stats" id="sandbox-stats">
+              <div><span>Поколение</span><strong id="generation">0</strong></div>
+              <div><span>Живых</span><strong id="population">48</strong></div>
+            </div>
+
+            <div class="life-buttons">
+              <button type="button" class="primary" id="start-pause">Старт</button>
+              <button type="button" id="step-once">Шаг</button>
+              <button type="button" id="randomize">Случайно</button>
+              <button type="button" id="clear">Очистить</button>
+            </div>
+
+            <label class="life-field" for="speed">Скорость: <output id="speed-output">8 / сек</output>
+              <input id="speed" type="range" min="1" max="24" step="1" value="8">
+            </label>
+
+            <label class="life-field" for="size">Размер поля
+              <select id="size">
+                <option value="32x22">32 × 22</option>
+                <option value="48x32" selected>48 × 32</option>
+                <option value="64x42">64 × 42</option>
+              </select>
+            </label>
+
+            <label class="life-field" for="pattern">Готовая фигура
+              <select id="pattern">
+                <option value="glider">Планер</option>
+                <option value="blinker">Мигалка</option>
+                <option value="pulsar" selected>Пульсар</option>
+                <option value="gosper">Ружьё Госпера</option>
+              </select>
+            </label>
+            <button type="button" class="life-place" id="place-pattern">Поставить в центр</button>
+
+            <label class="life-check"><input type="checkbox" id="wrap" checked> Замкнутые края</label>
+            <p class="life-cell-info" id="sandbox-cell-info">Наведи на клетку — покажу координаты и число соседей.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
+  </footer>
+
+  <script type="module" src="assets/js/life/app.js"></script>
+  <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/footer.js" defer></script>
+</body>
+</html>
