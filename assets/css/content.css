@@ -58,6 +58,18 @@
   margin: 0 0 14px;
 }
 
+#apps {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 1100px) {
+  #apps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 700px) {
+  #apps { grid-template-columns: 1fr; }
+}
+
 .materials-section { margin-top: 24px; }
 
 .materials-head h2 {

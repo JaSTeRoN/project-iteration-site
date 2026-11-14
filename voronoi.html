@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Диаграмма Вороного — Итерация-8</title>
+  <meta name="description" content="Интерактивное объяснение диаграммы Вороного: построение по шагам, релаксация Ллойда и песочница.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/voronoi.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"><span class="brand-home">| Главная</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть разделы">
+      <span class="nav-toggle-title">Приложения</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+      <a href="about.html">О курсе</a>
+    </nav>
+  </header>
+
+  <main class="wrap voronoi-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/voronoi.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Диаграмма Вороного</h1>
+        <p>Карта «кто к кому ближе»: строим её по шагам, сглаживаем и пробуем в песочнице.</p>
+      </div>
+    </div>
+
+    <section class="voronoi-card" aria-label="Интерактивное приложение">
+      <div class="voronoi-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Как строится</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Релаксация Ллойда</button>
+        <button type="button" role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false" data-level="3">3. Песочница</button>
+      </div>
+
+      <div class="voronoi-layout">
+        <div class="voronoi-stage">
+          <canvas id="voronoi-canvas" aria-label="Поле с точками и ячейками Вороного"></canvas>
+          <p class="voronoi-overlay" id="canvas-hint"></p>
+        </div>
+
+        <aside class="voronoi-side">
+          <section class="voronoi-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+            <p class="voronoi-kicker" id="step-kicker">Шаг 1 из 6</p>
+            <h2 id="step-title">Две базы на поляне</h2>
+            <p id="step-text">Перед нами поляна и две базы — A и B. Любая точка поляны принадлежит той базе, которая к ней ближе.</p>
+            <div class="voronoi-actions">
+              <button type="button" id="step-back">Назад</button>
+              <button type="button" class="primary" id="step-next">Дальше</button>
+            </div>
+            <button type="button" class="quiet" id="step-reset">Начать заново</button>
+          </section>
+
+          <section class="voronoi-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="voronoi-kicker">Итерация <span id="lloyd-iter">0</span></p>
+            <h2>Релаксация Ллойда</h2>
+            <p id="lloyd-text">У каждой ячейки есть центр масс — точка, в которой ячейка «уравновешена». Если переставить базу в этот центр и повторить, карта постепенно становится ровнее.</p>
+            <p class="voronoi-metric">Разброс площадей: <strong id="lloyd-spread">—</strong></p>
+            <div class="voronoi-actions">
+              <button type="button" class="primary" id="lloyd-step">Шаг</button>
+              <button type="button" id="lloyd-auto" aria-pressed="false">Запустить</button>
+            </div>
+            <button type="button" class="quiet" id="lloyd-reset">Сбросить</button>
+            <p class="voronoi-note" id="lloyd-status" role="status">Оранжевые кольца — центры масс ячеек.</p>
+          </section>
+
+          <section class="voronoi-panel" id="panel-3" role="tabpanel" aria-labelledby="tab-3" hidden>
+            <p class="voronoi-kicker">Песочница</p>
+            <h2>Собери свою карту</h2>
+            <p class="voronoi-note">Перетаскивай точки, кликай по ячейке, чтобы выбрать её и перекрасить. Правый клик по точке — удалить.</p>
+
+            <label class="voronoi-field" for="count-range"><span class="voronoi-field-head">Точек: <output id="count-output">12</output></span>
+              <input id="count-range" type="range" min="2" max="40" step="1" value="12">
+            </label>
+
+            <div class="voronoi-actions">
+              <button type="button" id="randomize">Случайно</button>
+              <button type="button" id="add-points" aria-pressed="false">Добавлять точки</button>
+            </div>
+            <div class="voronoi-actions">
+              <button type="button" id="remove-point">Удалить выбранную</button>
+              <button type="button" id="lloyd-step-3">Шаг Ллойда</button>
+            </div>
+
+            <div class="voronoi-palette" id="palette" aria-label="Цвет выбранной ячейки"></div>
+
+            <div class="voronoi-checks">
+              <label class="voronoi-check"><input type="checkbox" id="show-seeds" checked> Точки</label>
+              <label class="voronoi-check"><input type="checkbox" id="show-boundaries" checked> Границы</label>
+              <label class="voronoi-check"><input type="checkbox" id="show-centroids"> Центры масс</label>
+            </div>
+
+            <label class="voronoi-field" for="fill-opacity"><span class="voronoi-field-head">Заливка</span>
+              <input id="fill-opacity" type="range" min="8" max="60" step="1" value="30">
+            </label>
+
+            <button type="button" class="quiet" id="sandbox-reset">Сбросить песочницу</button>
+            <p class="voronoi-note" id="sandbox-status" role="status"></p>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
+  </footer>
+
+  <script type="module" src="assets/js/voronoi/app.js"></script>
+  <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/footer.js" defer></script>
+</body>
+</html>
