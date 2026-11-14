@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Алгоритм Diamond-Square — Итерация-8</title>
+  <meta name="description" content="Интерактивное объяснение алгоритма Diamond-Square: diamond- и square-шаги, рельеф и песочница.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/diamond.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"><span class="brand-home">| Главная</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть разделы">
+      <span class="nav-toggle-title">Приложения</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+      <a href="about.html">О курсе</a>
+    </nav>
+  </header>
+
+  <main class="wrap diamond-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/diamond_square.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Алгоритм Diamond-Square</h1>
+        <p>Сетка из четырёх углов и два шага, которые заполняют её высотами и превращают в рельеф.</p>
+      </div>
+    </div>
+
+    <section class="diamond-card" aria-label="Интерактивное приложение">
+      <div class="diamond-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Как строится</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Песочница</button>
+      </div>
+
+      <div class="diamond-layout">
+        <div class="diamond-stage">
+          <canvas id="diamond-canvas" aria-label="Сетка высот Diamond-Square"></canvas>
+          <p class="diamond-overlay" id="canvas-hint"></p>
+        </div>
+
+        <aside class="diamond-side">
+          <section class="diamond-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+            <p class="diamond-kicker" id="step-kicker">Шаг 1 из 7</p>
+            <h2 id="step-title">Сетка 5 × 5</h2>
+            <p id="step-text">Diamond-Square работает на квадратной сетке размером 2ⁿ + 1. Для примера возьмём 5 × 5: сначала известны только четыре угла, остальные высоты нужно вычислить.</p>
+            <p class="diamond-calc" id="step-calc">Углы заданы случайными числами. Остальные клетки пока пустые.</p>
+            <div class="diamond-actions">
+              <button type="button" id="step-back">Назад</button>
+              <button type="button" class="primary" id="step-next">Дальше</button>
+            </div>
+            <button type="button" class="quiet" id="step-reset">Начать заново</button>
+          </section>
+
+          <section class="diamond-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="diamond-kicker">Песочница</p>
+            <h2>Сгенерируй рельеф</h2>
+            <p class="diamond-note">Размер сетки задаёт детализацию, шероховатость — силу случайных смещений на каждом уровне.</p>
+
+            <label class="diamond-field" for="size">Размер сетки
+              <select id="size">
+                <option value="9">9 × 9</option>
+                <option value="17">17 × 17</option>
+                <option value="33" selected>33 × 33</option>
+                <option value="65">65 × 65</option>
+              </select>
+            </label>
+
+            <label class="diamond-field" for="roughness">Шероховатость: <output id="roughness-output">0.55</output>
+              <input id="roughness" type="range" min="0.3" max="0.8" step="0.05" value="0.55">
+            </label>
+
+            <label class="diamond-field" for="sea">Уровень воды: <output id="sea-output">0.45</output>
+              <input id="sea" type="range" min="0.2" max="0.8" step="0.01" value="0.45">
+            </label>
+
+            <label class="diamond-field" for="palette">Цвета
+              <select id="palette">
+                <option value="terrain">Ландшафт</option>
+                <option value="gray">Оттенки серого</option>
+                <option value="heat">Тепловая карта</option>
+              </select>
+            </label>
+
+            <div class="diamond-checks">
+              <label class="diamond-check"><input type="checkbox" id="smooth" checked> Сглаживать</label>
+              <label class="diamond-check"><input type="checkbox" id="show-grid"> Показывать сетку</label>
+            </div>
+
+            <div class="diamond-actions">
+              <button type="button" class="primary" id="randomize">Новый рельеф</button>
+              <button type="button" id="reset">Сброс</button>
+            </div>
+            <p class="diamond-note" id="sandbox-status" role="status">Сетка 33 × 33 · сид 37.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
+  </footer>
+
+  <script type="module" src="assets/js/diamond-square/app.js"></script>
+  <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/footer.js" defer></script>
+</body>
+</html>
