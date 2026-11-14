@@ -1,4 +1,5 @@
 import { fade, fbm2, makePermutation, perlin2 } from "./noise.js"
+import { buildLinearLayers, makeValueGrid, sampleLinearLayers, sampleTriangle } from "./linear-noise.js"
 
 const GRADIENTS = [0.95, -0.62, 0.48, -0.88, 0.36, 0.78]
 const DEFAULTS = {
@@ -40,6 +41,19 @@ const els = {
   randomize: document.querySelector("#randomize"),
   reset: document.querySelector("#reset"),
   status: document.querySelector("#sandbox-status"),
+  linearTitle: document.querySelector("#linear-title"),
+  linearText: document.querySelector("#linear-text"),
+  linearFormula: document.querySelector("#linear-formula"),
+  linearModes: [...document.querySelectorAll("[data-linear-mode]")],
+  linearGrid: document.querySelector("#linear-grid"),
+  linearGridOutput: document.querySelector("#linear-grid-output"),
+  linearOctaves: document.querySelector("#linear-octaves"),
+  linearOctavesOutput: document.querySelector("#linear-octaves-output"),
+  linearOctavesField: document.querySelector("#linear-octaves-field"),
+  linearTriangles: document.querySelector("#linear-triangles"),
+  linearNew: document.querySelector("#linear-new"),
+  linearToSandbox: document.querySelector("#linear-to-sandbox"),
+  linearStatus: document.querySelector("#linear-status"),
 }
 
 const steps = [
@@ -120,6 +134,7 @@ let permutationSeed = DEFAULTS.seed
 let renderQueued = false
 
 const params = { ...DEFAULTS }
+const linear = { mode: 0, cells: 8, octaves: 3, seed: 37, triangles: true }
 
 const terrainCanvas = document.createElement("canvas")
 const terrainCtx = terrainCanvas.getContext("2d", { willReadFrequently: true })
@@ -849,6 +864,153 @@ function drawOctaveMany() {
   })
 }
 
+const linearInfo = [
+  {
+    title: "Случайные значения в узлах",
+    text: "Разобьём плоскость на треугольники, а в каждом узле сохраним случайное значение. Пока это только набор чисел — между узлами ничего не определено.",
+    formula: "h(узел) = random()",
+  },
+  {
+    title: "Линейная интерполяция",
+    text: "Внутри каждого треугольника значение линейно смешивается по трём вершинам. Получается кусочно-линейная поверхность: плавная, но с заметными рёбрами. Это простая имитация шума Перлина — без градиентов и сглаживания.",
+    formula: "h = λ₀h₀ + λ₁h₁ + λ₂h₂\nλ — барицентрические веса точки",
+  },
+  {
+    title: "Сумма октав",
+    text: "Складываем несколько масштабов: крупная сетка задаёт форму, мелкие — детали. Получается облако, похожее на шум Перлина, хотя внутри только случайные значения и линейная интерполяция.",
+    formula: "h = Σ aᵢ · linear(fᵢ · p) / Σ aᵢ",
+  },
+]
+
+function drawLinearMesh(left, top, side, cells, grid, { mesh = true, nodes = false } = {}) {
+  const cell = side / cells
+  ctx.save()
+  if (mesh) {
+    ctx.strokeStyle = "rgba(36, 72, 112, 0.28)"
+    ctx.lineWidth = 0.8
+    for (let i = 0; i <= cells; i += 1) {
+      ctx.beginPath()
+      ctx.moveTo(left + i * cell, top)
+      ctx.lineTo(left + i * cell, top + side)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(left, top + i * cell)
+      ctx.lineTo(left + side, top + i * cell)
+      ctx.stroke()
+    }
+    ctx.strokeStyle = "rgba(36, 72, 112, 0.22)"
+    for (let y = 0; y < cells; y += 1) {
+      for (let x = 0; x < cells; x += 1) {
+        ctx.beginPath()
+        ctx.moveTo(left + x * cell, top + y * cell)
+        ctx.lineTo(left + (x + 1) * cell, top + (y + 1) * cell)
+        ctx.stroke()
+      }
+    }
+  }
+  if (nodes) {
+    const radius = Math.max(2.5, Math.min(6, cell * 0.12))
+    for (let y = 0; y <= cells; y += 1) {
+      for (let x = 0; x <= cells; x += 1) {
+        const shade = Math.round(grid[y][x] * 255)
+        ctx.beginPath()
+        ctx.arc(left + x * cell, top + y * cell, radius, 0, Math.PI * 2)
+        ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`
+        ctx.fill()
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
+        ctx.lineWidth = 1.2
+        ctx.stroke()
+      }
+    }
+  }
+  ctx.restore()
+}
+
+function renderLinear() {
+  const side = Math.min(W * 0.84, H * 0.84)
+  const left = (W - side) / 2
+  const top = (H - side) / 2
+  const cells = linear.cells
+  ctx.save()
+  ctx.fillStyle = "#f8fbfe"
+  ctx.fillRect(left, top, side, side)
+  ctx.restore()
+
+  if (linear.mode === 0) {
+    const grid = makeValueGrid(cells, linear.seed)
+    drawLinearMesh(left, top, side, cells, grid, { mesh: linear.triangles, nodes: true })
+    drawLinearLabel(left, top, "случайные значения в узлах")
+    return
+  }
+
+  const resolution = Math.max(180, Math.round(side / 2))
+  const image = ctx.createImageData(resolution, resolution)
+  const grid = linear.mode === 1 ? makeValueGrid(cells, linear.seed) : null
+  const layers = linear.mode === 2 ? buildLinearLayers(cells, linear.octaves, linear.seed) : null
+  for (let py = 0; py < resolution; py += 1) {
+    for (let px = 0; px < resolution; px += 1) {
+      const nx = px / (resolution - 1)
+      const ny = py / (resolution - 1)
+      const value = linear.mode === 1
+        ? sampleTriangle(grid, cells, nx, ny)
+        : sampleLinearLayers(layers, nx, ny)
+      const shade = Math.round(value * 255)
+      const index = (py * resolution + px) * 4
+      image.data[index] = shade
+      image.data[index + 1] = shade
+      image.data[index + 2] = shade
+      image.data[index + 3] = 255
+    }
+  }
+  const offscreen = document.createElement("canvas")
+  offscreen.width = resolution
+  offscreen.height = resolution
+  offscreen.getContext("2d").putImageData(image, 0, 0)
+  ctx.save()
+  ctx.imageSmoothingEnabled = true
+  ctx.drawImage(offscreen, left, top, side, side)
+  ctx.restore()
+  if (linear.triangles) {
+    drawLinearMesh(left, top, side, cells, grid, { mesh: true, nodes: false })
+  }
+  drawLinearLabel(
+    left,
+    top,
+    linear.mode === 1 ? "линейная интерполяция" : `${linear.octaves} окт. · линейная имитация`,
+  )
+}
+
+function drawLinearLabel(left, top, text) {
+  ctx.save()
+  ctx.font = "700 12px Manrope, system-ui, sans-serif"
+  const width = ctx.measureText(text).width + 20
+  ctx.fillStyle = "rgba(7, 17, 28, 0.75)"
+  ctx.fillRect(left + 10, top + 10, width, 26)
+  ctx.fillStyle = "#eaf3fd"
+  ctx.textAlign = "left"
+  ctx.textBaseline = "middle"
+  ctx.fillText(text, left + 20, top + 23)
+  ctx.restore()
+}
+
+function updateLinearUi() {
+  const info = linearInfo[linear.mode]
+  els.linearTitle.textContent = info.title
+  els.linearText.textContent = info.text
+  els.linearFormula.textContent = info.formula
+  els.linearGrid.value = String(linear.cells)
+  els.linearGridOutput.textContent = `${linear.cells} × ${linear.cells}`
+  els.linearOctaves.value = String(linear.octaves)
+  els.linearOctavesOutput.textContent = String(linear.octaves)
+  els.linearOctaves.disabled = linear.mode !== 2
+  els.linearOctavesField.hidden = linear.mode !== 2
+  els.linearTriangles.checked = linear.triangles
+  els.linearModes.forEach((button) => {
+    button.setAttribute("aria-pressed", String(Number(button.dataset.linearMode) === linear.mode))
+  })
+  els.linearStatus.textContent = `Сетка ${linear.cells} × ${linear.cells} · ${linear.mode === 2 ? `октав ${linear.octaves}` : "1 слой"} · сид ${linear.seed}.`
+}
+
 function renderSandbox() {
   drawTerrain(0, 0, W, H, params)
 }
@@ -856,8 +1018,12 @@ function renderSandbox() {
 function draw() {
   if (!ctx || W === 0 || H === 0) return
   drawBackground()
-  if (level === 2) {
+  if (level === 3) {
     renderSandbox()
+    return
+  }
+  if (level === 2) {
+    renderLinear()
     return
   }
   if (step === 0) drawStep0()
@@ -890,7 +1056,7 @@ function setStep(next) {
   els.stepTitle.textContent = current.title
   els.stepText.textContent = current.text
   els.stepBack.disabled = step === 0
-  els.stepNext.textContent = step === steps.length - 1 ? "В песочницу" : "Дальше"
+  els.stepNext.textContent = step === steps.length - 1 ? "К линейной имитации" : "Дальше"
   updateSampleVisibility()
   if (step >= 1 && step <= 7) {
     setHint(step === 7 ? "Двигайте ползунок — точка движется по графику" : "Двигайте ползунок — точка P движется внутри отрезка", "top")
@@ -933,11 +1099,15 @@ function setLevel(next) {
   panels.forEach((panel) => {
     panel.hidden = Number(panel.id.replace("panel-", "")) !== level
   })
-  if (level === 2) {
+  if (level === 3) {
     readParams()
     updateOutputs()
     els.status.textContent = `Сид: ${params.seed}. Октав: ${params.octaves}.`
     setHint("Меняйте параметры — ландшафт пересчитывается", "bottom")
+    draw()
+  } else if (level === 2) {
+    updateLinearUi()
+    setHint("", "top")
     draw()
   } else {
     setStep(step)
@@ -949,7 +1119,7 @@ function scheduleRender() {
   renderQueued = true
   requestAnimationFrame(() => {
     renderQueued = false
-    if (level === 2) {
+    if (level === 3) {
       readParams()
       els.status.textContent = `Сид: ${params.seed}. Октав: ${params.octaves}.`
     }
@@ -970,6 +1140,37 @@ function resize() {
 }
 
 tabs.forEach((tab) => tab.addEventListener("click", () => setLevel(Number(tab.dataset.level))))
+
+els.linearModes.forEach((button) => {
+  button.addEventListener("click", () => {
+    const previous = linear.mode
+    linear.mode = Number(button.dataset.linearMode)
+    if (linear.mode === 2 && previous !== 2) linear.triangles = false
+    else if (linear.mode !== 2 && previous === 2) linear.triangles = true
+    updateLinearUi()
+    if (level === 2) draw()
+  })
+})
+els.linearGrid.addEventListener("input", () => {
+  linear.cells = Number(els.linearGrid.value)
+  updateLinearUi()
+  if (level === 2) draw()
+})
+els.linearOctaves.addEventListener("input", () => {
+  linear.octaves = Number(els.linearOctaves.value)
+  updateLinearUi()
+  if (level === 2) draw()
+})
+els.linearTriangles.addEventListener("change", () => {
+  linear.triangles = els.linearTriangles.checked
+  if (level === 2) draw()
+})
+els.linearNew.addEventListener("click", () => {
+  linear.seed = Math.floor(Math.random() * 100000)
+  updateLinearUi()
+  if (level === 2) draw()
+})
+els.linearToSandbox.addEventListener("click", () => setLevel(3))
 
 els.stepBack.addEventListener("click", () => setStep(step - 1))
 els.stepNext.addEventListener("click", () => {

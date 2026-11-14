@@ -198,6 +198,55 @@
   font-size: 0.84rem !important;
 }
 
+.perlin-formula {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-left: 4px solid #146b3a;
+  border-radius: 8px;
+  background: #e8f1fb;
+  color: #173a2a;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  white-space: pre-line;
+}
+
+.perlin-modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.perlin-modes button {
+  flex: 1 1 auto;
+  min-height: 36px;
+  padding: 6px 9px;
+  font-size: 0.8rem;
+}
+
+.perlin-modes button[aria-pressed="true"] {
+  border-color: #146b3a;
+  background: #146b3a;
+  color: white;
+}
+
+.perlin-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  color: #334d68;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.perlin-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: #146b3a;
+}
+
 .perlin-panel .perlin-status.good { color: #146b3a; }
 .perlin-panel .perlin-status.bad { color: #a33b2c; }
 

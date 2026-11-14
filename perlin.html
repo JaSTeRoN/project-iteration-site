@@ -39,7 +39,8 @@
     <section class="perlin-card" aria-label="Интерактивное приложение">
       <div class="perlin-tabs" role="tablist" aria-label="Уровни приложения">
         <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Как устроен шум</button>
-        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Песочница</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Линейная имитация</button>
+        <button type="button" role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false" data-level="3">3. Песочница</button>
       </div>
 
       <div class="perlin-layout">
@@ -50,7 +51,7 @@
 
         <aside class="perlin-side">
           <section class="perlin-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
-            <p class="perlin-kicker" id="step-kicker">Шаг 1 из 7</p>
+            <p class="perlin-kicker" id="step-kicker">Шаг 1 из 16</p>
             <h2 id="step-title">Рваный случайный шум</h2>
             <p id="step-text">Если брать случайное число в каждой точке, получается рваная кривая: соседние значения никак не связаны. Для гор, облаков и текстур нужен шум, у которого соседние значения переходят друг в друга плавно.</p>
             <label class="perlin-field" id="sample-field" hidden>Положение точки
@@ -64,6 +65,35 @@
           </section>
 
           <section class="perlin-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="perlin-kicker">Линейная имитация</p>
+            <h2 id="linear-title">Случайные значения в узлах</h2>
+            <p id="linear-text">Разобьём плоскость на треугольники, а в каждом узле сохраним случайное значение. Пока это только набор чисел — между узлами ничего не определено.</p>
+            <div class="perlin-formula" id="linear-formula">h(узел) = random()</div>
+
+            <div class="perlin-modes" role="group" aria-label="Этапы линейной имитации">
+              <button type="button" data-linear-mode="0" aria-pressed="true">1. Узлы</button>
+              <button type="button" data-linear-mode="1" aria-pressed="false">2. Линейно</button>
+              <button type="button" data-linear-mode="2" aria-pressed="false">3. Октавы</button>
+            </div>
+
+            <label class="perlin-field" for="linear-grid">Сетка: <output id="linear-grid-output">8 × 8</output>
+              <input id="linear-grid" type="range" min="4" max="12" step="1" value="8">
+            </label>
+
+            <label class="perlin-field" for="linear-octaves" id="linear-octaves-field">Октавы: <output id="linear-octaves-output">3</output>
+              <input id="linear-octaves" type="range" min="1" max="5" step="1" value="3">
+            </label>
+
+            <label class="perlin-check"><input type="checkbox" id="linear-triangles" checked> Показывать треугольники</label>
+
+            <div class="perlin-actions">
+              <button type="button" id="linear-new">Новый набор</button>
+              <button type="button" class="primary" id="linear-to-sandbox">В песочницу</button>
+            </div>
+            <p class="perlin-note" id="linear-status" role="status">Сетка 8 × 8 · октав 1.</p>
+          </section>
+
+          <section class="perlin-panel" id="panel-3" role="tabpanel" aria-labelledby="tab-3" hidden>
             <p class="perlin-kicker">Песочница</p>
             <h2>Собери ландшафт</h2>
             <p class="perlin-note">Меняйте параметры — карта пересчитывается сразу. Чем больше октав, тем больше мелких деталей. Настойчивость задаёт силу мелких слоёв, лакунарность — их масштаб.</p>
