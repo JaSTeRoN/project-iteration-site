@@ -51,6 +51,7 @@ const els = {
   fillOpacity: document.querySelector("#fill-opacity"),
   sandboxReset: document.querySelector("#sandbox-reset"),
   sandboxStatus: document.querySelector("#sandbox-status"),
+  sandboxIter: document.querySelector("#sandbox-iter"),
 }
 
 const steps = [
@@ -105,7 +106,7 @@ let animationFrame = 0
 
 const l1 = { points: [], step: 0 }
 const l2 = { points: [], startPoints: [], iter: 0, auto: false }
-const l3 = { points: [], selected: -1, addMode: false }
+const l3 = { points: [], selected: -1, addMode: false, iter: 0, busy: false }
 
 function relativePoints(list, colors = COLORS) {
   return list.map((point, index) => ({
@@ -554,6 +555,10 @@ function updateCount() {
   els.countRange.value = String(Math.min(MAX_POINTS, Math.max(2, l3.points.length)))
 }
 
+function updateSandboxIter() {
+  els.sandboxIter.textContent = String(l3.iter)
+}
+
 function syncPalette() {
   const selected = l3.points[l3.selected]
   els.palette.querySelectorAll("[data-color]").forEach((button) => {
@@ -578,7 +583,7 @@ function setStep(next) {
   els.stepTitle.textContent = step.title
   els.stepText.textContent = step.text
   els.stepBack.disabled = l1.step === 0
-  els.stepNext.textContent = l1.step === steps.length - 1 ? "К уровню 2" : "Дальше"
+  els.stepNext.textContent = l1.step === steps.length - 1 ? "К релаксации Ллойда" : "Дальше"
   setHint(l1.step === steps.length - 1 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
   draw()
 }
@@ -687,6 +692,8 @@ function randomizeSandbox(count = l3.points.length, seed = Math.floor(Math.rando
   const safeCount = Math.max(2, Math.min(MAX_POINTS, count))
   l3.points = randomPoints(safeCount, seed)
   l3.selected = -1
+  l3.iter = 0
+  updateSandboxIter()
   updateCount()
   updateSelectionStatus()
   draw()
@@ -717,10 +724,15 @@ function removeSelected() {
 }
 
 function lloydSandbox() {
+  if (l3.busy) return
+  l3.busy = true
   const cells = voronoiCells(l3.points, W, H)
   const targets = cells.map(polygonCentroid)
   animatePoints(l3.points, targets, 360).then(() => {
+    l3.iter += 1
+    l3.busy = false
     l3.selected = -1
+    updateSandboxIter()
     updateSelectionStatus()
     updateSandboxStatus("Точки переехали в центры масс — диаграмма стала ровнее.", "good")
     draw()
@@ -744,6 +756,7 @@ function setLevel(next) {
     draw()
   } else {
     updateCount()
+    updateSandboxIter()
     updateSelectionStatus()
     setHint("Перетаскивайте точки • клик по ячейке — выбрать • правый клик — удалить")
     draw()
@@ -940,6 +953,8 @@ els.fillOpacity.addEventListener("input", draw)
 els.sandboxReset.addEventListener("click", () => {
   l3.points = randomPoints(12, 11)
   l3.selected = -1
+  l3.iter = 0
+  updateSandboxIter()
   updateCount()
   updateSelectionStatus()
   setHint("Перетаскивайте точки • клик по ячейке — выбрать • правый клик — удалить")
