@@ -150,6 +150,7 @@ let H = 0
 let dpr = 1
 let level = 1
 let step = 0
+let hoverCell = null
 let pinnedCell = null
 let lifeGeometries = []
 
@@ -293,7 +294,7 @@ function drawBoard(board, left, top, cell, options = {}) {
       }
     }
   }
-  if (focus) {
+  if (focus && spotlight) {
     ctx.fillStyle = "#f4a261"
     ctx.fillRect(left + focus.x * cell, top + focus.y * cell, cell + 0.5, cell + 0.5)
   }
@@ -348,26 +349,35 @@ function drawBoard(board, left, top, cell, options = {}) {
     }
     const cx = px + cell / 2
     const cy = py + cell / 2
-    ctx.save()
-    ctx.beginPath()
-    ctx.arc(cx, cy, cell * 0.17, 0, Math.PI * 2)
-    if (targetAlive) {
-      ctx.fillStyle = "#146b3a"
-      ctx.fill()
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
-      ctx.lineWidth = 2
-      ctx.stroke()
+    if (spotlight) {
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(cx, cy, cell * 0.17, 0, Math.PI * 2)
+      if (targetAlive) {
+        ctx.fillStyle = "#146b3a"
+        ctx.fill()
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
+        ctx.lineWidth = 2
+        ctx.stroke()
+      } else {
+        ctx.fillStyle = "rgba(255, 255, 255, 0.35)"
+        ctx.fill()
+        ctx.strokeStyle = "#5b3a12"
+        ctx.lineWidth = 2
+        ctx.stroke()
+      }
+      ctx.strokeStyle = "#7a3f00"
+      ctx.lineWidth = 3
+      ctx.strokeRect(px + 1, py + 1, cell - 2, cell - 2)
+      ctx.restore()
     } else {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.35)"
-      ctx.fill()
-      ctx.strokeStyle = "#5b3a12"
-      ctx.lineWidth = 2
-      ctx.stroke()
+      ctx.save()
+      ctx.strokeStyle = "#ff8a3d"
+      ctx.setLineDash(targetAlive ? [] : [5, 4])
+      ctx.lineWidth = 3
+      ctx.strokeRect(px + 1, py + 1, cell - 2, cell - 2)
+      ctx.restore()
     }
-    ctx.strokeStyle = "#7a3f00"
-    ctx.lineWidth = 3
-    ctx.strokeRect(px + 1, py + 1, cell - 2, cell - 2)
-    ctx.restore()
     const count = countNeighbors(board, focus.x, focus.y, false)
     const label = `n = ${count}`
     ctx.save()
@@ -466,7 +476,8 @@ function drawTwo(boards, labels, timeline = null) {
       }
     }
     const pinned = pinnedCell && pinnedCell.boardIndex === index ? pinnedCell : null
-    const focus = pinned
+    const hover = !pinnedCell && hoverCell && hoverCell.boardIndex === index ? hoverCell : null
+    const focus = pinned || hover
     const dimAll = Boolean(pinnedCell && pinnedCell.boardIndex !== index)
     lifeGeometries.push({ boardIndex: index, board, left: boardLeft, top: boardTop, cell, size, mode: "pair" })
     drawBoard(board, boardLeft, boardTop, cell, { focus, changed, spotlight: Boolean(pinned), dimAll })
@@ -503,7 +514,7 @@ function drawStep() {
     drawTwo(current.boards, current.labels, current.timeline || null)
     return
   }
-  const focus = pinnedCell
+  const focus = pinnedCell || hoverCell || current.focus
   drawSingle(current.board, focus, Boolean(pinnedCell))
 }
 
@@ -609,32 +620,35 @@ function updateLifeUi() {
   els.stepTitle.textContent = current.title
   els.stepText.textContent = current.text
   els.stepFormula.textContent = "next = alive ? (2 ≤ n ≤ 3)\n       : (n = 3)"
+  const focus = pinnedCell || hoverCell || current.focus
   if (current.boards) {
-    if (pinnedCell) {
-      const board = current.boards[pinnedCell.boardIndex]
-      const alive = board[pinnedCell.y][pinnedCell.x] === 1
-      const neighbors = countNeighbors(board, pinnedCell.x, pinnedCell.y, false)
-      els.cellInfo.textContent = `${current.labels[pinnedCell.boardIndex]}: клетка (${pinnedCell.x}, ${pinnedCell.y}) ${alive ? "живая" : "мёртвая"} · соседей ${neighbors} · режим проверки`
+    if (focus) {
+      const board = current.boards[focus.boardIndex]
+      const alive = board[focus.y][focus.x] === 1
+      const neighbors = countNeighbors(board, focus.x, focus.y, false)
+      const mode = pinnedCell ? " · режим проверки" : ""
+      els.cellInfo.textContent = `${current.labels[focus.boardIndex]}: клетка (${focus.x}, ${focus.y}) ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}${mode}`
     } else {
-      els.cellInfo.textContent = "Кликните по клетке — покажу её состояние, соседей и режим проверки."
+      els.cellInfo.textContent = "Наведите на клетку — покажу её состояние и число соседей."
     }
     els.stepResult.textContent = current.result
     els.stepResult.className = `life-result ${resultClassFor(current.result)}`
     els.stepCalc.textContent = current.calc
     return
   }
-  if (!pinnedCell) {
-    els.cellInfo.textContent = "Кликните по клетке — покажу её состояние, соседей и режим проверки."
+  if (!focus) {
+    els.cellInfo.textContent = "Наведите на клетку — покажу её состояние и число соседей."
     els.stepResult.textContent = current.result
     els.stepResult.className = `life-result ${resultClassFor(current.result)}`
     els.stepCalc.textContent = current.calc
     return
   }
   const board = current.board
-  const alive = board[pinnedCell.y][pinnedCell.x] === 1
-  const neighbors = countNeighbors(board, pinnedCell.x, pinnedCell.y, false)
+  const alive = board[focus.y][focus.x] === 1
+  const neighbors = countNeighbors(board, focus.x, focus.y, false)
   const result = resultFor(alive, neighbors)
-  els.cellInfo.textContent = `x = ${pinnedCell.x}, y = ${pinnedCell.y} · ${alive ? "живая" : "мёртвая"} · соседей ${neighbors} · режим проверки`
+  const mode = pinnedCell ? " · режим проверки" : ""
+  els.cellInfo.textContent = `x = ${focus.x}, y = ${focus.y} · ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}${mode}`
   els.stepResult.textContent = result.text
   els.stepResult.className = `life-result ${result.kind}`
   els.stepCalc.textContent = `n = ${neighbors} · клетка ${alive ? "живая" : "мёртвая"} → ${result.text}.`
@@ -642,6 +656,7 @@ function updateLifeUi() {
 
 function setStep(next) {
   step = Math.max(0, Math.min(steps.length - 1, next))
+  hoverCell = null
   pinnedCell = null
   els.stepBack.disabled = step === 0
   els.stepNext.textContent = step === steps.length - 1 ? "В песочницу" : "Дальше"
@@ -747,7 +762,16 @@ els.placePattern.addEventListener("click", () => {
 })
 
 canvas.addEventListener("pointermove", (event) => {
-  if (level !== 2) return
+  if (level === 1) {
+    const cell = lifeCellAt(event)
+    if (!cell) return
+    if (pinnedCell) return
+    if (hoverCell && hoverCell.x === cell.x && hoverCell.y === cell.y && hoverCell.boardIndex === cell.boardIndex) return
+    hoverCell = cell
+    updateLifeUi()
+    draw()
+    return
+  }
   const cell = sandboxCellAt(event)
   if (drawing && cell) {
     sandbox.board[cell.y][cell.x] = paintState
@@ -765,7 +789,12 @@ canvas.addEventListener("pointermove", (event) => {
 })
 
 canvas.addEventListener("pointerleave", () => {
-  if (level !== 2) return
+  if (level === 1) {
+    hoverCell = null
+    updateLifeUi()
+    draw()
+    return
+  }
   sandboxHover = null
   drawing = false
   paintState = null
@@ -802,6 +831,7 @@ canvas.addEventListener("click", (event) => {
   if (!cell) return
   if (pinnedCell && pinnedCell.x === cell.x && pinnedCell.y === cell.y && pinnedCell.boardIndex === cell.boardIndex) pinnedCell = null
   else pinnedCell = cell
+  hoverCell = cell
   updateLifeUi()
   draw()
 })
