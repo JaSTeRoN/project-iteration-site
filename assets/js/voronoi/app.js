@@ -68,11 +68,23 @@ const steps = [
   },
   {
     title: "Продлеваем перпендикуляры",
-    text: "Продлим каждый серединный перпендикуляр до пересечения с другими. Синие отрезки — исходные связи между точками, зелёные штрихи — перпендикуляры в серединах, а жирные зелёные участки — те части перпендикуляров, которые действительно стали границами ячеек. Оранжевые точки на пересечениях — вершины ячеек.",
+    text: "Продлим каждый серединный перпендикуляр до пересечения с другими. Пока это только вспомогательные прямые: границ ячеек ещё нет, мы только готовим материал для них.",
   },
   {
-    title: "Собираем ячейки",
-    text: "Пересечения перпендикуляров дают вершины ячеек. Оставляем только те участки, которые действительно ограничивают ячейку: для точки A — перпендикуляры к отрезкам, соединяющим A с соседями. Получается выпуклый многоугольник.",
+    title: "Находим пересечения",
+    text: "Там, где перпендикуляры пересекаются, появляются вершины будущих ячеек. Отметим их оранжевыми точками. Это ещё не границы — только узлы, из которых будут собраны ячейки.",
+  },
+  {
+    title: "Выбираем участки для границ",
+    text: "Не каждый кусок перпендикуляра нужен. Оставляем только те участки, которые действительно ограничивают ячейки: между двумя вершинами или от вершины до края рисунка. Выделим их оранжевым пунктиром — это ещё не финальные границы, а выбранные заготовки.",
+  },
+  {
+    title: "Рисуем границы ячеек",
+    text: "Теперь по выбранным участкам проводим настоящие границы. Они замыкаются в многоугольники вокруг каждой точки — это уже контуры ячеек.",
+  },
+  {
+    title: "Заливаем ячейки",
+    text: "Каждый замкнутый многоугольник — ячейка. Закрасим их, чтобы было видно, какая область соответствует какой точке.",
   },
   {
     title: "Диаграмма Вороного",
@@ -221,6 +233,40 @@ function strokeCell(polygon, color, width) {
   ctx.stroke()
 }
 
+function isOuterEdge(a, b) {
+  const edge = 1.2
+  return (a.x <= edge && b.x <= edge)
+    || (a.x >= W - edge && b.x >= W - edge)
+    || (a.y <= edge && b.y <= edge)
+    || (a.y >= H - edge && b.y >= H - edge)
+}
+
+function cellEdgeKey(a, b) {
+  const first = `${Math.round(a.x * 2)}:${Math.round(a.y * 2)}`
+  const second = `${Math.round(b.x * 2)}:${Math.round(b.y * 2)}`
+  return first < second ? `${first}|${second}` : `${second}|${first}`
+}
+
+function uniqueCellEdges(cells, skipOuter = false) {
+  const edges = new Map()
+  for (const cell of cells) {
+    for (let i = 0; i < cell.length; i += 1) {
+      const a = cell[i]
+      const b = cell[(i + 1) % cell.length]
+      if (skipOuter && isOuterEdge(a, b)) continue
+      const key = cellEdgeKey(a, b)
+      if (!edges.has(key)) edges.set(key, [a, b])
+    }
+  }
+  return [...edges.values()]
+}
+
+function strokeCellEdges(cells, color, width, dash = [], skipOuter = false) {
+  for (const [a, b] of uniqueCellEdges(cells, skipOuter)) {
+    drawLine(a, b, color, width, dash)
+  }
+}
+
 function drawCells(cells, points, alpha, boundaries = true) {
   cells.forEach((cell, index) => fillCell(cell, points[index]?.color || COLORS[index % COLORS.length], alpha))
   if (boundaries) {
@@ -322,7 +368,7 @@ function drawLabel(text, x, y, color = "#0f4f2b") {
 }
 
 function drawHover() {
-  if (!hover || l1.step !== 5) return
+  if (!hover || l1.step !== steps.length - 1) return
   const index = nearestIndex(l1.points, hover.x, hover.y)
   const nearest = l1.points[index]
   if (!nearest) return
@@ -399,24 +445,27 @@ function drawLevel1() {
   } else if (l1.step === 2) {
     drawDelaunay(points, edges, "rgba(70, 95, 125, 0.3)", 1.1)
     drawPerpendicularTicks(points, edges)
-  } else if (l1.step === 3) {
-    drawDelaunay(points, edges, "rgba(47, 93, 145, 0.62)", 1.8)
+  } else if (l1.step === 3 || l1.step === 4) {
+    drawDelaunay(points, edges, "rgba(47, 93, 145, 0.55)", 1.6)
     for (const [a, b] of edges) {
       const line = bisectorSegment(points[a], points[b], W, H)
-      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.18)", 1, [4, 5])
+      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.42)", 1.5, [7, 6])
     }
-    cells.forEach((cell) => strokeCell(cell, "rgba(15, 79, 43, 0.92)", 2.6))
     drawPerpendicularTicks(points, edges)
-    drawVoronoiVertices(cells)
-  } else if (l1.step === 4) {
-    cells.forEach((cell, index) => fillCell(cell, points[index].color, 0.1))
-    cells.forEach((cell) => strokeCell(cell, "rgba(15, 40, 65, 0.5)", 1.6))
-    fillCell(cells[0], points[0].color, 0.38)
-    strokeCell(cells[0], SELECTED_COLOR, 3)
-    drawDelaunay(points, edges, "rgba(70, 95, 125, 0.16)", 1)
-    const centroid = polygonCentroid(cells[0])
-    drawLabel("ячейка A", centroid.x, centroid.y - 26)
+    if (l1.step === 4) drawVoronoiVertices(cells)
   } else if (l1.step === 5) {
+    drawDelaunay(points, edges, "rgba(70, 95, 125, 0.18)", 1)
+    for (const [a, b] of edges) {
+      const line = bisectorSegment(points[a], points[b], W, H)
+      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.12)", 1, [5, 5])
+    }
+    strokeCellEdges(cells, "rgba(201, 106, 31, 0.95)", 2.6, [6, 5], true)
+    drawVoronoiVertices(cells)
+  } else if (l1.step === 6) {
+    strokeCellEdges(cells, "rgba(15, 79, 43, 0.95)", 2.8, [], true)
+  } else if (l1.step === 7) {
+    drawCells(cells, points, 0.3, true)
+  } else if (l1.step === 8) {
     drawCells(cells, points, 0.3, true)
     if (hover) {
       const index = nearestIndex(points, hover.x, hover.y)
@@ -530,7 +579,7 @@ function setStep(next) {
   els.stepText.textContent = step.text
   els.stepBack.disabled = l1.step === 0
   els.stepNext.textContent = l1.step === steps.length - 1 ? "К уровню 2" : "Дальше"
-  setHint(l1.step === 5 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
+  setHint(l1.step === steps.length - 1 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
   draw()
 }
 
@@ -688,7 +737,7 @@ function setLevel(next) {
   })
   if (level === 1) {
     setStep(l1.step)
-    setHint(l1.step === 5 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
+    setHint(l1.step === steps.length - 1 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
   } else if (level === 2) {
     updateLloydPanel()
     setHint("Оранжевые кольца — центры масс ячеек")
@@ -744,7 +793,7 @@ function buildPalette() {
 }
 
 canvas.addEventListener("pointerdown", (event) => {
-  if (level === 1 && l1.step === 5) {
+  if (level === 1 && l1.step === steps.length - 1) {
     hover = canvasPoint(event)
     draw()
     return
@@ -772,7 +821,7 @@ canvas.addEventListener("pointerdown", (event) => {
 })
 
 canvas.addEventListener("pointermove", (event) => {
-  if (level === 1 && l1.step === 5) {
+  if (level === 1 && l1.step === steps.length - 1) {
     hover = canvasPoint(event)
     draw()
     return
