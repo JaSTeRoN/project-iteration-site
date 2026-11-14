@@ -71,6 +71,11 @@
             <div class="perlin-formula" id="linear-formula">value(p) = (1/N) · Σ [nᵢ · p &gt; dᵢ]
 [условие] = 1 или 0</div>
 
+            <div class="perlin-how">
+              <strong>Как это работает</strong>
+              <p>Прямая даёт каждой точке один голос: <b>1</b> — если точка на белой стороне, <b>0</b> — если на чёрной. После N прямых значение — это среднее N голосов. 10 прямых дают до 11 уровней серого, 100 — до 101, а 10&nbsp;000 — до 10&nbsp;001.</p>
+            </div>
+
             <div class="perlin-modes" role="group" aria-label="Количество прямых">
               <button type="button" data-line-count="10" aria-pressed="true">10</button>
               <button type="button" data-line-count="100" aria-pressed="false">100</button>
@@ -78,13 +83,21 @@
               <button type="button" data-line-count="10000" aria-pressed="false">10 000</button>
             </div>
 
+            <p class="perlin-step-title">Пошаговое построение</p>
+            <div class="perlin-stepbar">
+              <button type="button" id="linear-prev">← Шаг</button>
+              <span id="linear-step">Шаг 5/14 · 10 линий</span>
+              <button type="button" id="linear-next">Шаг →</button>
+            </div>
+
             <label class="perlin-check"><input type="checkbox" id="linear-normalize" checked> Нормировать контраст</label>
+            <label class="perlin-check"><input type="checkbox" id="linear-show-line" checked> Показывать последнюю прямую</label>
 
             <div class="perlin-actions">
               <button type="button" id="linear-new">Новый набор</button>
               <button type="button" class="primary" id="linear-to-sandbox">В песочницу</button>
             </div>
-            <p class="perlin-note" id="linear-status" role="status">10 линий · сид 37.</p>
+            <p class="perlin-note" id="linear-status" role="status">10 линий · 11 уровней · сид 37.</p>
           </section>
 
           <section class="perlin-panel" id="panel-3" role="tabpanel" aria-labelledby="tab-3" hidden>

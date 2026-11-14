@@ -46,6 +46,10 @@ const els = {
   linearFormula: document.querySelector("#linear-formula"),
   lineCountButtons: [...document.querySelectorAll("[data-line-count]")],
   linearNormalize: document.querySelector("#linear-normalize"),
+  linearShowLine: document.querySelector("#linear-show-line"),
+  linearPrev: document.querySelector("#linear-prev"),
+  linearNext: document.querySelector("#linear-next"),
+  linearStep: document.querySelector("#linear-step"),
   linearNew: document.querySelector("#linear-new"),
   linearToSandbox: document.querySelector("#linear-to-sandbox"),
   linearStatus: document.querySelector("#linear-status"),
@@ -129,7 +133,8 @@ let permutationSeed = DEFAULTS.seed
 let renderQueued = false
 
 const params = { ...DEFAULTS }
-const linear = { count: 10, seed: 37, normalize: true, lines: null, fields: new Map() }
+const linear = { count: 10, seed: 37, normalize: true, showLine: true, lines: null, fields: new Map() }
+const LINEAR_STEPS = [0, 1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
 
 const terrainCanvas = document.createElement("canvas")
 const terrainCtx = terrainCanvas.getContext("2d", { willReadFrequently: true })
@@ -882,6 +887,42 @@ function formatCount(value) {
   return value.toLocaleString("ru-RU")
 }
 
+function plural(value, one, few, many) {
+  const mod10 = value % 10
+  const mod100 = value % 100
+  if (mod10 === 1 && mod100 !== 11) return one
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few
+  return many
+}
+
+function lineWord(value) {
+  return plural(value, "линия", "линии", "линий")
+}
+
+function levelWord(value) {
+  return plural(value, "уровень", "уровня", "уровней")
+}
+
+function lineTitle(value) {
+  if (value === 0) return "0 случайных прямых"
+  if (value === 1) return "1 случайная прямая"
+  return `${formatCount(value)} ${plural(value, "случайная прямая", "случайные прямые", "случайных прямых")}`
+}
+
+function getLineInfo(count) {
+  if (lineInfo[count]) return lineInfo[count]
+  if (count === 0) {
+    return {
+      title: "0 случайных прямых",
+      text: "Пока нет ни одной прямой. Поле ровно серое: будущие значения ещё не из чего складывать.",
+    }
+  }
+  return {
+    title: lineTitle(count),
+    text: "Каждая новая прямая добавляет еще один слой «чёрное/белое». В каждой точке значения всех слоёв усредняются, поэтому число серых уровней растёт вместе с числом прямых.",
+  }
+}
+
 function lineResolution(count) {
   if (count <= 10) return 360
   if (count <= 100) return 300
@@ -890,6 +931,7 @@ function lineResolution(count) {
 }
 
 function getLineField() {
+  if (linear.count === 0) return null
   if (!linear.lines) linear.lines = makeRandomLines(10000, linear.seed)
   const key = `${linear.seed}:${linear.count}`
   if (linear.fields.has(key)) return linear.fields.get(key)
@@ -899,6 +941,53 @@ function getLineField() {
   )
   linear.fields.set(key, field)
   return field
+}
+
+function drawLastLine(line, left, top, side) {
+  const points = []
+  const add = (x, y) => {
+    if (Math.abs(x) <= 1.0001 && Math.abs(y) <= 1.0001) {
+      if (!points.some((point) => Math.abs(point.x - x) < 1e-9 && Math.abs(point.y - y) < 1e-9)) {
+        points.push({ x, y })
+      }
+    }
+  }
+  if (Math.abs(line.ny) > 1e-8) {
+    add(-1, (line.d + line.nx) / line.ny)
+    add(1, (line.d - line.nx) / line.ny)
+  }
+  if (Math.abs(line.nx) > 1e-8) {
+    add((line.d + line.ny) / line.nx, -1)
+    add((line.d - line.ny) / line.nx, 1)
+  }
+  if (points.length < 2) return
+  let first = points[0]
+  let second = points[1]
+  let best = -1
+  for (let i = 0; i < points.length; i += 1) {
+    for (let j = i + 1; j < points.length; j += 1) {
+      const distance = Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y)
+      if (distance > best) {
+        best = distance
+        first = points[i]
+        second = points[j]
+      }
+    }
+  }
+  const toCanvas = (point) => ({
+    x: left + ((point.x + 1) / 2) * side,
+    y: top + ((point.y + 1) / 2) * side,
+  })
+  const a = toCanvas(first)
+  const b = toCanvas(second)
+  ctx.save()
+  ctx.strokeStyle = "rgba(255, 138, 61, 0.95)"
+  ctx.lineWidth = 2.5
+  ctx.beginPath()
+  ctx.moveTo(a.x, a.y)
+  ctx.lineTo(b.x, b.y)
+  ctx.stroke()
+  ctx.restore()
 }
 
 function drawLinearLabel(left, top, text) {
@@ -915,10 +1004,18 @@ function drawLinearLabel(left, top, text) {
 }
 
 function renderLinear() {
-  const field = getLineField()
   const side = Math.min(W * 0.84, H * 0.84)
   const left = (W - side) / 2
   const top = (H - side) / 2
+  const field = getLineField()
+  if (!field) {
+    ctx.save()
+    ctx.fillStyle = "#808080"
+    ctx.fillRect(left, top, side, side)
+    ctx.restore()
+    drawLinearLabel(left, top, "0 линий")
+    return
+  }
   const shades = fieldToShades(field, linear.normalize)
   const image = ctx.createImageData(field.resolution, field.resolution)
   for (let i = 0; i < shades.length; i += 1) {
@@ -937,19 +1034,28 @@ function renderLinear() {
   ctx.imageSmoothingEnabled = true
   ctx.drawImage(offscreen, left, top, side, side)
   ctx.restore()
-  drawLinearLabel(left, top, `${formatCount(linear.count)} линий`)
+  if (linear.showLine && linear.lines && linear.count > 0) {
+    drawLastLine(linear.lines[linear.count - 1], left, top, side)
+  }
+  drawLinearLabel(left, top, `${formatCount(linear.count)} ${lineWord(linear.count)}`)
 }
 
 function updateLinearUi() {
-  const info = lineInfo[linear.count]
+  const info = getLineInfo(linear.count)
   els.linearTitle.textContent = info.title
   els.linearText.textContent = info.text
   els.linearFormula.textContent = "value(p) = (1/N) · Σ [nᵢ · p > dᵢ]\n[условие] = 1 или 0"
   els.lineCountButtons.forEach((button) => {
     button.setAttribute("aria-pressed", String(Number(button.dataset.lineCount) === linear.count))
   })
+  const stepIndex = LINEAR_STEPS.indexOf(linear.count)
+  const safeIndex = Math.max(0, stepIndex)
+  els.linearStep.textContent = `Шаг ${safeIndex + 1}/${LINEAR_STEPS.length} · ${formatCount(linear.count)} ${lineWord(linear.count)}`
+  els.linearPrev.disabled = safeIndex <= 0
+  els.linearNext.disabled = safeIndex >= LINEAR_STEPS.length - 1
   els.linearNormalize.checked = linear.normalize
-  els.linearStatus.textContent = `${formatCount(linear.count)} линий · сид ${linear.seed}.`
+  els.linearShowLine.checked = linear.showLine
+  els.linearStatus.textContent = `${formatCount(linear.count)} ${lineWord(linear.count)} · ${formatCount(linear.count + 1)} ${levelWord(linear.count + 1)} · сид ${linear.seed}.`
 }
 
 function renderSandbox() {
@@ -1091,6 +1197,22 @@ els.lineCountButtons.forEach((button) => {
 })
 els.linearNormalize.addEventListener("change", () => {
   linear.normalize = els.linearNormalize.checked
+  if (level === 2) draw()
+})
+els.linearShowLine.addEventListener("change", () => {
+  linear.showLine = els.linearShowLine.checked
+  if (level === 2) draw()
+})
+els.linearPrev.addEventListener("click", () => {
+  const index = Math.max(0, LINEAR_STEPS.indexOf(linear.count))
+  linear.count = LINEAR_STEPS[Math.max(0, index - 1)]
+  updateLinearUi()
+  if (level === 2) draw()
+})
+els.linearNext.addEventListener("click", () => {
+  const index = Math.max(0, LINEAR_STEPS.indexOf(linear.count))
+  linear.count = LINEAR_STEPS[Math.min(LINEAR_STEPS.length - 1, index + 1)]
+  updateLinearUi()
   if (level === 2) draw()
 })
 els.linearNew.addEventListener("click", () => {
