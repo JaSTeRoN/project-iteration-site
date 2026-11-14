@@ -53,7 +53,9 @@
             <p class="diamond-kicker" id="step-kicker">Шаг 1 из 7</p>
             <h2 id="step-title">Сетка 5 × 5</h2>
             <p id="step-text">Diamond-Square работает на квадратной сетке размером 2ⁿ + 1. Для примера возьмём 5 × 5: сначала известны только четыре угла, остальные высоты нужно вычислить.</p>
+            <div class="diamond-formula" id="step-formula">h = random()</div>
             <p class="diamond-calc" id="step-calc">Углы заданы случайными числами. Остальные клетки пока пустые.</p>
+            <p class="diamond-cell-info" id="cell-info">Наведите на значение в клетке — покажу её координаты и высоту.</p>
             <div class="diamond-actions">
               <button type="button" id="step-back">Назад</button>
               <button type="button" class="primary" id="step-next">Дальше</button>
@@ -101,6 +103,7 @@
               <button type="button" id="reset">Сброс</button>
             </div>
             <p class="diamond-note" id="sandbox-status" role="status">Сетка 33 × 33 · сид 37.</p>
+            <p class="diamond-cell-info" id="sandbox-cell-info">Наведите на рельеф — покажу координаты и высоту.</p>
           </section>
         </aside>
       </div>

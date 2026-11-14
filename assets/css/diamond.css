@@ -126,6 +126,29 @@
   font-size: 0.86rem !important;
 }
 
+.diamond-formula {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-left: 4px solid #146b3a;
+  border-radius: 8px;
+  background: #e8f1fb;
+  color: #173a2a;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.diamond-cell-info {
+  margin-top: 8px !important;
+  color: #4b657f;
+  font-size: 0.82rem !important;
+}
+
+.diamond-page canvas {
+  cursor: crosshair;
+}
+
 .diamond-actions {
   display: flex;
   flex-wrap: wrap;

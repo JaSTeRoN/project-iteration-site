@@ -15,7 +15,9 @@ const els = {
   stepKicker: document.querySelector("#step-kicker"),
   stepTitle: document.querySelector("#step-title"),
   stepText: document.querySelector("#step-text"),
+  stepFormula: document.querySelector("#step-formula"),
   stepCalc: document.querySelector("#step-calc"),
+  cellInfo: document.querySelector("#cell-info"),
   stepBack: document.querySelector("#step-back"),
   stepNext: document.querySelector("#step-next"),
   stepReset: document.querySelector("#step-reset"),
@@ -30,6 +32,7 @@ const els = {
   randomize: document.querySelector("#randomize"),
   reset: document.querySelector("#reset"),
   status: document.querySelector("#sandbox-status"),
+  sandboxCellInfo: document.querySelector("#sandbox-cell-info"),
 }
 
 const tutorial = generateDiamondSquare(TUTORIAL_SIZE, TUTORIAL_ROUGHNESS, TUTORIAL_SEED)
@@ -42,6 +45,13 @@ let dpr = 1
 let level = 1
 let step = 0
 let renderQueued = false
+let tutorialGeometry = null
+let sandboxGeometry = null
+let hoverCell = null
+let pinnedCell = null
+let defaultFocus = null
+let sandboxHover = null
+let sandboxPinned = null
 
 const steps = [
   {
@@ -49,29 +59,54 @@ const steps = [
     text: "Diamond-Square работает на квадратной сетке размером 2ⁿ + 1. Для примера возьмём 5 × 5: сначала известны только четыре угла, остальные высоты нужно вычислить.",
   },
   {
-    title: "Diamond-шаг",
-    text: "Находим центр большого квадрата. Его высота — среднее четырёх углов плюс случайное смещение. На первом уровне квадрат один, поэтому появляется одна новая точка.",
+    title: "Diamond: какие клетки нужны",
+    text: "Чтобы вычислить центр большого квадрата, нужны четыре угла. Стрелки показывают, откуда берутся значения. Центр пока пустой — мы только выбрали источники.",
   },
   {
-    title: "Square-шаг",
-    text: "Теперь заполняем середины сторон. У внутренней точки четыре соседа, у точки на краю — только три; берём среднее доступных и добавляем случайное смещение. После этого шага заполнены все середины рёбер большого квадрата.",
+    title: "Diamond: вычисляем центр",
+    text: "Теперь считаем высоту центра: среднее четырёх углов плюс случайное смещение. Новая клетка выделена оранжевым.",
+  },
+  {
+    title: "Square: какие клетки нужны",
+    text: "Теперь заполняем середины сторон. У каждой середины есть соседи: у точки на краю их три, у внутренней — четыре. Стрелки показывают источники, а целевые клетки пока пустые.",
+  },
+  {
+    title: "Square: вычисляем середины",
+    text: "Считаем каждую середину как среднее доступных соседей плюс случайное смещение. После этого шага заполнены все середины сторон большого квадрата.",
   },
   {
     title: "Следующий уровень",
-    text: "Большой квадрат разбился на четыре маленьких. Для каждого снова выполняем diamond-шаг: находим центр, усредняем четыре угла и добавляем смещение. Шаг сетки уменьшился вдвое, поэтому и случайное смещение стало меньше.",
+    text: "Большой квадрат разбился на четыре маленьких. Для каждого снова выполняем diamond-шаг. Шаг сетки уменьшился вдвое, поэтому и случайное смещение стало меньше.",
   },
   {
     title: "Последний square-шаг",
-    text: "Осталось заполнить середины сторон у маленьких ромбов. Снова усредняем соседей и добавляем небольшое случайное смещение. После этого все 25 высот известны.",
+    text: "Осталось заполнить середины сторон у маленьких ромбов. Снова усредняем соседей и добавляем небольшое случайное смещение.",
   },
   {
     title: "Все высоты заполнены",
-    text: "Мы получили карту высот 5 × 5. В настоящей сетке 33 × 33 или 65 × 65 те же два шага повторяются, пока не будут заполнены все клетки.",
+    text: "Мы получили полную карту высот 5 × 5 в клетках. Теперь её можно сгладить: интерполировать значения между центрами клеток.",
   },
   {
-    title: "Превращаем высоты в рельеф",
-    text: "Высоты можно раскрасить: низкие значения — вода, выше — песок, трава, камни и снег. На рисунке — та же раскраска для сетки 33 × 33, как в песочнице.",
+    title: "Сглаживаем высоты",
+    text: "Сглаживание — отдельный шаг. Между центрами клеток высоты плавно интерполируются, поэтому резкие границы клеток исчезают, а рельеф становится непрерывным.",
   },
+  {
+    title: "Раскрашиваем рельеф",
+    text: "Сглаженные высоты раскрашиваются: низкие значения — вода, выше — песок, трава, камни и снег. На рисунке — пример для сетки 33 × 33.",
+  },
+]
+
+const stepConfigs = [
+  { grid: 0, arrows: null },
+  { grid: 0, arrows: 1, targetOnly: true },
+  { grid: 1, arrows: 1 },
+  { grid: 1, arrows: 2, targetOnly: true },
+  { grid: 2, arrows: 2 },
+  { grid: 3, arrows: 3 },
+  { grid: 4, arrows: 4 },
+  { grid: 4, arrows: null },
+  { smooth: true },
+  { terrain: true },
 ]
 
 function colorFor(value, sea, palette) {
@@ -106,25 +141,88 @@ function luminance([r, g, b]) {
   return r * 0.299 + g * 0.587 + b * 0.114
 }
 
-function drawGrid(phase, highlight = true) {
+function drawArrowLine(from, to, color) {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x)
+  const length = Math.hypot(to.x - from.x, to.y - from.y)
+  if (length < 4) return
+  const end = { x: from.x + Math.cos(angle) * (length - 10), y: from.y + Math.sin(angle) * (length - 10) }
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = 1.7
+  ctx.beginPath()
+  ctx.moveTo(from.x, from.y)
+  ctx.lineTo(end.x, end.y)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(end.x, end.y)
+  ctx.lineTo(end.x - 8 * Math.cos(angle - 0.5), end.y - 8 * Math.sin(angle - 0.5))
+  ctx.lineTo(end.x - 8 * Math.cos(angle + 0.5), end.y - 8 * Math.sin(angle + 0.5))
+  ctx.closePath()
+  ctx.fillStyle = color
+  ctx.fill()
+  ctx.restore()
+}
+
+function drawGrid(config, focus) {
   const size = TUTORIAL_SIZE
   const cell = Math.min((W * 0.72) / size, (H * 0.78) / size)
   const left = (W - cell * size) / 2
   const top = (H - cell * size) / 2
-  const added = new Map()
-  if (highlight) {
-    for (const item of phase.added) added.set(`${item.x}:${item.y}`, item)
-  }
+  tutorialGeometry = { left, top, cell, size }
+  const center = (x, y) => ({ x: left + (x + 0.5) * cell, y: top + (y + 0.5) * cell })
+  const gridPhase = tutorial.phases[config.grid]
+  const arrowPhase = config.arrows !== null ? tutorial.phases[config.arrows] : null
+  const focusInfo = arrowPhase && focus
+    ? arrowPhase.added.find((item) => item.x === focus.x && item.y === focus.y)
+    : null
 
   ctx.save()
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
-      const value = phase.grid[y][x]
+      const value = gridPhase.grid[y][x]
       const px = left + x * cell
       const py = top + y * cell
       if (value === null) {
         ctx.fillStyle = "rgba(23, 54, 88, 0.04)"
         ctx.fillRect(px, py, cell, cell)
+      } else {
+        const [r, g, b] = colorFor(value, 0.45, "terrain")
+        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+        ctx.fillRect(px, py, cell, cell)
+      }
+    }
+  }
+
+  if (arrowPhase) {
+    const targets = arrowPhase.added.length <= 4
+      ? arrowPhase.added
+      : (focusInfo ? [focusInfo] : [])
+    for (const target of targets) {
+      for (const neighbor of target.neighbors) {
+        ctx.save()
+        ctx.strokeStyle = "rgba(47, 93, 145, 0.55)"
+        ctx.setLineDash([4, 4])
+        ctx.lineWidth = 1.4
+        ctx.strokeRect(left + neighbor.x * cell + 4, top + neighbor.y * cell + 4, cell - 8, cell - 8)
+        ctx.restore()
+        drawArrowLine(center(neighbor.x, neighbor.y), center(target.x, target.y), "rgba(47, 93, 145, 0.55)")
+      }
+      const targetValue = gridPhase.grid[target.y][target.x]
+      ctx.save()
+      ctx.setLineDash(targetValue === null ? [6, 4] : [])
+      ctx.strokeStyle = "#ff8a3d"
+      ctx.lineWidth = 3
+      ctx.strokeRect(left + target.x * cell + 2, top + target.y * cell + 2, cell - 4, cell - 4)
+      ctx.restore()
+    }
+  }
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const value = gridPhase.grid[y][x]
+      const px = left + x * cell
+      const py = top + y * cell
+      if (value === null) {
         ctx.fillStyle = "rgba(23, 54, 88, 0.25)"
         ctx.font = "600 13px Manrope, system-ui, sans-serif"
         ctx.textAlign = "center"
@@ -132,21 +230,26 @@ function drawGrid(phase, highlight = true) {
         ctx.fillText("·", px + cell / 2, py + cell / 2)
       } else {
         const [r, g, b] = colorFor(value, 0.45, "terrain")
-        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
-        ctx.fillRect(px, py, cell, cell)
         ctx.fillStyle = luminance([r, g, b]) > 150 ? "#15324d" : "#ffffff"
         ctx.font = `700 ${Math.max(10, Math.min(14, cell * 0.16))}px Manrope, system-ui, sans-serif`
         ctx.textAlign = "center"
         ctx.textBaseline = "middle"
         ctx.fillText(value.toFixed(2), px + cell / 2, py + cell / 2)
       }
-      if (added.has(`${x}:${y}`)) {
-        ctx.strokeStyle = "#ff8a3d"
-        ctx.lineWidth = 3
-        ctx.strokeRect(px + 2, py + 2, cell - 4, cell - 4)
-      }
     }
   }
+
+  if (focus) {
+    const focusIsTarget = arrowPhase && arrowPhase.added.some((item) => item.x === focus.x && item.y === focus.y)
+    if (!focusIsTarget) {
+      ctx.save()
+      ctx.strokeStyle = "#0f4f2b"
+      ctx.lineWidth = 3.5
+      ctx.strokeRect(left + focus.x * cell + 1, top + focus.y * cell + 1, cell - 2, cell - 2)
+      ctx.restore()
+    }
+  }
+
   ctx.strokeStyle = "rgba(255, 255, 255, 0.65)"
   ctx.lineWidth = 1.2
   for (let i = 0; i <= size; i += 1) {
@@ -158,6 +261,15 @@ function drawGrid(phase, highlight = true) {
     ctx.moveTo(left, top + i * cell)
     ctx.lineTo(left + size * cell, top + i * cell)
     ctx.stroke()
+  }
+
+  ctx.fillStyle = "#5a7087"
+  ctx.font = "600 11px Manrope, system-ui, sans-serif"
+  ctx.textAlign = "center"
+  ctx.textBaseline = "middle"
+  for (let i = 0; i < size; i += 1) {
+    ctx.fillText(String(i), left + (i + 0.5) * cell, top - 10)
+    ctx.fillText(String(i), left - 12, top + (i + 0.5) * cell)
   }
   ctx.restore()
 }
@@ -187,9 +299,145 @@ function drawTutorialTerrain() {
   ctx.restore()
 }
 
-function renderSandbox() {
-  const resW = Math.max(180, Math.round(W / 2))
+function drawSmoothedTutorial() {
+  const resW = Math.max(160, Math.round(W / 2))
   const resH = Math.max(120, Math.round(H / 2))
+  const image = ctx.createImageData(resW, resH)
+  for (let py = 0; py < resH; py += 1) {
+    for (let px = 0; px < resW; px += 1) {
+      const value = sampleGrid(tutorial.grid, TUTORIAL_SIZE, px / (resW - 1), py / (resH - 1))
+      const shade = Math.round(value * 255)
+      const index = (py * resW + px) * 4
+      image.data[index] = shade
+      image.data[index + 1] = shade
+      image.data[index + 2] = shade
+      image.data[index + 3] = 255
+    }
+  }
+  const offscreen = document.createElement("canvas")
+  offscreen.width = resW
+  offscreen.height = resH
+  offscreen.getContext("2d").putImageData(image, 0, 0)
+  ctx.save()
+  ctx.imageSmoothingEnabled = true
+  ctx.drawImage(offscreen, 0, 0, W, H)
+  ctx.fillStyle = "rgba(7, 17, 28, 0.72)"
+  ctx.fillRect(12, 12, 190, 28)
+  ctx.fillStyle = "#eaf3fd"
+  ctx.font = "700 13px Manrope, system-ui, sans-serif"
+  ctx.textAlign = "left"
+  ctx.textBaseline = "middle"
+  ctx.fillText("сглаженные высоты", 22, 26)
+  ctx.restore()
+}
+
+function drawSandboxAxes(inner) {
+  const size = sandbox.size
+  const ticks = 4
+  ctx.save()
+  ctx.strokeStyle = "rgba(23, 54, 88, 0.45)"
+  ctx.lineWidth = 1.4
+  ctx.beginPath()
+  ctx.moveTo(inner.x, inner.y + inner.height)
+  ctx.lineTo(inner.x + inner.width, inner.y + inner.height)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(inner.x, inner.y)
+  ctx.lineTo(inner.x, inner.y + inner.height)
+  ctx.stroke()
+  ctx.fillStyle = "#5a7087"
+  ctx.font = "600 10px Manrope, system-ui, sans-serif"
+  ctx.textAlign = "center"
+  ctx.textBaseline = "top"
+  for (let i = 0; i <= ticks; i += 1) {
+    const x = inner.x + (inner.width * i) / ticks
+    const label = Math.round(((size - 1) * i) / ticks)
+    ctx.beginPath()
+    ctx.moveTo(x, inner.y + inner.height)
+    ctx.lineTo(x, inner.y + inner.height + 4)
+    ctx.stroke()
+    ctx.fillText(String(label), x, inner.y + inner.height + 7)
+  }
+  ctx.textAlign = "right"
+  ctx.textBaseline = "middle"
+  for (let i = 0; i <= ticks; i += 1) {
+    const y = inner.y + inner.height - (inner.height * i) / ticks
+    const label = Math.round(((size - 1) * i) / ticks)
+    ctx.beginPath()
+    ctx.moveTo(inner.x - 4, y)
+    ctx.lineTo(inner.x, y)
+    ctx.stroke()
+    ctx.fillText(String(label), inner.x - 7, y)
+  }
+  ctx.textAlign = "left"
+  ctx.fillStyle = "#43556c"
+  ctx.font = "700 11px Manrope, system-ui, sans-serif"
+  ctx.fillText("x", inner.x + inner.width + 6, inner.y + inner.height + 7)
+  ctx.textAlign = "right"
+  ctx.fillText("y", inner.x - 8, inner.y - 8)
+  ctx.restore()
+}
+
+function drawSandboxMarker(cell, inner) {
+  if (!cell) return
+  const gridW = inner.width / (sandbox.size - 1)
+  const gridH = inner.height / (sandbox.size - 1)
+  const cx = inner.x + cell.x * gridW
+  const cy = inner.y + cell.y * gridH
+  ctx.save()
+  ctx.setLineDash([4, 4])
+  ctx.strokeStyle = "rgba(15, 79, 43, 0.4)"
+  ctx.lineWidth = 1.2
+  ctx.beginPath()
+  ctx.moveTo(cx, cy)
+  ctx.lineTo(cx, inner.y + inner.height)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(cx, cy)
+  ctx.lineTo(inner.x, cy)
+  ctx.stroke()
+  ctx.restore()
+
+  const x0 = Math.max(inner.x, cx - gridW / 2)
+  const y0 = Math.max(inner.y, cy - gridH / 2)
+  const x1 = Math.min(inner.x + inner.width, cx + gridW / 2)
+  const y1 = Math.min(inner.y + inner.height, cy + gridH / 2)
+  ctx.save()
+  ctx.fillStyle = "rgba(255, 255, 255, 0.28)"
+  ctx.fillRect(x0, y0, x1 - x0, y1 - y0)
+  ctx.strokeStyle = "#0f4f2b"
+  ctx.lineWidth = 2.5
+  ctx.strokeRect(x0, y0, x1 - x0, y1 - y0)
+  ctx.restore()
+
+  const text = `x = ${cell.x} · y = ${cell.y} · h = ${cell.value.toFixed(3)}`
+  ctx.save()
+  ctx.font = "700 11px Manrope, system-ui, sans-serif"
+  const width = ctx.measureText(text).width + 16
+  let bx = cx + 12
+  let by = cy - 32
+  if (bx + width > inner.x + inner.width) bx = cx - width - 12
+  if (by < inner.y) by = cy + 16
+  ctx.fillStyle = "rgba(7, 17, 28, 0.82)"
+  ctx.fillRect(bx, by, width, 24)
+  ctx.fillStyle = "#eaf3fd"
+  ctx.textAlign = "left"
+  ctx.textBaseline = "middle"
+  ctx.fillText(text, bx + 8, by + 12)
+  ctx.restore()
+}
+
+function renderSandbox() {
+  const margin = { left: 48, right: 16, top: 16, bottom: 38 }
+  const inner = {
+    x: margin.left,
+    y: margin.top,
+    width: W - margin.left - margin.right,
+    height: H - margin.top - margin.bottom,
+  }
+  sandboxGeometry = { inner, size: sandbox.size }
+  const resW = Math.max(180, Math.round(inner.width / 2))
+  const resH = Math.max(120, Math.round(inner.height / 2))
   const image = ctx.createImageData(resW, resH)
   for (let py = 0; py < resH; py += 1) {
     for (let px = 0; px < resW; px += 1) {
@@ -214,25 +462,30 @@ function renderSandbox() {
   offscreen.getContext("2d").putImageData(image, 0, 0)
   ctx.save()
   ctx.imageSmoothingEnabled = true
-  ctx.drawImage(offscreen, 0, 0, W, H)
+  ctx.drawImage(offscreen, inner.x, inner.y, inner.width, inner.height)
+  ctx.restore()
+
   if ((params.grid || !params.smooth) && sandbox.size <= 33) {
+    ctx.save()
     ctx.strokeStyle = "rgba(255, 255, 255, 0.28)"
     ctx.lineWidth = 1
     const cells = sandbox.size - 1
     for (let i = 1; i < cells; i += 1) {
-      const x = (i / cells) * W
-      const y = (i / cells) * H
+      const x = inner.x + (i / cells) * inner.width
+      const y = inner.y + (i / cells) * inner.height
       ctx.beginPath()
-      ctx.moveTo(x, 0)
-      ctx.lineTo(x, H)
+      ctx.moveTo(x, inner.y)
+      ctx.lineTo(x, inner.y + inner.height)
       ctx.stroke()
       ctx.beginPath()
-      ctx.moveTo(0, y)
-      ctx.lineTo(W, y)
+      ctx.moveTo(inner.x, y)
+      ctx.lineTo(inner.x + inner.width, y)
       ctx.stroke()
     }
+    ctx.restore()
   }
-  ctx.restore()
+  drawSandboxAxes(inner)
+  drawSandboxMarker(sandboxHover || sandboxPinned, inner)
 }
 
 function drawBackground() {
@@ -264,42 +517,94 @@ function draw() {
     renderSandbox()
     return
   }
-  if (step === 6) {
+  const config = stepConfigs[step]
+  if (config.terrain) {
     drawTutorialTerrain()
     return
   }
-  const phase = tutorial.phases[step === 5 ? 4 : step]
-  drawGrid(phase, step !== 5)
+  if (config.smooth) {
+    drawSmoothedTutorial()
+    return
+  }
+  drawGrid(config, hoverCell || pinnedCell || defaultFocus)
 }
 
-function calcText(phase) {
-  if (!phase.added.length) return "Углы заданы случайными числами. Остальные клетки пока пустые."
-  const cell = phase.added[0]
-  const neighborValues = cell.neighbors.map((item) => item.value.toFixed(2))
-  const average = (cell.average).toFixed(2)
-  const offset = `${cell.offset >= 0 ? "+" : ""}${cell.offset.toFixed(2)}`
-  const kind = phase.kind === "diamond" ? "среднее четырёх углов" : `среднее ${cell.neighbors.length} соседей`
-  return `${kind}: (${neighborValues.join(" + ")}) / ${cell.neighbors.length} = ${average}. Случайное смещение: ${offset}. Новая высота: ${cell.value.toFixed(2)}.`
+function formulaForStep(index) {
+  if (index === 0) return "h = random()"
+  if (index === 1 || index === 2) return "h = (h₁ + h₂ + h₃ + h₄) / 4 + rand(−r, +r)"
+  if (index === 3 || index === 4) return "h = (h₁ + … + hₙ) / n + rand(−r, +r)\nn = 3 на краю, 4 внутри"
+  if (index === 5) return "h = (h₁ + h₂ + h₃ + h₄) / 4 + rand(−r, +r)\nшаг и r уменьшились вдвое"
+  if (index === 6) return "h = (h₁ + … + hₙ) / n + rand(−r, +r)"
+  if (index === 7) return "все высоты h(x, y) известны"
+  if (index === 8) return "h(u,v) = (1−u)(1−v)·h₀₀ + u(1−v)·h₁₀ + (1−u)v·h₀₁ + uv·h₁₁"
+  return "цвет = палитра(h, уровень воды)"
+}
+
+function describeCell(info) {
+  const values = info.neighbors.map((item) => item.value.toFixed(2))
+  const offset = `${info.offset >= 0 ? "+" : ""}${info.offset.toFixed(2)}`
+  return `(${values.join(" + ")}) / ${info.neighbors.length} = ${info.average.toFixed(2)}; смещение ${offset}; h = ${info.value.toFixed(2)}.`
+}
+
+function defaultCalc(index) {
+  if (index === 0) return "Углы заданы случайными числами. Остальные клетки пока пустые."
+  if (index === 7) return "Все 25 высот известны. Теперь поле можно сгладить."
+  if (index === 8) return "Высоты между центрами клеток интерполируются — резкие границы исчезают."
+  if (index === 9) return "Низкие высоты — вода, затем песок, трава, камни и снег."
+  return "Наведите на вычисленную клетку, чтобы увидеть расчёт."
+}
+
+function updateTutorialUi() {
+  const config = stepConfigs[step]
+  if (config.grid === undefined) {
+    els.cellInfo.textContent = step === 8
+      ? "Сглаживание — отдельный шаг после построения поля."
+      : "Это пример раскраски высот на большой сетке."
+    els.stepCalc.textContent = defaultCalc(step)
+    return
+  }
+  const focus = hoverCell || pinnedCell || defaultFocus
+  if (!focus) {
+    els.cellInfo.textContent = "Наведите на значение в клетке — покажу её координаты и высоту."
+    els.stepCalc.textContent = defaultCalc(step)
+    return
+  }
+  const gridPhase = tutorial.phases[config.grid]
+  const arrowPhase = config.arrows !== null ? tutorial.phases[config.arrows] : null
+  const value = gridPhase.grid[focus.y][focus.x]
+  const info = arrowPhase
+    ? arrowPhase.added.find((item) => item.x === focus.x && item.y === focus.y)
+    : null
+  const valueText = value === null ? "клетка пока пустая" : `высота ${value.toFixed(2)}`
+  const sourceText = info && info.neighbors.length
+    ? ` · источники: ${info.neighbors.map((item) => `(${item.x},${item.y})`).join(", ")}`
+    : ""
+  els.cellInfo.textContent = `x = ${focus.x}, y = ${focus.y} · ${valueText}${sourceText}`
+  els.stepCalc.textContent = info ? describeCell(info) : defaultCalc(step)
 }
 
 function setStep(next) {
   step = Math.max(0, Math.min(steps.length - 1, next))
   const current = steps[step]
+  const config = stepConfigs[step]
+  hoverCell = null
+  pinnedCell = null
+  if (config && config.arrows !== null && config.arrows !== undefined) {
+    const first = tutorial.phases[config.arrows].added[0]
+    defaultFocus = first ? { x: first.x, y: first.y } : null
+  } else if (step === 0) {
+    defaultFocus = { x: 0, y: 0 }
+  } else {
+    defaultFocus = null
+  }
   els.stepKicker.textContent = `Шаг ${step + 1} из ${steps.length}`
   els.stepTitle.textContent = current.title
   els.stepText.textContent = current.text
-  if (step === 0) {
-    els.stepCalc.textContent = "Углы заданы случайными числами. Остальные клетки пока пустые."
-  } else if (step === 5) {
-    els.stepCalc.textContent = "Все 25 высот известны. В большой сетке шаги повторяются до полного заполнения."
-  } else if (step === 6) {
-    els.stepCalc.textContent = "Низкие высоты — вода, затем песок, трава, камни и снег."
-  } else {
-    els.stepCalc.textContent = calcText(tutorial.phases[step])
-  }
+  els.stepFormula.textContent = formulaForStep(step)
+  updateTutorialUi()
   els.stepBack.disabled = step === 0
   els.stepNext.textContent = step === steps.length - 1 ? "В песочницу" : "Дальше"
-  setHint(step === 6 ? "Карта высот превратилась в рельеф" : "", "top")
+  setHint("", "top")
   if (level === 1) draw()
 }
 
@@ -318,7 +623,10 @@ function setLevel(next) {
   if (level === 2) {
     readParams()
     updateStatus()
-    setHint("Меняйте размер, шероховатость и уровень воды", "bottom")
+    sandboxHover = null
+    sandboxPinned = null
+    updateSandboxInfo()
+    setHint("", "bottom")
     draw()
   } else {
     setStep(step)
@@ -345,6 +653,9 @@ function updateStatus() {
 
 function regenerate() {
   sandbox = generateDiamondSquare(params.size, params.roughness, params.seed)
+  sandboxHover = null
+  sandboxPinned = null
+  updateSandboxInfo()
 }
 
 function syncControls() {
@@ -381,6 +692,97 @@ function resize() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   draw()
 }
+
+function canvasPoint(event) {
+  const rect = canvas.getBoundingClientRect()
+  return {
+    x: (event.clientX - rect.left) * (W / rect.width),
+    y: (event.clientY - rect.top) * (H / rect.height),
+  }
+}
+
+function tutorialCellAt(event) {
+  if (!tutorialGeometry) return null
+  const { left, top, cell, size } = tutorialGeometry
+  const point = canvasPoint(event)
+  const x = Math.floor((point.x - left) / cell)
+  const y = Math.floor((point.y - top) / cell)
+  if (x < 0 || y < 0 || x >= size || y >= size) return null
+  return { x, y }
+}
+
+function sandboxCellAt(event) {
+  if (!sandboxGeometry) return null
+  const { inner, size } = sandboxGeometry
+  const point = canvasPoint(event)
+  if (point.x < inner.x || point.x > inner.x + inner.width || point.y < inner.y || point.y > inner.y + inner.height) {
+    return null
+  }
+  const nx = (point.x - inner.x) / inner.width
+  const ny = (point.y - inner.y) / inner.height
+  const x = Math.max(0, Math.min(size - 1, Math.round(nx * (size - 1))))
+  const y = Math.max(0, Math.min(size - 1, Math.round(ny * (size - 1))))
+  return { x, y, value: sandbox.grid[y][x] }
+}
+
+function updateSandboxInfo() {
+  const cell = sandboxHover || sandboxPinned
+  els.sandboxCellInfo.textContent = cell
+    ? `x = ${cell.x}, y = ${cell.y} · высота ${cell.value.toFixed(3)}`
+    : "Наведите на рельеф — покажу координаты и высоту."
+}
+
+canvas.addEventListener("pointermove", (event) => {
+  if (level === 1) {
+    const config = stepConfigs[step]
+    if (config.grid === undefined) return
+    const cell = tutorialCellAt(event)
+    if (!cell) return
+    if (hoverCell && hoverCell.x === cell.x && hoverCell.y === cell.y) return
+    hoverCell = cell
+    updateTutorialUi()
+    draw()
+    return
+  }
+  const cell = sandboxCellAt(event)
+  if (!cell) return
+  if (sandboxHover && sandboxHover.x === cell.x && sandboxHover.y === cell.y) return
+  sandboxHover = cell
+  updateSandboxInfo()
+  draw()
+})
+
+canvas.addEventListener("pointerleave", () => {
+  if (level === 1) {
+    hoverCell = null
+    updateTutorialUi()
+    draw()
+    return
+  }
+  sandboxHover = null
+  updateSandboxInfo()
+  draw()
+})
+
+canvas.addEventListener("click", (event) => {
+  if (level === 1) {
+    const config = stepConfigs[step]
+    if (config.grid === undefined) return
+    const cell = tutorialCellAt(event)
+    if (!cell) return
+    if (pinnedCell && pinnedCell.x === cell.x && pinnedCell.y === cell.y) pinnedCell = null
+    else pinnedCell = cell
+    updateTutorialUi()
+    draw()
+    return
+  }
+  const cell = sandboxCellAt(event)
+  if (!cell) return
+  if (sandboxPinned && sandboxPinned.x === cell.x && sandboxPinned.y === cell.y) sandboxPinned = null
+  else sandboxPinned = cell
+  updateSandboxInfo()
+  draw()
+})
 
 tabs.forEach((tab) => tab.addEventListener("click", () => setLevel(Number(tab.dataset.level))))
 els.stepBack.addEventListener("click", () => setStep(step - 1))
