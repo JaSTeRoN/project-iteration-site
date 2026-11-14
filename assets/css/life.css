@@ -144,6 +144,40 @@
   color: #4b657f;
 }
 
+.life-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 8px;
+  color: #5a7087;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.life-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.life-swatch {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+}
+
+.life-swatch.target { background: #f4a261; border: 1px solid #7a3f00; }
+.life-swatch.neighbour { background: #2f80ed; }
+.life-swatch.alive { background: #2f9e63; }
+
+.life-legend-note {
+  margin-left: auto;
+  color: #43556c;
+  font-weight: 600;
+}
+
 .life-calc {
   margin-top: 8px !important;
   padding: 8px 10px;

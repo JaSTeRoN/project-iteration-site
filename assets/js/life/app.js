@@ -59,16 +59,39 @@ function blinkerPair() {
   return [first, second]
 }
 
-function gliderPair() {
+function gliderGenerations() {
   const first = makeBoard(9, 9)
   stampPattern(first, PATTERNS.glider, 2, 2)
-  let current = first
-  for (let i = 0; i < 4; i += 1) current = stepLife(current).board
-  return [first, current]
+  const generations = [first]
+  for (let i = 0; i < 4; i += 1) {
+    generations.push(stepLife(generations[generations.length - 1]).board)
+  }
+  return generations
 }
 
 const [blinkerBefore, blinkerAfter] = blinkerPair()
-const [gliderBefore, gliderAfter] = gliderPair()
+const gliderGens = gliderGenerations()
+const gliderTexts = [
+  "Первое поколение: планер перестраивается. Оранжевые клетки родились, красные крестики — клетки, которые погибли.",
+  "Второе поколение: форма снова меняется. Смотри, как рождения и смерти постепенно сдвигают всю фигуру.",
+  "Третье поколение: планер продолжает перестраиваться, но остаётся той же фигурой из пяти клеток.",
+  "Четвёртое поколение: планер вернулся к исходной форме, но сместился на одну клетку вправо и вниз.",
+]
+const gliderSteps = gliderGens.slice(0, 4).map((before, index) => {
+  const after = gliderGens[index + 1]
+  const transition = stepLife(before)
+  const born = transition.born.length
+  const died = transition.died.length
+  return {
+    title: `Планер: ${index} → ${index + 1}`,
+    text: gliderTexts[index],
+    boards: [before, after],
+    labels: [`поколение ${index}`, `поколение ${index + 1}`],
+    timeline: { values: [0, 1, 2, 3, 4], active: index },
+    result: "планер",
+    calc: `Родилось: ${born} · умерло: ${died}.${index === 3 ? " Итог: смещение на (1, 1)." : ""}`,
+  }
+})
 
 const steps = [
   {
@@ -119,14 +142,7 @@ const steps = [
     result: "мигалка",
     calc: "Три клетки по горизонтали → три по вертикали → снова по горизонтали.",
   },
-  {
-    title: "Из правил — движение",
-    text: "Простые правила порождают устойчивые фигуры. Планер за четыре поколения смещается на одну клетку вправо и вниз, сохраняя форму.",
-    boards: [gliderBefore, gliderAfter],
-    labels: ["поколение 0", "поколение 4"],
-    result: "планер",
-    calc: "Четыре поколения → вся фигура сдвинулась на (1, 1).",
-  },
+  ...gliderSteps,
 ]
 
 let W = 0
@@ -242,6 +258,9 @@ function drawBoard(board, left, top, cell, options = {}) {
   const cols = board[0].length
   const focus = options.focus || null
   const changed = options.changed || new Map()
+  const spotlight = Boolean(options.spotlight && focus)
+  const dimAll = Boolean(options.dimAll)
+  const targetAlive = focus ? board[focus.y][focus.x] === 1 : false
   ctx.save()
   for (let y = 0; y < rows; y += 1) {
     for (let x = 0; x < cols; x += 1) {
@@ -251,7 +270,35 @@ function drawBoard(board, left, top, cell, options = {}) {
       ctx.fillRect(px, py, cell, cell)
     }
   }
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.7)"
+  if (dimAll) {
+    ctx.fillStyle = "rgba(7, 17, 28, 0.62)"
+    ctx.fillRect(left, top, cols * cell, rows * cell)
+  } else if (spotlight) {
+    ctx.fillStyle = "rgba(7, 17, 28, 0.62)"
+    for (let y = 0; y < rows; y += 1) {
+      for (let x = 0; x < cols; x += 1) {
+        if (Math.abs(x - focus.x) <= 1 && Math.abs(y - focus.y) <= 1) continue
+        ctx.fillRect(left + x * cell, top + y * cell, cell, cell)
+      }
+    }
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        if (dx === 0 && dy === 0) continue
+        const nx = focus.x + dx
+        const ny = focus.y + dy
+        if (nx < 0 || ny < 0 || nx >= cols || ny >= rows) continue
+        if (board[ny][nx]) {
+          ctx.fillStyle = "#2f80ed"
+          ctx.fillRect(left + nx * cell, top + ny * cell, cell + 0.5, cell + 0.5)
+        }
+      }
+    }
+  }
+  if (focus) {
+    ctx.fillStyle = "#f4a261"
+    ctx.fillRect(left + focus.x * cell, top + focus.y * cell, cell + 0.5, cell + 0.5)
+  }
+  ctx.strokeStyle = dimAll ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.7)"
   ctx.lineWidth = 1
   for (let i = 0; i <= cols; i += 1) {
     ctx.beginPath()
@@ -266,6 +313,7 @@ function drawBoard(board, left, top, cell, options = {}) {
     ctx.stroke()
   }
   for (const [key, item] of changed) {
+    if (spotlight || dimAll) break
     const [x, y] = key.split(":").map(Number)
     if (item === "born") {
       ctx.strokeStyle = "#ff8a3d"
@@ -299,9 +347,25 @@ function drawBoard(board, left, top, cell, options = {}) {
         ctx.restore()
       }
     }
+    const cx = px + cell / 2
+    const cy = py + cell / 2
     ctx.save()
-    ctx.strokeStyle = "#ff8a3d"
-    ctx.setLineDash(board[focus.y][focus.x] ? [] : [5, 4])
+    ctx.beginPath()
+    ctx.arc(cx, cy, cell * 0.17, 0, Math.PI * 2)
+    if (targetAlive) {
+      ctx.fillStyle = "#146b3a"
+      ctx.fill()
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
+      ctx.lineWidth = 2
+      ctx.stroke()
+    } else {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.35)"
+      ctx.fill()
+      ctx.strokeStyle = "#5b3a12"
+      ctx.lineWidth = 2
+      ctx.stroke()
+    }
+    ctx.strokeStyle = "#7a3f00"
     ctx.lineWidth = 3
     ctx.strokeRect(px + 1, py + 1, cell - 2, cell - 2)
     ctx.restore()
@@ -325,13 +389,13 @@ function drawBoard(board, left, top, cell, options = {}) {
   ctx.restore()
 }
 
-function drawSingle(board, focus) {
+function drawSingle(board, focus, spotlight = false) {
   const size = board.length
   const cell = Math.min((W * 0.68) / size, (H * 0.7) / size)
   const left = (W - cell * size) / 2
   const top = (H - cell * size) / 2
   lifeGeometries = [{ boardIndex: 0, board, left, top, cell, size, mode: "single" }]
-  drawBoard(board, left, top, cell, { focus })
+  drawBoard(board, left, top, cell, { focus, spotlight })
   ctx.save()
   ctx.fillStyle = "#5a7087"
   ctx.font = "600 11px Manrope, system-ui, sans-serif"
@@ -344,13 +408,50 @@ function drawSingle(board, focus) {
   ctx.restore()
 }
 
-function drawTwo(boards, labels) {
+function drawTimeline(timeline) {
+  const values = timeline.values
+  const startX = W * 0.28
+  const endX = W * 0.72
+  const y = 48
+  ctx.save()
+  ctx.strokeStyle = "rgba(47, 93, 145, 0.45)"
+  ctx.lineWidth = 2
+  ctx.beginPath()
+  ctx.moveTo(startX, y)
+  ctx.lineTo(endX, y)
+  ctx.stroke()
+  values.forEach((value, index) => {
+    const x = startX + ((endX - startX) * index) / (values.length - 1)
+    const active = index === timeline.active || index === timeline.active + 1
+    ctx.beginPath()
+    ctx.arc(x, y, active ? 10 : 7, 0, Math.PI * 2)
+    ctx.fillStyle = active ? "#146b3a" : "#eef4fb"
+    ctx.fill()
+    ctx.strokeStyle = active ? "#146b3a" : "rgba(47, 93, 145, 0.5)"
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.fillStyle = active ? "#ffffff" : "#334d68"
+    ctx.font = "800 10px Manrope, system-ui, sans-serif"
+    ctx.textAlign = "center"
+    ctx.textBaseline = "middle"
+    ctx.fillText(String(value), x, y + 0.5)
+  })
+  ctx.fillStyle = "#5a7087"
+  ctx.font = "600 11px Manrope, system-ui, sans-serif"
+  ctx.textAlign = "center"
+  ctx.textBaseline = "top"
+  ctx.fillText("поколения", (startX + endX) / 2, y + 16)
+  ctx.restore()
+}
+
+function drawTwo(boards, labels, timeline = null) {
+  if (timeline) drawTimeline(timeline)
   const size = boards[0].length
-  const gap = 54
+  const gap = W < 520 ? 30 : 54
   const cell = Math.min((W - gap * 3) / (size * 2), (H * 0.62) / size)
   const total = cell * size * 2 + gap
   const left = (W - total) / 2
-  const top = H * 0.22
+  const top = timeline ? Math.max(H * 0.27, 128) : H * 0.22
   lifeGeometries = []
   boards.forEach((board, index) => {
     const boardLeft = left + index * (cell * size + gap)
@@ -365,11 +466,12 @@ function drawTwo(boards, labels) {
         }
       }
     }
-    const focus = (hoverCell || pinnedCell) && (hoverCell || pinnedCell).boardIndex === index
-      ? (hoverCell || pinnedCell)
-      : null
+    const pinned = pinnedCell && pinnedCell.boardIndex === index ? pinnedCell : null
+    const hover = !pinnedCell && hoverCell && hoverCell.boardIndex === index ? hoverCell : null
+    const focus = pinned || hover
+    const dimAll = Boolean(pinnedCell && pinnedCell.boardIndex !== index)
     lifeGeometries.push({ boardIndex: index, board, left: boardLeft, top: boardTop, cell, size, mode: "pair" })
-    drawBoard(board, boardLeft, boardTop, cell, { focus, changed })
+    drawBoard(board, boardLeft, boardTop, cell, { focus, changed, spotlight: Boolean(pinned), dimAll })
     ctx.save()
     ctx.fillStyle = "#5a7087"
     ctx.font = "700 12px Manrope, system-ui, sans-serif"
@@ -400,10 +502,11 @@ function drawTwo(boards, labels) {
 function drawStep() {
   const current = steps[step]
   if (current.boards) {
-    drawTwo(current.boards, current.labels)
+    drawTwo(current.boards, current.labels, current.timeline || null)
     return
   }
-  drawSingle(current.board, hoverCell || pinnedCell || current.focus)
+  const focus = pinnedCell || hoverCell || current.focus
+  drawSingle(current.board, focus, Boolean(pinnedCell))
 }
 
 function drawSandbox() {
@@ -501,15 +604,16 @@ function updateLifeUi() {
   els.stepTitle.textContent = current.title
   els.stepText.textContent = current.text
   els.stepFormula.textContent = "next = alive ? (2 ≤ n ≤ 3)\n       : (n = 3)"
-  const focus = hoverCell || pinnedCell || current.focus
+  const focus = pinnedCell || hoverCell || current.focus
   if (current.boards) {
     if (focus) {
       const board = current.boards[focus.boardIndex]
       const alive = board[focus.y][focus.x] === 1
       const neighbors = countNeighbors(board, focus.x, focus.y, false)
-      els.cellInfo.textContent = `${current.labels[focus.boardIndex]}: клетка (${focus.x}, ${focus.y}) ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}`
+      const mode = pinnedCell ? " · режим проверки" : ""
+      els.cellInfo.textContent = `${current.labels[focus.boardIndex]}: клетка (${focus.x}, ${focus.y}) ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}${mode}`
     } else {
-      els.cellInfo.textContent = "Наведите на клетку — покажу её состояние и число соседей."
+      els.cellInfo.textContent = "Наведите на клетку — покажу её состояние и число соседей. Клик включает режим проверки."
     }
     els.stepResult.textContent = current.result
     els.stepResult.className = "life-result born"
@@ -521,7 +625,8 @@ function updateLifeUi() {
   const alive = board[cell.y][cell.x] === 1
   const neighbors = countNeighbors(board, cell.x, cell.y, false)
   const result = resultFor(alive, neighbors)
-  els.cellInfo.textContent = `x = ${cell.x}, y = ${cell.y} · ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}`
+  const mode = pinnedCell ? " · режим проверки" : ""
+  els.cellInfo.textContent = `x = ${cell.x}, y = ${cell.y} · ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}${mode}`
   els.stepResult.textContent = result.text
   els.stepResult.className = `life-result ${result.kind}`
   els.stepCalc.textContent = `n = ${neighbors} · клетка ${alive ? "живая" : "мёртвая"} → ${result.text}.`
@@ -654,6 +759,7 @@ canvas.addEventListener("pointermove", (event) => {
   }
   const cell = lifeCellAt(event)
   if (!cell) return
+  if (pinnedCell) return
   if (hoverCell && hoverCell.x === cell.x && hoverCell.y === cell.y && hoverCell.boardIndex === cell.boardIndex) return
   hoverCell = cell
   updateLifeUi()
@@ -703,6 +809,7 @@ canvas.addEventListener("click", (event) => {
   if (!cell) return
   if (pinnedCell && pinnedCell.x === cell.x && pinnedCell.y === cell.y && pinnedCell.boardIndex === cell.boardIndex) pinnedCell = null
   else pinnedCell = cell
+  hoverCell = null
   updateLifeUi()
   draw()
 })
