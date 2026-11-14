@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Шум Перлина — Итерация-8</title>
+  <meta name="description" content="Интерактивное объяснение шума Перлина: градиенты, плавное смешивание, октавы и песочница с ландшафтом.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/perlin.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"><span class="brand-home">| Главная</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть разделы">
+      <span class="nav-toggle-title">Приложения</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+      <a href="about.html">О курсе</a>
+    </nav>
+  </header>
+
+  <main class="wrap perlin-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/perlin_noise.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Шум Перлина</h1>
+        <p>Плавный случайный шум: разбираем по шагам, как из градиентов получаются горы, облака и берега.</p>
+      </div>
+    </div>
+
+    <section class="perlin-card" aria-label="Интерактивное приложение">
+      <div class="perlin-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Как устроен шум</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Песочница</button>
+      </div>
+
+      <div class="perlin-layout">
+        <div class="perlin-stage">
+          <canvas id="perlin-canvas" aria-label="График шума Перлина"></canvas>
+          <p class="perlin-overlay" id="canvas-hint"></p>
+        </div>
+
+        <aside class="perlin-side">
+          <section class="perlin-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+            <p class="perlin-kicker" id="step-kicker">Шаг 1 из 7</p>
+            <h2 id="step-title">Рваный случайный шум</h2>
+            <p id="step-text">Если брать случайное число в каждой точке, получается рваная кривая: соседние значения никак не связаны. Для гор, облаков и текстур нужен шум, у которого соседние значения переходят друг в друга плавно.</p>
+            <label class="perlin-field" id="sample-field" hidden>Точка на графике
+              <input id="perlin-sample" type="range" min="0" max="499" step="1" value="135">
+            </label>
+            <div class="perlin-actions">
+              <button type="button" id="step-back">Назад</button>
+              <button type="button" class="primary" id="step-next">Дальше</button>
+            </div>
+            <button type="button" class="quiet" id="step-reset">Начать заново</button>
+          </section>
+
+          <section class="perlin-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="perlin-kicker">Песочница</p>
+            <h2>Собери ландшафт</h2>
+            <p class="perlin-note">Меняйте параметры — карта пересчитывается сразу. Чем больше октав, тем больше мелких деталей. Настойчивость задаёт силу мелких слоёв, лакунарность — их масштаб.</p>
+
+            <label class="perlin-field" for="scale">Масштаб: <output id="scale-output">4.0</output>
+              <input id="scale" type="range" min="1" max="10" step="0.5" value="4">
+            </label>
+            <label class="perlin-field" for="octaves">Октавы: <output id="octaves-output">4</output>
+              <input id="octaves" type="range" min="1" max="6" step="1" value="4">
+            </label>
+            <label class="perlin-field" for="persistence">Настойчивость: <output id="persistence-output">0.50</output>
+              <input id="persistence" type="range" min="0.2" max="0.8" step="0.05" value="0.5">
+            </label>
+            <label class="perlin-field" for="lacunarity">Лакунарность: <output id="lacunarity-output">2.0</output>
+              <input id="lacunarity" type="range" min="1.5" max="3" step="0.1" value="2">
+            </label>
+            <label class="perlin-field" for="sea">Уровень воды: <output id="sea-output">0.45</output>
+              <input id="sea" type="range" min="0.2" max="0.8" step="0.01" value="0.45">
+            </label>
+
+            <label class="perlin-field" for="palette">Цвета
+              <select id="palette">
+                <option value="terrain">Ландшафт</option>
+                <option value="gray">Оттенки серого</option>
+                <option value="heat">Тепловая карта</option>
+              </select>
+            </label>
+
+            <div class="perlin-actions">
+              <button type="button" class="primary" id="randomize">Новый ландшафт</button>
+              <button type="button" id="reset">Сброс</button>
+            </div>
+            <p class="perlin-note" id="sandbox-status" role="status">Сид: 37. Октав: 4.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
+  </footer>
+
+  <script type="module" src="assets/js/perlin/app.js"></script>
+  <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/footer.js" defer></script>
+</body>
+</html>
