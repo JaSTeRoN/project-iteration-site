@@ -18,6 +18,11 @@ const els = {
   stepFormula: document.querySelector("#step-formula"),
   stepCalc: document.querySelector("#step-calc"),
   cellInfo: document.querySelector("#cell-info"),
+  smoothField: document.querySelector("#smooth-field"),
+  smoothRange: document.querySelector("#smooth-range"),
+  smoothOutput: document.querySelector("#smooth-output"),
+  smoothActions: document.querySelector("#smooth-actions"),
+  smoothReplay: document.querySelector("#smooth-replay"),
   stepBack: document.querySelector("#step-back"),
   stepNext: document.querySelector("#step-next"),
   stepReset: document.querySelector("#step-reset"),
@@ -52,6 +57,8 @@ let pinnedCell = null
 let defaultFocus = null
 let sandboxHover = null
 let sandboxPinned = null
+let smoothT = 0
+let smoothFrame = 0
 
 const steps = [
   {
@@ -83,16 +90,12 @@ const steps = [
     text: "Осталось заполнить середины сторон у маленьких ромбов. Снова усредняем соседей и добавляем небольшое случайное смещение.",
   },
   {
-    title: "Все высоты заполнены",
-    text: "Мы получили полную карту высот 5 × 5 в клетках. Теперь её можно сгладить: интерполировать значения между центрами клеток.",
+    title: "Все высоты: сетка 33 × 33",
+    text: "Вот полностью построенное поле из клеток 33 × 33. Каждая клетка — вычисленная высота; наведите на неё, чтобы увидеть координаты и значение. Границы клеток пока отчётливо видны.",
   },
   {
-    title: "Сглаживаем высоты",
-    text: "Сглаживание — отдельный шаг. Между центрами клеток высоты плавно интерполируются, поэтому резкие границы клеток исчезают, а рельеф становится непрерывным.",
-  },
-  {
-    title: "Раскрашиваем рельеф",
-    text: "Сглаженные высоты раскрашиваются: низкие значения — вода, выше — песок, трава, камни и снег. На рисунке — пример для сетки 33 × 33.",
+    title: "Сглаживаем поле",
+    text: "Теперь интерполируем высоты между центрами клеток. Двигайте ползунок: при 0% видна сетка из клеток, при 100% — непрерывный рельеф без резких границ.",
   },
 ]
 
@@ -104,9 +107,8 @@ const stepConfigs = [
   { grid: 2, arrows: 2 },
   { grid: 3, arrows: 3 },
   { grid: 4, arrows: 4 },
-  { grid: 4, arrows: null },
-  { smooth: true },
-  { terrain: true },
+  { fieldGrid: true },
+  { smoothing: true },
 ]
 
 function colorFor(value, sea, palette) {
@@ -274,13 +276,130 @@ function drawGrid(config, focus) {
   ctx.restore()
 }
 
-function drawTutorialTerrain() {
-  const resW = Math.max(160, Math.round(W / 2))
-  const resH = Math.max(120, Math.round(H / 2))
+function fieldGeometry() {
+  const size = 33
+  const side = Math.min(W * 0.78, H * 0.82)
+  return {
+    size,
+    left: (W - side) / 2,
+    top: (H - side) / 2,
+    side,
+    cell: side / size,
+  }
+}
+
+function drawFieldAxes(geometry) {
+  const { left, top, side, size } = geometry
+  const ticks = 4
+  ctx.save()
+  ctx.strokeStyle = "rgba(23, 54, 88, 0.4)"
+  ctx.lineWidth = 1.2
+  ctx.beginPath()
+  ctx.moveTo(left, top + side)
+  ctx.lineTo(left + side, top + side)
+  ctx.stroke()
+  ctx.beginPath()
+  ctx.moveTo(left, top)
+  ctx.lineTo(left, top + side)
+  ctx.stroke()
+  ctx.fillStyle = "#5a7087"
+  ctx.font = "600 10px Manrope, system-ui, sans-serif"
+  ctx.textAlign = "center"
+  ctx.textBaseline = "top"
+  for (let i = 0; i <= ticks; i += 1) {
+    const x = left + (side * i) / ticks
+    const label = Math.round(((size - 1) * i) / ticks)
+    ctx.fillText(String(label), x, top + side + 7)
+  }
+  ctx.textAlign = "right"
+  ctx.textBaseline = "middle"
+  for (let i = 0; i <= ticks; i += 1) {
+    const y = top + side - (side * i) / ticks
+    const label = Math.round(((size - 1) * i) / ticks)
+    ctx.fillText(String(label), left - 7, y)
+  }
+  ctx.restore()
+}
+
+function fieldCellFromGeometry(event, geometry) {
+  const point = canvasPoint(event)
+  const x = Math.floor((point.x - geometry.left) / geometry.cell)
+  const y = Math.floor((point.y - geometry.top) / geometry.cell)
+  if (x < 0 || y < 0 || x >= geometry.size || y >= geometry.size) return null
+  return { x, y }
+}
+
+function drawFieldFocus(cell, geometry) {
+  if (!cell) return
+  const px = geometry.left + cell.x * geometry.cell
+  const py = geometry.top + cell.y * geometry.cell
+  const value = tutorialLandscape.grid[cell.y][cell.x]
+  ctx.save()
+  ctx.strokeStyle = "#0f4f2b"
+  ctx.lineWidth = 3
+  ctx.strokeRect(px, py, geometry.cell, geometry.cell)
+  ctx.restore()
+  const text = `x = ${cell.x} · y = ${cell.y} · h = ${value.toFixed(3)}`
+  ctx.save()
+  ctx.font = "700 11px Manrope, system-ui, sans-serif"
+  const width = ctx.measureText(text).width + 16
+  let bx = px + geometry.cell + 8
+  let by = py - 30
+  if (bx + width > geometry.left + geometry.side) bx = px - width - 8
+  if (by < geometry.top) by = py + geometry.cell + 8
+  ctx.fillStyle = "rgba(7, 17, 28, 0.82)"
+  ctx.fillRect(bx, by, width, 24)
+  ctx.fillStyle = "#eaf3fd"
+  ctx.textAlign = "left"
+  ctx.textBaseline = "middle"
+  ctx.fillText(text, bx + 8, by + 12)
+  ctx.restore()
+}
+
+function drawFieldGrid() {
+  const geometry = fieldGeometry()
+  const { left, top, cell, size } = geometry
+  tutorialGeometry = { ...geometry, mode: "field" }
+  const focus = hoverCell || pinnedCell
+  ctx.save()
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const value = tutorialLandscape.grid[y][x]
+      const [r, g, b] = colorFor(value, 0.45, "terrain")
+      ctx.fillStyle = `rgb(${r}, ${g}, ${b})`
+      ctx.fillRect(left + x * cell, top + y * cell, cell + 0.5, cell + 0.5)
+    }
+  }
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.32)"
+  ctx.lineWidth = 0.6
+  for (let i = 0; i <= size; i += 1) {
+    ctx.beginPath()
+    ctx.moveTo(left + i * cell, top)
+    ctx.lineTo(left + i * cell, top + size * cell)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(left, top + i * cell)
+    ctx.lineTo(left + size * cell, top + i * cell)
+    ctx.stroke()
+  }
+  ctx.restore()
+  drawFieldAxes(geometry)
+  drawFieldFocus(focus, geometry)
+}
+
+function drawSmoothing() {
+  const geometry = fieldGeometry()
+  tutorialGeometry = null
+  const resW = Math.max(180, Math.round(geometry.side / 2))
+  const resH = Math.max(180, Math.round(geometry.side / 2))
   const image = ctx.createImageData(resW, resH)
   for (let py = 0; py < resH; py += 1) {
     for (let px = 0; px < resW; px += 1) {
-      const value = sampleGrid(tutorialLandscape.grid, tutorialLandscape.size, px / (resW - 1), py / (resH - 1))
+      const nx = px / (resW - 1)
+      const ny = py / (resH - 1)
+      const nearest = sampleGrid(tutorialLandscape.grid, 33, nx, ny, false)
+      const smooth = sampleGrid(tutorialLandscape.grid, 33, nx, ny, true)
+      const value = nearest + (smooth - nearest) * smoothT
       const [r, g, b] = colorFor(value, 0.45, "terrain")
       const index = (py * resW + px) * 4
       image.data[index] = r
@@ -295,40 +414,27 @@ function drawTutorialTerrain() {
   offscreen.getContext("2d").putImageData(image, 0, 0)
   ctx.save()
   ctx.imageSmoothingEnabled = true
-  ctx.drawImage(offscreen, 0, 0, W, H)
-  ctx.restore()
-}
-
-function drawSmoothedTutorial() {
-  const resW = Math.max(160, Math.round(W / 2))
-  const resH = Math.max(120, Math.round(H / 2))
-  const image = ctx.createImageData(resW, resH)
-  for (let py = 0; py < resH; py += 1) {
-    for (let px = 0; px < resW; px += 1) {
-      const value = sampleGrid(tutorial.grid, TUTORIAL_SIZE, px / (resW - 1), py / (resH - 1))
-      const shade = Math.round(value * 255)
-      const index = (py * resW + px) * 4
-      image.data[index] = shade
-      image.data[index + 1] = shade
-      image.data[index + 2] = shade
-      image.data[index + 3] = 255
+  ctx.drawImage(offscreen, geometry.left, geometry.top, geometry.side, geometry.side)
+  if (smoothT < 0.98) {
+    ctx.globalAlpha = (1 - smoothT) * 0.45
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.7)"
+    ctx.lineWidth = 0.7
+    const cells = 33
+    for (let i = 0; i <= cells; i += 1) {
+      const x = geometry.left + (i / cells) * geometry.side
+      const y = geometry.top + (i / cells) * geometry.side
+      ctx.beginPath()
+      ctx.moveTo(x, geometry.top)
+      ctx.lineTo(x, geometry.top + geometry.side)
+      ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(geometry.left, y)
+      ctx.lineTo(geometry.left + geometry.side, y)
+      ctx.stroke()
     }
   }
-  const offscreen = document.createElement("canvas")
-  offscreen.width = resW
-  offscreen.height = resH
-  offscreen.getContext("2d").putImageData(image, 0, 0)
-  ctx.save()
-  ctx.imageSmoothingEnabled = true
-  ctx.drawImage(offscreen, 0, 0, W, H)
-  ctx.fillStyle = "rgba(7, 17, 28, 0.72)"
-  ctx.fillRect(12, 12, 190, 28)
-  ctx.fillStyle = "#eaf3fd"
-  ctx.font = "700 13px Manrope, system-ui, sans-serif"
-  ctx.textAlign = "left"
-  ctx.textBaseline = "middle"
-  ctx.fillText("сглаженные высоты", 22, 26)
   ctx.restore()
+  drawFieldAxes(geometry)
 }
 
 function drawSandboxAxes(inner) {
@@ -518,12 +624,12 @@ function draw() {
     return
   }
   const config = stepConfigs[step]
-  if (config.terrain) {
-    drawTutorialTerrain()
+  if (config.fieldGrid) {
+    drawFieldGrid()
     return
   }
-  if (config.smooth) {
-    drawSmoothedTutorial()
+  if (config.smoothing) {
+    drawSmoothing()
     return
   }
   drawGrid(config, hoverCell || pinnedCell || defaultFocus)
@@ -548,18 +654,32 @@ function describeCell(info) {
 
 function defaultCalc(index) {
   if (index === 0) return "Углы заданы случайными числами. Остальные клетки пока пустые."
-  if (index === 7) return "Все 25 высот известны. Теперь поле можно сгладить."
-  if (index === 8) return "Высоты между центрами клеток интерполируются — резкие границы исчезают."
-  if (index === 9) return "Низкие высоты — вода, затем песок, трава, камни и снег."
+  if (index === 7) return "Это полное поле 33 × 33 в клетках. Наведите на клетку, чтобы увидеть высоту."
+  if (index === 8) return "Ползунок показывает переход от клеток к плавному рельефу."
   return "Наведите на вычисленную клетку, чтобы увидеть расчёт."
 }
 
 function updateTutorialUi() {
   const config = stepConfigs[step]
+  if (config.fieldGrid) {
+    const focus = hoverCell || pinnedCell
+    if (!focus) {
+      els.cellInfo.textContent = "Наведите на клетку поля 33 × 33 — покажу координаты и высоту."
+      els.stepCalc.textContent = defaultCalc(step)
+      return
+    }
+    const value = tutorialLandscape.grid[focus.y][focus.x]
+    els.cellInfo.textContent = `x = ${focus.x}, y = ${focus.y} · высота ${value.toFixed(3)}`
+    els.stepCalc.textContent = `Клетка (${focus.x}, ${focus.y}) — одна из 1089 высот готового поля.`
+    return
+  }
+  if (config.smoothing) {
+    els.cellInfo.textContent = "Двигайте ползунок, чтобы увидеть переход от клеток к сглаженному рельефу."
+    els.stepCalc.textContent = defaultCalc(step)
+    return
+  }
   if (config.grid === undefined) {
-    els.cellInfo.textContent = step === 8
-      ? "Сглаживание — отдельный шаг после построения поля."
-      : "Это пример раскраски высот на большой сетке."
+    els.cellInfo.textContent = "Наведите на вычисленную клетку, чтобы увидеть расчёт."
     els.stepCalc.textContent = defaultCalc(step)
     return
   }
@@ -583,12 +703,41 @@ function updateTutorialUi() {
   els.stepCalc.textContent = info ? describeCell(info) : defaultCalc(step)
 }
 
+function stopSmoothingAnimation() {
+  if (smoothFrame) cancelAnimationFrame(smoothFrame)
+  smoothFrame = 0
+}
+
+function updateSmoothControls() {
+  els.smoothOutput.textContent = `${Math.round(smoothT * 100)}%`
+  els.smoothRange.value = String(Math.round(smoothT * 100))
+}
+
+function startSmoothingAnimation() {
+  stopSmoothingAnimation()
+  smoothT = 0
+  updateSmoothControls()
+  draw()
+  const started = performance.now()
+  const duration = 1500
+  const frame = (now) => {
+    const progress = Math.min(1, (now - started) / duration)
+    smoothT = progress * progress * (3 - 2 * progress)
+    updateSmoothControls()
+    draw()
+    if (progress < 1) smoothFrame = requestAnimationFrame(frame)
+    else smoothFrame = 0
+  }
+  smoothFrame = requestAnimationFrame(frame)
+}
+
 function setStep(next) {
   step = Math.max(0, Math.min(steps.length - 1, next))
   const current = steps[step]
   const config = stepConfigs[step]
   hoverCell = null
   pinnedCell = null
+  stopSmoothingAnimation()
   if (config && config.arrows !== null && config.arrows !== undefined) {
     const first = tutorial.phases[config.arrows].added[0]
     defaultFocus = first ? { x: first.x, y: first.y } : null
@@ -601,11 +750,21 @@ function setStep(next) {
   els.stepTitle.textContent = current.title
   els.stepText.textContent = current.text
   els.stepFormula.textContent = formulaForStep(step)
+  const smoothing = Boolean(config && config.smoothing)
+  els.smoothField.hidden = !smoothing
+  els.smoothActions.hidden = !smoothing
+  if (smoothing) {
+    smoothT = 0
+    updateSmoothControls()
+  }
   updateTutorialUi()
   els.stepBack.disabled = step === 0
   els.stepNext.textContent = step === steps.length - 1 ? "В песочницу" : "Дальше"
   setHint("", "top")
-  if (level === 1) draw()
+  if (level === 1) {
+    draw()
+    if (smoothing) requestAnimationFrame(startSmoothingAnimation)
+  }
 }
 
 function setHint(text, placement = "top") {
@@ -616,6 +775,7 @@ function setHint(text, placement = "top") {
 
 function setLevel(next) {
   level = next
+  if (level === 2) stopSmoothingAnimation()
   tabs.forEach((tab) => tab.setAttribute("aria-selected", String(Number(tab.dataset.level) === level)))
   panels.forEach((panel) => {
     panel.hidden = Number(panel.id.replace("panel-", "")) !== level
@@ -735,7 +895,7 @@ function updateSandboxInfo() {
 canvas.addEventListener("pointermove", (event) => {
   if (level === 1) {
     const config = stepConfigs[step]
-    if (config.grid === undefined) return
+    if (config.grid === undefined && !config.fieldGrid) return
     const cell = tutorialCellAt(event)
     if (!cell) return
     if (hoverCell && hoverCell.x === cell.x && hoverCell.y === cell.y) return
@@ -767,7 +927,7 @@ canvas.addEventListener("pointerleave", () => {
 canvas.addEventListener("click", (event) => {
   if (level === 1) {
     const config = stepConfigs[step]
-    if (config.grid === undefined) return
+    if (config.grid === undefined && !config.fieldGrid) return
     const cell = tutorialCellAt(event)
     if (!cell) return
     if (pinnedCell && pinnedCell.x === cell.x && pinnedCell.y === cell.y) pinnedCell = null
@@ -782,6 +942,16 @@ canvas.addEventListener("click", (event) => {
   else sandboxPinned = cell
   updateSandboxInfo()
   draw()
+})
+
+els.smoothRange.addEventListener("input", () => {
+  stopSmoothingAnimation()
+  smoothT = Number(els.smoothRange.value) / 100
+  updateSmoothControls()
+  draw()
+})
+els.smoothReplay.addEventListener("click", () => {
+  startSmoothingAnimation()
 })
 
 tabs.forEach((tab) => tab.addEventListener("click", () => setLevel(Number(tab.dataset.level))))

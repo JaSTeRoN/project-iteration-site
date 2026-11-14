@@ -219,6 +219,14 @@
   accent-color: #146b3a;
 }
 
+.diamond-actions[hidden] {
+  display: none;
+}
+
+.diamond-field[hidden] {
+  display: none;
+}
+
 .diamond-checks {
   display: flex;
   flex-wrap: wrap;

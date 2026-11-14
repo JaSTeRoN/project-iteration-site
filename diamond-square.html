@@ -56,6 +56,12 @@
             <div class="diamond-formula" id="step-formula">h = random()</div>
             <p class="diamond-calc" id="step-calc">Углы заданы случайными числами. Остальные клетки пока пустые.</p>
             <p class="diamond-cell-info" id="cell-info">Наведите на значение в клетке — покажу её координаты и высоту.</p>
+            <label class="diamond-field" id="smooth-field" hidden>Сглаживание: <output id="smooth-output">0%</output>
+              <input id="smooth-range" type="range" min="0" max="100" step="1" value="0">
+            </label>
+            <div class="diamond-actions" id="smooth-actions" hidden>
+              <button type="button" id="smooth-replay">Показать сглаживание ещё раз</button>
+            </div>
             <div class="diamond-actions">
               <button type="button" id="step-back">Назад</button>
               <button type="button" class="primary" id="step-next">Дальше</button>
