@@ -48,20 +48,32 @@ const steps = [
     text: "Если брать случайное число в каждой точке, получается рваная кривая: соседние значения никак не связаны. Для гор, облаков и текстур нужен шум, у которого соседние значения переходят друг в друга плавно.",
   },
   {
-    title: "Градиенты в узлах",
-    text: "Разобьём ось на равные отрезки. В узлах зададим не высоты, а случайные наклоны — градиенты. Наклон показывает, как быстро и в какую сторону меняется шум рядом с узлом.",
+    title: "Один отрезок между узлами",
+    text: "Возьмём один отрезок между двумя узлами A и B и точку P внутри. Для левого узла смещение до P положительное, для правого — отрицательное: точка находится левее B. Эти два числа — dA и dB — показаны синей и красной стрелками.",
   },
   {
-    title: "Вклад соседних градиентов",
-    text: "Для точки между двумя узлами считаем два вклада: градиент левого узла умножаем на расстояние до него, правого — на расстояние до правого узла. Это и есть скалярное произведение градиента на вектор расстояния.",
+    title: "Наклоны в узлах",
+    text: "В каждом узле задан случайный наклон — градиент. Это не высота, а направление и крутизна изменения шума рядом с узлом. Стрелка вверх означает, что вклад растёт, вниз — падает.",
+  },
+  {
+    title: "Влияние левого градиента",
+    text: "Считаем первый вклад: умножаем наклон gA на смещение dA. Если наклон и смещение направлены в одну сторону, вклад положительный; если в разные — отрицательный. На рисунке это синяя вертикальная полоска hA.",
+  },
+  {
+    title: "Влияние правого градиента",
+    text: "То же самое для правого узла: hB = gB × dB. Обрати внимание на знак dB: смещение к правому узлу отрицательное, поэтому знак вклада зависит и от наклона, и от того, с какой стороны находится точка.",
+  },
+  {
+    title: "Смешиваем два влияния",
+    text: "У нас есть два числа hA и hB. Нужно выбрать между ними. Вес t — это положение точки внутри отрезка: 0 у левого узла, 1 у правого. Линейное смешивание: h = hA·(1−t) + hB·t.",
   },
   {
     title: "Плавное смешивание",
-    text: "Два вклада нужно смешать. В середине отрезка берём их поровну, у узлов — почти только ближний. Получается плавная кривая; двигай точку и смотри, как меняется значение.",
+    text: "Линейное смешивание даёт изломы в узлах. Перлин заменяет t на сглаженное значение w = fade(t). У концов отрезка w меняется медленно, поэтому кривая подходит к узлам плавно, без острых углов: h = hA·(1−w) + hB·w.",
   },
   {
-    title: "Зачем сглаживание",
-    text: "Если смешивать линейно, в узлах остаются изломы. Перлин использует кривую сглаживания: у неё нулевой наклон на концах, поэтому соседние участки соединяются без резких углов.",
+    title: "Повторяем для всех отрезков",
+    text: "Считаем значение в каждой точке отрезка и повторяем для всех остальных отрезков. На стыках соседние куски совпадают по значению и наклону, поэтому получается одна непрерывная плавная кривая.",
   },
   {
     title: "В 2D: четыре угла",
@@ -78,7 +90,7 @@ let H = 0
 let dpr = 1
 let level = 1
 let step = 0
-let sample = 1.35
+let sample = 0.35
 let permutation = makePermutation(DEFAULTS.seed)
 let permutationSeed = DEFAULTS.seed
 let renderQueued = false
@@ -266,14 +278,6 @@ function tutorialValue(x) {
   return { value: left + (right - left) * fade(local), left, right, cell, local }
 }
 
-function linearValue(x) {
-  const cell = Math.min(4, Math.max(0, Math.floor(x)))
-  const local = x - cell
-  const left = GRADIENTS[cell] * local
-  const right = GRADIENTS[cell + 1] * (local - 1)
-  return left + (right - left) * local
-}
-
 function drawCurve(getValue, color, width, dash = []) {
   const geometry = graphGeometry()
   ctx.save()
@@ -291,9 +295,9 @@ function drawCurve(getValue, color, width, dash = []) {
   ctx.restore()
 }
 
-function drawSample(geometry) {
-  const value = tutorialValue(sample).value
-  const x = plotX(sample, geometry)
+function drawSample(geometry, sampleX = sample) {
+  const value = tutorialValue(sampleX).value
+  const x = plotX(sampleX, geometry)
   const y = plotY(value, geometry)
   ctx.save()
   ctx.setLineDash([4, 4])
@@ -352,85 +356,271 @@ function drawStep0() {
   drawWhiteNoise(geometry)
 }
 
-function drawStep1() {
-  const geometry = graphGeometry()
-  drawGraphAxes(geometry)
-  for (let i = 0; i <= 5; i += 1) drawNode(i, geometry, GRADIENTS[i])
+function drawArrow(from, to, color, width = 2.4) {
+  ctx.save()
+  ctx.strokeStyle = color
+  ctx.lineWidth = width
+  ctx.beginPath()
+  ctx.moveTo(from.x, from.y)
+  ctx.lineTo(to.x, to.y)
+  ctx.stroke()
+  const angle = Math.atan2(to.y - from.y, to.x - from.x)
+  ctx.beginPath()
+  ctx.moveTo(to.x, to.y)
+  ctx.lineTo(to.x - 9 * Math.cos(angle - 0.5), to.y - 9 * Math.sin(angle - 0.5))
+  ctx.lineTo(to.x - 9 * Math.cos(angle + 0.5), to.y - 9 * Math.sin(angle + 0.5))
+  ctx.closePath()
+  ctx.fillStyle = color
+  ctx.fill()
+  ctx.restore()
 }
 
-function drawStep2() {
-  const geometry = graphGeometry()
-  drawGraphAxes(geometry)
-  const cell = Math.min(4, Math.max(0, Math.floor(sample)))
-  const leftX = plotX(cell, geometry)
-  const rightX = plotX(cell + 1, geometry)
+function drawText(text, x, y, color, align = "center", size = 12) {
   ctx.save()
-  ctx.fillStyle = "rgba(79, 142, 247, 0.08)"
-  ctx.fillRect(leftX, geometry.padTop, rightX - leftX, H - geometry.padTop - geometry.padBottom)
+  ctx.font = `700 ${size}px Manrope, system-ui, sans-serif`
+  ctx.textAlign = align
+  ctx.textBaseline = "middle"
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.92)"
+  ctx.lineWidth = 4
+  ctx.strokeText(text, x, y)
+  ctx.fillStyle = color
+  ctx.fillText(text, x, y)
   ctx.restore()
-  for (let i = cell; i <= cell + 1; i += 1) drawNode(i, geometry, GRADIENTS[i])
+}
 
-  const drawContribution = (gradient, offset, color) => {
+function cellMetrics() {
+  const left = W * 0.14
+  const right = W * 0.86
+  const zeroY = H * 0.42
+  const pX = left + (right - left) * sample
+  const gA = 1.1
+  const gB = -1
+  const dA = sample
+  const dB = sample - 1
+  const hA = gA * dA
+  const hB = gB * dB
+  const w = fade(sample)
+  const h = hA + (hB - hA) * w
+  const hLin = hA + (hB - hA) * sample
+  const scaleY = Math.min(H * 0.26, 160)
+  return { left, right, zeroY, pX, gA, gB, dA, dB, hA, hB, w, h, hLin, scaleY }
+}
+
+function drawCellBase(metrics, reveal) {
+  const { left, right, zeroY, pX, t, gA, gB, dA, dB, hA, hB, w, h, scaleY } = metrics
+  const valueY = (value) => zeroY - value * scaleY
+
+  ctx.save()
+  ctx.fillStyle = "rgba(79, 142, 247, 0.06)"
+  ctx.fillRect(left, zeroY - scaleY * 1.25, right - left, scaleY * 2.5)
+  ctx.strokeStyle = "rgba(23, 54, 88, 0.32)"
+  ctx.lineWidth = 1.2
+  ctx.beginPath()
+  ctx.moveTo(left - 18, zeroY)
+  ctx.lineTo(right + 18, zeroY)
+  ctx.stroke()
+  ctx.restore()
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(left, zeroY, 6, 0, Math.PI * 2)
+  ctx.arc(right, zeroY, 6, 0, Math.PI * 2)
+  ctx.fillStyle = "#24405f"
+  ctx.fill()
+  ctx.restore()
+  drawText("A", left, zeroY - 18, "#24405f")
+  drawText("B", right, zeroY - 18, "#24405f")
+  drawText("0", left, zeroY + 130, "#5a7087")
+  drawText("1", right, zeroY + 130, "#5a7087")
+
+  ctx.save()
+  ctx.beginPath()
+  ctx.arc(pX, zeroY, 7, 0, Math.PI * 2)
+  ctx.fillStyle = "#c96a1f"
+  ctx.fill()
+  ctx.strokeStyle = "white"
+  ctx.lineWidth = 2.5
+  ctx.stroke()
+  ctx.restore()
+  drawText("P", pX, zeroY - 18, "#c96a1f")
+
+  if (reveal >= 1) {
+    const distanceY = zeroY + 54
+    drawArrow({ x: left, y: distanceY }, { x: pX, y: distanceY }, "rgba(79, 142, 247, 0.95)", 2.4)
+    drawText(`dA = ${dA >= 0 ? "+" : ""}${dA.toFixed(2)}`, (left + pX) / 2, distanceY - 13, "rgba(47, 93, 145, 0.95)")
+    const distanceY2 = zeroY + 82
+    drawArrow({ x: right, y: distanceY2 }, { x: pX, y: distanceY2 }, "rgba(224, 122, 138, 0.95)", 2.4)
+    drawText(`dB = ${dB.toFixed(2)}`, (right + pX) / 2, distanceY2 - 13, "rgba(190, 80, 98, 0.95)")
+  }
+
+  if (reveal >= 2) {
+    drawArrow({ x: left, y: zeroY }, { x: left + 44, y: zeroY - gA * 44 }, "rgba(47, 93, 145, 0.95)")
+    if (W >= 560) drawText(`gA = ${gA.toFixed(2)}`, left + 50, zeroY - gA * 44 - 12, "rgba(47, 93, 145, 0.95)", "left")
+    drawArrow({ x: right, y: zeroY }, { x: right - 44, y: zeroY - gB * 44 }, "rgba(224, 122, 138, 0.95)")
+    if (W >= 560) drawText(`gB = ${gB.toFixed(2)}`, right - 50, zeroY - gB * 44 - 12, "rgba(190, 80, 98, 0.95)", "right")
+  }
+
+  if (reveal >= 3) {
+    ctx.save()
+    ctx.strokeStyle = "rgba(47, 93, 145, 0.9)"
+    ctx.lineWidth = 6
+    ctx.beginPath()
+    ctx.moveTo(pX - 13, zeroY)
+    ctx.lineTo(pX - 13, valueY(hA))
+    ctx.stroke()
+    ctx.restore()
+    drawText(`hA = ${hA.toFixed(2)}`, pX - 20, valueY(hA) - 10, "rgba(47, 93, 145, 0.95)", "right")
+  }
+
+  if (reveal >= 4) {
+    ctx.save()
+    ctx.strokeStyle = "rgba(224, 122, 138, 0.9)"
+    ctx.lineWidth = 6
+    ctx.beginPath()
+    ctx.moveTo(pX + 13, zeroY)
+    ctx.lineTo(pX + 13, valueY(hB))
+    ctx.stroke()
+    ctx.restore()
+    drawText(`hB = ${hB.toFixed(2)}`, pX + 20, valueY(hB) - 10, "rgba(190, 80, 98, 0.95)", "left")
+  }
+
+  if (reveal >= 5) {
+    const weightY = zeroY + 120
+    ctx.save()
+    ctx.strokeStyle = "rgba(23, 54, 88, 0.22)"
+    ctx.lineWidth = 2
+    ctx.beginPath()
+    ctx.moveTo(left, weightY)
+    ctx.lineTo(right, weightY)
+    ctx.stroke()
+    ctx.restore()
+    const tX = left + (right - left) * sample
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(tX, weightY, 5, 0, Math.PI * 2)
+    ctx.fillStyle = "rgba(47, 93, 145, 0.95)"
+    ctx.fill()
+    ctx.restore()
+    drawText(`t = ${sample.toFixed(2)}`, tX, weightY - 14, "rgba(47, 93, 145, 0.95)")
+  }
+
+  if (reveal >= 6) {
+    const weightY = zeroY + 120
+    const wX = left + (right - left) * w
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(wX, weightY, 5, 0, Math.PI * 2)
+    ctx.fillStyle = "rgba(15, 79, 43, 0.95)"
+    ctx.fill()
+    ctx.restore()
+    drawText(`w = ${w.toFixed(2)}`, wX, weightY + 14, "rgba(15, 79, 43, 0.95)")
+  }
+}
+
+function drawCellCurves(metrics, reveal) {
+  const { left, right, zeroY, scaleY } = metrics
+  const valueY = (value) => zeroY - value * scaleY
+  const curve = (smooth, color, width, dash) => {
     ctx.save()
     ctx.strokeStyle = color
-    ctx.lineWidth = 2
-    ctx.setLineDash([5, 4])
+    ctx.lineWidth = width
+    ctx.setLineDash(dash)
     ctx.beginPath()
-    for (let index = 0; index <= 60; index += 1) {
-      const local = index / 60
-      const value = gradient * (local + offset)
-      const x = leftX + local * (rightX - leftX)
-      const y = plotY(value, geometry)
+    for (let index = 0; index <= 80; index += 1) {
+      const t = index / 80
+      const hA = metrics.gA * t
+      const hB = metrics.gB * (t - 1)
+      const h = hA + (hB - hA) * (smooth ? fade(t) : t)
+      const x = left + (right - left) * t
+      const y = valueY(h)
       if (index === 0) ctx.moveTo(x, y)
       else ctx.lineTo(x, y)
     }
     ctx.stroke()
     ctx.restore()
   }
-  ctx.save()
-  ctx.beginPath()
-  ctx.rect(geometry.padLeft, geometry.padTop, geometry.plotWidth, H - geometry.padTop - geometry.padBottom)
-  ctx.clip()
-  drawContribution(GRADIENTS[cell], 0, "rgba(79, 142, 247, 0.9)")
-  drawContribution(GRADIENTS[cell + 1], -1, "rgba(224, 122, 138, 0.95)")
-  drawSample(geometry)
-  ctx.restore()
-  ctx.save()
-  ctx.font = "700 12px Manrope, system-ui, sans-serif"
-  ctx.textAlign = "left"
-  ctx.fillStyle = "rgba(79, 142, 247, 0.95)"
-  ctx.fillText("вклад левого узла", geometry.padLeft + 12, geometry.padTop + 16)
-  ctx.fillStyle = "rgba(224, 122, 138, 0.95)"
-  ctx.fillText("вклад правого узла", geometry.padLeft + 12, geometry.padTop + 34)
-  ctx.restore()
+  if (reveal >= 5) curve(false, "rgba(155, 91, 79, 0.85)", 2, [6, 5])
+  if (reveal >= 6) curve(true, "rgba(15, 79, 43, 0.95)", 3, [])
 }
 
-function drawStep3() {
+function drawCellStep(reveal) {
+  const metrics = cellMetrics()
+  drawCellBase(metrics, reveal)
+  drawCellCurves(metrics, reveal)
+  if (reveal >= 5) {
+    const valueY = (value) => metrics.zeroY - value * metrics.scaleY
+    const shown = reveal >= 6 ? metrics.h : metrics.hLin
+    const color = reveal >= 6 ? "rgba(15, 79, 43, 0.95)" : "rgba(155, 91, 79, 0.95)"
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(metrics.pX, valueY(shown), 6.5, 0, Math.PI * 2)
+    ctx.fillStyle = color
+    ctx.fill()
+    ctx.strokeStyle = "white"
+    ctx.lineWidth = 2.5
+    ctx.stroke()
+    ctx.restore()
+    drawText(`h = ${shown.toFixed(2)}`, metrics.pX + 14, valueY(shown) - 12, color, "left")
+  }
+
+  if (reveal >= 6 && W >= 560) {
+    const box = { x: W - 196, y: 18, width: 176, height: 104 }
+    ctx.save()
+    ctx.fillStyle = "rgba(255, 255, 255, 0.92)"
+    ctx.strokeStyle = "rgba(23, 54, 88, 0.18)"
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.roundRect(box.x, box.y, box.width, box.height, 10)
+    ctx.fill()
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(box.x + 30, box.y + box.height - 24)
+    ctx.lineTo(box.x + box.width - 16, box.y + box.height - 24)
+    ctx.strokeStyle = "rgba(23, 54, 88, 0.35)"
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(box.x + 30, box.y + box.height - 24)
+    ctx.lineTo(box.x + 30, box.y + 18)
+    ctx.stroke()
+    ctx.beginPath()
+    for (let index = 0; index <= 40; index += 1) {
+      const t = index / 40
+      const x = box.x + 30 + t * (box.width - 46)
+      const y = box.y + box.height - 24 - fade(t) * (box.height - 46)
+      if (index === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.strokeStyle = "rgba(15, 79, 43, 0.9)"
+    ctx.lineWidth = 2
+    ctx.stroke()
+    const px = box.x + 30 + sample * (box.width - 46)
+    const py = box.y + box.height - 24 - fade(sample) * (box.height - 46)
+    ctx.beginPath()
+    ctx.arc(px, py, 4, 0, Math.PI * 2)
+    ctx.fillStyle = "#c96a1f"
+    ctx.fill()
+    ctx.fillStyle = "#5a7087"
+    ctx.font = "600 11px Manrope, system-ui, sans-serif"
+    ctx.textAlign = "left"
+    ctx.fillText("fade(t)", box.x + 34, box.y + 16)
+    ctx.restore()
+  }
+
+  if (reveal >= 6 && W >= 560) {
+    drawText("плавно", W * 0.14 + 10, metrics.zeroY - metrics.scaleY * 1.18, "rgba(15, 79, 43, 0.9)", "left")
+    drawText("линейно", W * 0.14 + 10, metrics.zeroY - metrics.scaleY * 1.18 + 18, "rgba(155, 91, 79, 0.9)", "left")
+  }
+}
+
+function drawStep7() {
   const geometry = graphGeometry()
   drawGraphAxes(geometry)
   for (let i = 0; i <= 5; i += 1) drawNode(i, geometry)
   drawCurve((x) => tutorialValue(x).value, "rgba(15, 79, 43, 0.95)", 3)
-  drawSample(geometry)
+  drawSample(geometry, sample * 4.999)
 }
 
-function drawStep4() {
-  const geometry = graphGeometry()
-  drawGraphAxes(geometry)
-  for (let i = 0; i <= 5; i += 1) drawNode(i, geometry)
-  drawCurve(linearValue, "rgba(155, 91, 79, 0.8)", 2, [6, 5])
-  drawCurve((x) => tutorialValue(x).value, "rgba(15, 79, 43, 0.95)", 3)
-  drawSample(geometry)
-  ctx.save()
-  ctx.font = "700 12px Manrope, system-ui, sans-serif"
-  ctx.textAlign = "left"
-  ctx.fillStyle = "rgba(15, 79, 43, 0.9)"
-  ctx.fillText("плавно", geometry.padLeft + 10, geometry.padTop + 16)
-  ctx.fillStyle = "rgba(155, 91, 79, 0.9)"
-  ctx.fillText("линейно", geometry.padLeft + 10, geometry.padTop + 34)
-  ctx.restore()
-}
-
-function drawStep5() {
+function draw2DCell() {
   const size = Math.min(W * 0.58, H * 0.62)
   const left = (W - size) / 2
   const top = (H - size) / 2
@@ -499,7 +689,7 @@ function drawStep5() {
   ctx.restore()
 }
 
-function drawStep6() {
+function drawOctaves() {
   const gap = 8
   const half = (W - gap) / 2
   drawTerrain(0, 0, half, H, { ...DEFAULTS, octaves: 1 })
@@ -530,21 +720,20 @@ function draw() {
     return
   }
   if (step === 0) drawStep0()
-  else if (step === 1) drawStep1()
-  else if (step === 2) drawStep2()
-  else if (step === 3) drawStep3()
-  else if (step === 4) drawStep4()
-  else if (step === 5) drawStep5()
-  else drawStep6()
+  else if (step <= 6) drawCellStep(step)
+  else if (step === 7) drawStep7()
+  else if (step === 8) draw2DCell()
+  else drawOctaves()
 }
 
 function updateSampleVisibility() {
-  els.sampleField.hidden = !(step === 2 || step === 3 || step === 4)
+  els.sampleField.hidden = !(step >= 1 && step <= 7)
 }
 
-function setHint(text) {
+function setHint(text, placement = "top") {
   hint.textContent = text
   hint.hidden = !text
+  hint.classList.toggle("top", placement === "top")
 }
 
 function setStep(next) {
@@ -556,14 +745,10 @@ function setStep(next) {
   els.stepBack.disabled = step === 0
   els.stepNext.textContent = step === steps.length - 1 ? "В песочницу" : "Дальше"
   updateSampleVisibility()
-  if (step === 2 || step === 3 || step === 4) {
-    setHint("Двигайте ползунок — точка перемещается по графику")
-  } else if (step === 5) {
-    setHint("У точки четыре соседних узла — по одному в каждом углу")
-  } else if (step === 6) {
-    setHint("Слева один слой шума, справа четыре")
+  if (step >= 1 && step <= 7) {
+    setHint(step === 7 ? "Двигайте ползунок — точка движется по графику" : "Двигайте ползунок — точка P движется внутри отрезка", "top")
   } else {
-    setHint("")
+    setHint("", "top")
   }
   if (level === 1) draw()
 }
@@ -605,7 +790,7 @@ function setLevel(next) {
     readParams()
     updateOutputs()
     els.status.textContent = `Сид: ${params.seed}. Октав: ${params.octaves}.`
-    setHint("Меняйте параметры — ландшафт пересчитывается")
+    setHint("Меняйте параметры — ландшафт пересчитывается", "bottom")
     draw()
   } else {
     setStep(step)
@@ -645,12 +830,12 @@ els.stepNext.addEventListener("click", () => {
   else setStep(step + 1)
 })
 els.stepReset.addEventListener("click", () => {
-  sample = 1.35
-  els.sample.value = "135"
+  sample = 0.35
+  els.sample.value = "350"
   setStep(0)
 })
 els.sample.addEventListener("input", () => {
-  sample = Number(els.sample.value) / 100
+  sample = Number(els.sample.value) / 1000
   if (level === 1) draw()
 })
 

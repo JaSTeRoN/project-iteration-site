@@ -59,6 +59,11 @@
   height: 100%;
 }
 
+.perlin-overlay.top {
+  top: 10px;
+  bottom: auto;
+}
+
 .perlin-overlay {
   position: absolute;
   left: 12px;
@@ -202,6 +207,10 @@
   .perlin-stage { height: clamp(320px, 46vh, 460px); }
   .perlin-side { order: 2; }
   .perlin-panel { padding: 14px; }
+}
+
+@media (max-width: 600px) {
+  .perlin-overlay { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
