@@ -1,5 +1,5 @@
 import { fade, fbm2, makePermutation, perlin2 } from "./noise.js"
-import { buildLinearLayers, makeValueGrid, sampleLinearLayers, sampleTriangle } from "./linear-noise.js"
+import { accumulateLineField, fieldToShades, makeRandomLines } from "./line-noise.js"
 
 const GRADIENTS = [0.95, -0.62, 0.48, -0.88, 0.36, 0.78]
 const DEFAULTS = {
@@ -44,13 +44,8 @@ const els = {
   linearTitle: document.querySelector("#linear-title"),
   linearText: document.querySelector("#linear-text"),
   linearFormula: document.querySelector("#linear-formula"),
-  linearModes: [...document.querySelectorAll("[data-linear-mode]")],
-  linearGrid: document.querySelector("#linear-grid"),
-  linearGridOutput: document.querySelector("#linear-grid-output"),
-  linearOctaves: document.querySelector("#linear-octaves"),
-  linearOctavesOutput: document.querySelector("#linear-octaves-output"),
-  linearOctavesField: document.querySelector("#linear-octaves-field"),
-  linearTriangles: document.querySelector("#linear-triangles"),
+  lineCountButtons: [...document.querySelectorAll("[data-line-count]")],
+  linearNormalize: document.querySelector("#linear-normalize"),
   linearNew: document.querySelector("#linear-new"),
   linearToSandbox: document.querySelector("#linear-to-sandbox"),
   linearStatus: document.querySelector("#linear-status"),
@@ -134,7 +129,7 @@ let permutationSeed = DEFAULTS.seed
 let renderQueued = false
 
 const params = { ...DEFAULTS }
-const linear = { mode: 0, cells: 8, octaves: 3, seed: 37, triangles: true }
+const linear = { count: 10, seed: 37, normalize: true, lines: null, fields: new Map() }
 
 const terrainCanvas = document.createElement("canvas")
 const terrainCtx = terrainCanvas.getContext("2d", { willReadFrequently: true })
@@ -864,120 +859,46 @@ function drawOctaveMany() {
   })
 }
 
-const linearInfo = [
-  {
-    title: "Случайные значения в узлах",
-    text: "Разобьём плоскость на треугольники, а в каждом узле сохраним случайное значение. Пока это только набор чисел — между узлами ничего не определено.",
-    formula: "h(узел) = random()",
+const lineInfo = {
+  10: {
+    title: "10 случайных прямых",
+    text: "Каждая прямая делит плоскость на две половины: одну заливаем белым, другую — чёрным. В каждой точке усредняем ответы всех прямых — так появляются первые серые оттенки.",
   },
-  {
-    title: "Линейная интерполяция",
-    text: "Внутри каждого треугольника значение линейно смешивается по трём вершинам. Получается кусочно-линейная поверхность: плавная, но с заметными рёбрами. Это простая имитация шума Перлина — без градиентов и сглаживания.",
-    formula: "h = λ₀h₀ + λ₁h₁ + λ₂h₂\nλ — барицентрические веса точки",
+  100: {
+    title: "100 случайных прямых",
+    text: "Прямых становится больше, области дробятся на более мелкие. Серых оттенков тоже больше: чёрное и белое всё сильнее смешиваются.",
   },
-  {
-    title: "Сумма октав",
-    text: "Складываем несколько масштабов: крупная сетка задаёт форму, мелкие — детали. Получается облако, похожее на шум Перлина, хотя внутри только случайные значения и линейная интерполяция.",
-    formula: "h = Σ aᵢ · linear(fᵢ · p) / Σ aᵢ",
+  1000: {
+    title: "1 000 случайных прямых",
+    text: "Тысяча прямых почти растворяет границы. Усреднение даёт плавное облако — уже похоже на шум, хотя каждая отдельная прямая всё ещё делит плоскость на чёрное и белое.",
   },
-]
-
-function drawLinearMesh(left, top, side, cells, grid, { mesh = true, nodes = false } = {}) {
-  const cell = side / cells
-  ctx.save()
-  if (mesh) {
-    ctx.strokeStyle = "rgba(36, 72, 112, 0.28)"
-    ctx.lineWidth = 0.8
-    for (let i = 0; i <= cells; i += 1) {
-      ctx.beginPath()
-      ctx.moveTo(left + i * cell, top)
-      ctx.lineTo(left + i * cell, top + side)
-      ctx.stroke()
-      ctx.beginPath()
-      ctx.moveTo(left, top + i * cell)
-      ctx.lineTo(left + side, top + i * cell)
-      ctx.stroke()
-    }
-    ctx.strokeStyle = "rgba(36, 72, 112, 0.22)"
-    for (let y = 0; y < cells; y += 1) {
-      for (let x = 0; x < cells; x += 1) {
-        ctx.beginPath()
-        ctx.moveTo(left + x * cell, top + y * cell)
-        ctx.lineTo(left + (x + 1) * cell, top + (y + 1) * cell)
-        ctx.stroke()
-      }
-    }
-  }
-  if (nodes) {
-    const radius = Math.max(2.5, Math.min(6, cell * 0.12))
-    for (let y = 0; y <= cells; y += 1) {
-      for (let x = 0; x <= cells; x += 1) {
-        const shade = Math.round(grid[y][x] * 255)
-        ctx.beginPath()
-        ctx.arc(left + x * cell, top + y * cell, radius, 0, Math.PI * 2)
-        ctx.fillStyle = `rgb(${shade}, ${shade}, ${shade})`
-        ctx.fill()
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.9)"
-        ctx.lineWidth = 1.2
-        ctx.stroke()
-      }
-    }
-  }
-  ctx.restore()
+  10000: {
+    title: "10 000 случайных прямых",
+    text: "На десяти тысячах прямых поле становится гладким. Это и есть линейная имитация: много случайных «чёрное/белое», усреднённых в серые оттенки.",
+  },
 }
 
-function renderLinear() {
-  const side = Math.min(W * 0.84, H * 0.84)
-  const left = (W - side) / 2
-  const top = (H - side) / 2
-  const cells = linear.cells
-  ctx.save()
-  ctx.fillStyle = "#f8fbfe"
-  ctx.fillRect(left, top, side, side)
-  ctx.restore()
+function formatCount(value) {
+  return value.toLocaleString("ru-RU")
+}
 
-  if (linear.mode === 0) {
-    const grid = makeValueGrid(cells, linear.seed)
-    drawLinearMesh(left, top, side, cells, grid, { mesh: linear.triangles, nodes: true })
-    drawLinearLabel(left, top, "случайные значения в узлах")
-    return
-  }
+function lineResolution(count) {
+  if (count <= 10) return 360
+  if (count <= 100) return 300
+  if (count <= 1000) return 220
+  return 160
+}
 
-  const resolution = Math.max(180, Math.round(side / 2))
-  const image = ctx.createImageData(resolution, resolution)
-  const grid = linear.mode === 1 ? makeValueGrid(cells, linear.seed) : null
-  const layers = linear.mode === 2 ? buildLinearLayers(cells, linear.octaves, linear.seed) : null
-  for (let py = 0; py < resolution; py += 1) {
-    for (let px = 0; px < resolution; px += 1) {
-      const nx = px / (resolution - 1)
-      const ny = py / (resolution - 1)
-      const value = linear.mode === 1
-        ? sampleTriangle(grid, cells, nx, ny)
-        : sampleLinearLayers(layers, nx, ny)
-      const shade = Math.round(value * 255)
-      const index = (py * resolution + px) * 4
-      image.data[index] = shade
-      image.data[index + 1] = shade
-      image.data[index + 2] = shade
-      image.data[index + 3] = 255
-    }
-  }
-  const offscreen = document.createElement("canvas")
-  offscreen.width = resolution
-  offscreen.height = resolution
-  offscreen.getContext("2d").putImageData(image, 0, 0)
-  ctx.save()
-  ctx.imageSmoothingEnabled = true
-  ctx.drawImage(offscreen, left, top, side, side)
-  ctx.restore()
-  if (linear.triangles) {
-    drawLinearMesh(left, top, side, cells, grid, { mesh: true, nodes: false })
-  }
-  drawLinearLabel(
-    left,
-    top,
-    linear.mode === 1 ? "линейная интерполяция" : `${linear.octaves} окт. · линейная имитация`,
+function getLineField() {
+  if (!linear.lines) linear.lines = makeRandomLines(10000, linear.seed)
+  const key = `${linear.seed}:${linear.count}`
+  if (linear.fields.has(key)) return linear.fields.get(key)
+  const field = accumulateLineField(
+    linear.lines.slice(0, linear.count),
+    lineResolution(linear.count),
   )
+  linear.fields.set(key, field)
+  return field
 }
 
 function drawLinearLabel(left, top, text) {
@@ -993,22 +914,42 @@ function drawLinearLabel(left, top, text) {
   ctx.restore()
 }
 
+function renderLinear() {
+  const field = getLineField()
+  const side = Math.min(W * 0.84, H * 0.84)
+  const left = (W - side) / 2
+  const top = (H - side) / 2
+  const shades = fieldToShades(field, linear.normalize)
+  const image = ctx.createImageData(field.resolution, field.resolution)
+  for (let i = 0; i < shades.length; i += 1) {
+    const index = i * 4
+    const shade = shades[i]
+    image.data[index] = shade
+    image.data[index + 1] = shade
+    image.data[index + 2] = shade
+    image.data[index + 3] = 255
+  }
+  const offscreen = document.createElement("canvas")
+  offscreen.width = field.resolution
+  offscreen.height = field.resolution
+  offscreen.getContext("2d").putImageData(image, 0, 0)
+  ctx.save()
+  ctx.imageSmoothingEnabled = true
+  ctx.drawImage(offscreen, left, top, side, side)
+  ctx.restore()
+  drawLinearLabel(left, top, `${formatCount(linear.count)} линий`)
+}
+
 function updateLinearUi() {
-  const info = linearInfo[linear.mode]
+  const info = lineInfo[linear.count]
   els.linearTitle.textContent = info.title
   els.linearText.textContent = info.text
-  els.linearFormula.textContent = info.formula
-  els.linearGrid.value = String(linear.cells)
-  els.linearGridOutput.textContent = `${linear.cells} × ${linear.cells}`
-  els.linearOctaves.value = String(linear.octaves)
-  els.linearOctavesOutput.textContent = String(linear.octaves)
-  els.linearOctaves.disabled = linear.mode !== 2
-  els.linearOctavesField.hidden = linear.mode !== 2
-  els.linearTriangles.checked = linear.triangles
-  els.linearModes.forEach((button) => {
-    button.setAttribute("aria-pressed", String(Number(button.dataset.linearMode) === linear.mode))
+  els.linearFormula.textContent = "value(p) = (1/N) · Σ [nᵢ · p > dᵢ]\n[условие] = 1 или 0"
+  els.lineCountButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(Number(button.dataset.lineCount) === linear.count))
   })
-  els.linearStatus.textContent = `Сетка ${linear.cells} × ${linear.cells} · ${linear.mode === 2 ? `октав ${linear.octaves}` : "1 слой"} · сид ${linear.seed}.`
+  els.linearNormalize.checked = linear.normalize
+  els.linearStatus.textContent = `${formatCount(linear.count)} линий · сид ${linear.seed}.`
 }
 
 function renderSandbox() {
@@ -1141,32 +1082,21 @@ function resize() {
 
 tabs.forEach((tab) => tab.addEventListener("click", () => setLevel(Number(tab.dataset.level))))
 
-els.linearModes.forEach((button) => {
+els.lineCountButtons.forEach((button) => {
   button.addEventListener("click", () => {
-    const previous = linear.mode
-    linear.mode = Number(button.dataset.linearMode)
-    if (linear.mode === 2 && previous !== 2) linear.triangles = false
-    else if (linear.mode !== 2 && previous === 2) linear.triangles = true
+    linear.count = Number(button.dataset.lineCount)
     updateLinearUi()
     if (level === 2) draw()
   })
 })
-els.linearGrid.addEventListener("input", () => {
-  linear.cells = Number(els.linearGrid.value)
-  updateLinearUi()
-  if (level === 2) draw()
-})
-els.linearOctaves.addEventListener("input", () => {
-  linear.octaves = Number(els.linearOctaves.value)
-  updateLinearUi()
-  if (level === 2) draw()
-})
-els.linearTriangles.addEventListener("change", () => {
-  linear.triangles = els.linearTriangles.checked
+els.linearNormalize.addEventListener("change", () => {
+  linear.normalize = els.linearNormalize.checked
   if (level === 2) draw()
 })
 els.linearNew.addEventListener("click", () => {
   linear.seed = Math.floor(Math.random() * 100000)
+  linear.lines = null
+  linear.fields.clear()
   updateLinearUi()
   if (level === 2) draw()
 })

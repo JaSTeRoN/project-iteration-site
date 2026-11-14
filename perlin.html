@@ -66,31 +66,25 @@
 
           <section class="perlin-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
             <p class="perlin-kicker">Линейная имитация</p>
-            <h2 id="linear-title">Случайные значения в узлах</h2>
-            <p id="linear-text">Разобьём плоскость на треугольники, а в каждом узле сохраним случайное значение. Пока это только набор чисел — между узлами ничего не определено.</p>
-            <div class="perlin-formula" id="linear-formula">h(узел) = random()</div>
+            <h2 id="linear-title">10 случайных прямых</h2>
+            <p id="linear-text">Каждая прямая делит плоскость на две половины: одну заливаем белым, другую — чёрным. В каждой точке усредняем ответы всех прямых — так появляются первые серые оттенки.</p>
+            <div class="perlin-formula" id="linear-formula">value(p) = (1/N) · Σ [nᵢ · p &gt; dᵢ]
+[условие] = 1 или 0</div>
 
-            <div class="perlin-modes" role="group" aria-label="Этапы линейной имитации">
-              <button type="button" data-linear-mode="0" aria-pressed="true">1. Узлы</button>
-              <button type="button" data-linear-mode="1" aria-pressed="false">2. Линейно</button>
-              <button type="button" data-linear-mode="2" aria-pressed="false">3. Октавы</button>
+            <div class="perlin-modes" role="group" aria-label="Количество прямых">
+              <button type="button" data-line-count="10" aria-pressed="true">10</button>
+              <button type="button" data-line-count="100" aria-pressed="false">100</button>
+              <button type="button" data-line-count="1000" aria-pressed="false">1 000</button>
+              <button type="button" data-line-count="10000" aria-pressed="false">10 000</button>
             </div>
 
-            <label class="perlin-field" for="linear-grid">Сетка: <output id="linear-grid-output">8 × 8</output>
-              <input id="linear-grid" type="range" min="4" max="12" step="1" value="8">
-            </label>
-
-            <label class="perlin-field" for="linear-octaves" id="linear-octaves-field">Октавы: <output id="linear-octaves-output">3</output>
-              <input id="linear-octaves" type="range" min="1" max="5" step="1" value="3">
-            </label>
-
-            <label class="perlin-check"><input type="checkbox" id="linear-triangles" checked> Показывать треугольники</label>
+            <label class="perlin-check"><input type="checkbox" id="linear-normalize" checked> Нормировать контраст</label>
 
             <div class="perlin-actions">
               <button type="button" id="linear-new">Новый набор</button>
               <button type="button" class="primary" id="linear-to-sandbox">В песочницу</button>
             </div>
-            <p class="perlin-note" id="linear-status" role="status">Сетка 8 × 8 · октав 1.</p>
+            <p class="perlin-note" id="linear-status" role="status">10 линий · сид 37.</p>
           </section>
 
           <section class="perlin-panel" id="panel-3" role="tabpanel" aria-labelledby="tab-3" hidden>
