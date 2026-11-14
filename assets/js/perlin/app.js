@@ -1,4 +1,4 @@
-import { fade, fbm2, makePermutation } from "./noise.js"
+import { fade, fbm2, makePermutation, perlin2 } from "./noise.js"
 
 const GRADIENTS = [0.95, -0.62, 0.48, -0.88, 0.36, 0.78]
 const DEFAULTS = {
@@ -76,12 +76,36 @@ const steps = [
     text: "Считаем значение в каждой точке отрезка и повторяем для всех остальных отрезков. На стыках соседние куски совпадают по значению и наклону, поэтому получается одна непрерывная плавная кривая.",
   },
   {
-    title: "В 2D: четыре угла",
-    text: "В двумерном случае у точки четыре соседних узла. В каждом — свой градиент. Считаем четыре вклада и плавно смешиваем их сначала по горизонтали, потом по вертикали. Так получается значение шума в любой точке плоскости.",
+    title: "В 2D: клетка и четыре градиента",
+    text: "В двумерном случае точка P попадает внутрь квадратной клетки. У клетки четыре угла: 00, 10, 01 и 11. В каждом углу задан свой двумерный градиент — стрелка. Дальше нужно учесть вклад всех четырёх углов.",
   },
   {
-    title: "Октавы: больше деталей",
-    text: "Один слой шума даёт крупные формы. Чтобы добавить мелкие детали, складываем несколько слоёв с разным масштабом — октав. Слева один слой, справа четыре: берег и горы становятся сложнее.",
+    title: "Четыре вклада",
+    text: "От каждого угла проводим вектор к точке P и берём скалярное произведение с градиентом угла. Получаем четыре числа: n00, n10, n01 и n11. В 1D было два вклада, в 2D их четыре — по одному на каждый угол.",
+  },
+  {
+    title: "Сначала смешиваем по горизонтали",
+    text: "Сначала смешиваем пары по горизонтали. На верхней кромке смешиваем n00 и n10 с весом u — получаем top. На нижней кромке так же смешиваем n01 и n11 — получаем bottom. Вес u — горизонтальное положение точки внутри клетки.",
+  },
+  {
+    title: "Потом смешиваем по вертикали",
+    text: "Теперь смешиваем top и bottom по вертикали с весом v. Получаем одно число h — значение шума в точке P. В 2D смешивание идёт в два прохода: сначала по X, потом по Y.",
+  },
+  {
+    title: "Повторяем для всей плоскости",
+    text: "Каждая клетка сетки считается так же: четыре градиента, четыре вклада, два горизонтальных смешивания и одно вертикальное. В результате получается двумерное поле шума. В игре его раскрашивают как карту высот: синее — низко, зелёное — суша, белое — горы.",
+  },
+  {
+    title: "Один слой шума",
+    text: "Один слой шума — это крупные, плавные формы. Если взять только его, получится слишком гладко: в рельефе не будет мелких деталей — камней, трещин, небольших неровностей.",
+  },
+  {
+    title: "Добавляем второй слой",
+    text: "Добавим второй слой: та же сетка, но в два раза мельче (частота ×2) и в два раза слабее (амплитуда ×0.5). Складываем слои: крупная форма плюс мелкие детали. Справа видно, как сумма отличается от каждого слоя по отдельности.",
+  },
+  {
+    title: "Больше октав",
+    text: "Можно добавить 4, 6 и больше слоёв. Каждый следующий мельче и слабее. Настойчивость задаёт силу следующего слоя, лакунарность — во сколько раз он мельче. Чем больше октав, тем больше деталей; в песочнице это можно покрутить.",
   },
 ]
 
@@ -99,6 +123,8 @@ const params = { ...DEFAULTS }
 
 const terrainCanvas = document.createElement("canvas")
 const terrainCtx = terrainCanvas.getContext("2d", { willReadFrequently: true })
+const heightCanvas = document.createElement("canvas")
+const heightCtx = heightCanvas.getContext("2d", { willReadFrequently: true })
 
 function valueColor(value, sea, palette) {
   const v = Math.max(0, Math.min(1, value))
@@ -164,6 +190,43 @@ function drawTerrain(x, y, width, height, options) {
   ctx.save()
   ctx.imageSmoothingEnabled = true
   ctx.drawImage(terrainCanvas, x, y, width, height)
+  ctx.restore()
+}
+
+function renderHeightPanel(x, y, width, height, valueAt, label) {
+  const resW = Math.max(100, Math.round(width / 2))
+  const resH = Math.max(80, Math.round(height / 2))
+  heightCanvas.width = resW
+  heightCanvas.height = resH
+  const image = heightCtx.createImageData(resW, resH)
+  for (let py = 0; py < resH; py += 1) {
+    for (let px = 0; px < resW; px += 1) {
+      const value = Math.max(0, Math.min(1, valueAt(px / resW, py / resH)))
+      const shade = Math.round(value * 255)
+      const index = (py * resW + px) * 4
+      image.data[index] = shade
+      image.data[index + 1] = shade
+      image.data[index + 2] = shade
+      image.data[index + 3] = 255
+    }
+  }
+  heightCtx.putImageData(image, 0, 0)
+  ctx.save()
+  ctx.imageSmoothingEnabled = true
+  ctx.drawImage(heightCanvas, x, y, width, height)
+  ctx.strokeStyle = "rgba(23, 54, 88, 0.28)"
+  ctx.lineWidth = 1
+  ctx.strokeRect(x + 0.5, y + 0.5, width - 1, height - 1)
+  if (label) {
+    ctx.font = "700 11px Manrope, system-ui, sans-serif"
+    const textWidth = ctx.measureText(label).width
+    ctx.fillStyle = "rgba(7, 17, 28, 0.78)"
+    ctx.fillRect(x + 8, y + 8, textWidth + 14, 24)
+    ctx.fillStyle = "#eaf3fd"
+    ctx.textAlign = "left"
+    ctx.textBaseline = "middle"
+    ctx.fillText(label, x + 15, y + 20)
+  }
   ctx.restore()
 }
 
@@ -620,56 +683,45 @@ function drawStep7() {
   drawSample(geometry, sample * 4.999)
 }
 
-function draw2DCell() {
-  const size = Math.min(W * 0.58, H * 0.62)
+function draw2DCell(reveal) {
+  const size = Math.min(W * 0.52, H * 0.58)
   const left = (W - size) / 2
-  const top = (H - size) / 2
-  const gradients = [[1, 0.35], [-0.7, 0.85], [0.4, -1], [-0.55, -0.6]]
-  const corners = [
-    { x: left, y: top },
-    { x: left + size, y: top },
-    { x: left, y: top + size },
-    { x: left + size, y: top + size },
+  const top = (H - size) / 2 + 8
+  const u = 0.62
+  const v = 0.58
+  const point = { x: left + size * u, y: top + size * v }
+  const gradients = [
+    { name: "00", g: [0.9, 0.4], color: "rgba(47, 93, 145, 0.92)" },
+    { name: "10", g: [-0.7, 0.8], color: "rgba(224, 122, 138, 0.92)" },
+    { name: "01", g: [0.6, -0.9], color: "rgba(155, 123, 212, 0.92)" },
+    { name: "11", g: [-0.8, -0.4], color: "rgba(91, 192, 190, 0.92)" },
   ]
-  const point = { x: left + size * 0.62, y: top + size * 0.58 }
+  const corners = [
+    { x: left, y: top, dx: u, dy: v },
+    { x: left + size, y: top, dx: u - 1, dy: v },
+    { x: left, y: top + size, dx: u, dy: v - 1 },
+    { x: left + size, y: top + size, dx: u - 1, dy: v - 1 },
+  ]
+  const dot = (gradient, dx, dy) => gradient[0] * dx + gradient[1] * dy
+  const values = corners.map((corner, index) => dot(gradients[index].g, corner.dx, corner.dy))
+  const [n00, n10, n01, n11] = values
+  const topValue = n00 + (n10 - n00) * fade(u)
+  const bottomValue = n01 + (n11 - n01) * fade(u)
+  const result = topValue + (bottomValue - topValue) * fade(v)
 
   ctx.save()
-  ctx.fillStyle = "rgba(79, 142, 247, 0.08)"
+  ctx.fillStyle = "rgba(79, 142, 247, 0.07)"
   ctx.fillRect(left, top, size, size)
-  ctx.strokeStyle = "rgba(23, 54, 88, 0.4)"
+  ctx.strokeStyle = "rgba(23, 54, 88, 0.38)"
   ctx.lineWidth = 1.5
   ctx.strokeRect(left, top, size, size)
   ctx.restore()
 
   corners.forEach((corner, index) => {
-    const [gx, gy] = gradients[index]
-    const end = { x: corner.x + gx * 48, y: corner.y + gy * 48 }
-    ctx.save()
-    ctx.strokeStyle = "rgba(47, 93, 145, 0.9)"
-    ctx.lineWidth = 2.6
-    ctx.beginPath()
-    ctx.moveTo(corner.x, corner.y)
-    ctx.lineTo(end.x, end.y)
-    ctx.stroke()
-    const angle = Math.atan2(end.y - corner.y, end.x - corner.x)
-    ctx.beginPath()
-    ctx.moveTo(end.x, end.y)
-    ctx.lineTo(end.x - 9 * Math.cos(angle - 0.5), end.y - 9 * Math.sin(angle - 0.5))
-    ctx.lineTo(end.x - 9 * Math.cos(angle + 0.5), end.y - 9 * Math.sin(angle + 0.5))
-    ctx.closePath()
-    ctx.fillStyle = "rgba(47, 93, 145, 0.9)"
-    ctx.fill()
-    ctx.restore()
-
-    ctx.save()
-    ctx.setLineDash([4, 5])
-    ctx.strokeStyle = "rgba(201, 106, 31, 0.55)"
-    ctx.lineWidth = 1.4
-    ctx.beginPath()
-    ctx.moveTo(corner.x, corner.y)
-    ctx.lineTo(point.x, point.y)
-    ctx.stroke()
-    ctx.restore()
+    const gradient = gradients[index]
+    const end = { x: corner.x + gradient.g[0] * 42, y: corner.y + gradient.g[1] * 42 }
+    drawArrow({ x: corner.x, y: corner.y }, end, gradient.color, 2.4)
+    drawText(gradient.name, corner.x + (index % 2 === 0 ? -16 : 16), corner.y + (index < 2 ? -14 : 16), "rgba(23, 54, 88, 0.8)", index % 2 === 0 ? "right" : "left", 11)
   })
 
   ctx.save()
@@ -681,31 +733,120 @@ function draw2DCell() {
   ctx.lineWidth = 2.5
   ctx.stroke()
   ctx.restore()
-  ctx.save()
-  ctx.fillStyle = "#5a7087"
-  ctx.font = "600 12px Manrope, system-ui, sans-serif"
-  ctx.textAlign = "center"
-  ctx.fillText("четыре соседних узла", W / 2, top - 14)
-  ctx.restore()
+  drawText("P", point.x + 12, point.y - 12, "#c96a1f", "left")
+  drawText(`u = ${u.toFixed(2)}`, left + size * u, top + size + 18, "#5a7087")
+  drawText(`v = ${v.toFixed(2)}`, left - 18, top + size * v, "#5a7087", "right")
+
+  if (reveal >= 1) {
+    corners.forEach((corner, index) => {
+      ctx.save()
+      ctx.setLineDash([4, 4])
+      ctx.strokeStyle = gradients[index].color
+      ctx.lineWidth = 1.3
+      ctx.beginPath()
+      ctx.moveTo(corner.x, corner.y)
+      ctx.lineTo(point.x, point.y)
+      ctx.stroke()
+      ctx.restore()
+    })
+    drawText(`n00 = ${n00.toFixed(2)}`, left + 18, top + 18, gradients[0].color, "left", 11)
+    drawText(`n10 = ${n10.toFixed(2)}`, left + size - 18, top + 18, gradients[1].color, "right", 11)
+    drawText(`n01 = ${n01.toFixed(2)}`, left + 18, top + size - 18, gradients[2].color, "left", 11)
+    drawText(`n11 = ${n11.toFixed(2)}`, left + size - 18, top + size - 18, gradients[3].color, "right", 11)
+  }
+
+  if (reveal >= 2) {
+    const topPoint = { x: left + size * u, y: top }
+    const bottomPoint = { x: left + size * u, y: top + size }
+    ctx.save()
+    ctx.setLineDash([5, 5])
+    ctx.strokeStyle = "rgba(23, 54, 88, 0.4)"
+    ctx.lineWidth = 1.6
+    ctx.beginPath()
+    ctx.moveTo(topPoint.x, topPoint.y)
+    ctx.lineTo(bottomPoint.x, bottomPoint.y)
+    ctx.stroke()
+    ctx.restore()
+    for (const marker of [topPoint, bottomPoint]) {
+      ctx.save()
+      ctx.beginPath()
+      ctx.arc(marker.x, marker.y, 5, 0, Math.PI * 2)
+      ctx.fillStyle = "#24405f"
+      ctx.fill()
+      ctx.strokeStyle = "white"
+      ctx.lineWidth = 2
+      ctx.stroke()
+      ctx.restore()
+    }
+    drawText(`top = ${topValue.toFixed(2)}`, topPoint.x - 10, topPoint.y + 14, "#24405f", "right")
+    drawText(`bottom = ${bottomValue.toFixed(2)}`, bottomPoint.x - 10, bottomPoint.y - 14, "#24405f", "right")
+  }
+
+  if (reveal >= 3) {
+    drawText(`h = ${result.toFixed(2)}`, point.x + 14, point.y + 18, "#0f4f2b", "left")
+  }
 }
 
-function drawOctaves() {
-  const gap = 8
-  const half = (W - gap) / 2
-  drawTerrain(0, 0, half, H, { ...DEFAULTS, octaves: 1 })
-  drawTerrain(half + gap, 0, half, H, { ...DEFAULTS, octaves: 4 })
+function draw2DField() {
+  const perm = makePermutation(37)
+  const scale = 4
+  renderHeightPanel(0, 0, W, H, (x, y) => 0.5 + 0.5 * perlin2(x * scale, y * scale, perm), "")
   ctx.save()
-  ctx.fillStyle = "rgba(7, 17, 28, 0.72)"
-  ctx.fillRect(10, 10, 96, 28)
-  ctx.fillRect(half + gap + 10, 10, 108, 28)
-  ctx.fillStyle = "#eaf3fd"
-  ctx.font = "700 13px Manrope, system-ui, sans-serif"
-  ctx.textAlign = "center"
-  ctx.fillText("1 октава", 58, 29)
-  ctx.fillText("4 октавы", half + gap + 64, 29)
-  ctx.fillStyle = "rgba(255, 255, 255, 0.35)"
-  ctx.fillRect(half + gap / 2 - 1, 0, 2, H)
+  ctx.strokeStyle = "rgba(255, 255, 255, 0.55)"
+  ctx.lineWidth = 1.4
+  for (let i = 1; i < scale; i += 1) {
+    ctx.beginPath()
+    ctx.moveTo((W / scale) * i, 0)
+    ctx.lineTo((W / scale) * i, H)
+    ctx.stroke()
+    ctx.beginPath()
+    ctx.moveTo(0, (H / scale) * i)
+    ctx.lineTo(W, (H / scale) * i)
+    ctx.stroke()
+  }
+  const cellW = W / scale
+  const cellH = H / scale
+  const cellX = cellW
+  const cellY = cellH
+  ctx.strokeStyle = "#c96a1f"
+  ctx.lineWidth = 3
+  ctx.strokeRect(cellX, cellY, cellW, cellH)
   ctx.restore()
+  drawText("одна клетка", cellX + cellW / 2, cellY + 18, "#c96a1f", "center", 12)
+}
+
+function drawOctaveSingle() {
+  const perm = makePermutation(37)
+  renderHeightPanel(0, 0, W, H, (x, y) => 0.5 + 0.5 * perlin2(x * 3, y * 3, perm), "1 октава")
+}
+
+function drawOctaveLayers() {
+  const perm = makePermutation(37)
+  const gap = 8
+  const panelW = (W - gap * 2) / 3
+  const layer1 = (x, y) => 0.5 + 0.5 * perlin2(x * 3, y * 3, perm)
+  const layer2 = (x, y) => 0.5 + 0.25 * perlin2(x * 6, y * 6, perm)
+  const sum = (x, y) => {
+    const first = 2 * (layer1(x, y) - 0.5)
+    const second = 2 * (layer2(x, y) - 0.5)
+    return 0.5 + 0.5 * (first + second) / 1.5
+  }
+  renderHeightPanel(0, 0, panelW, H, layer1, "слой 1")
+  renderHeightPanel(panelW + gap, 0, panelW, H, layer2, "слой 2")
+  renderHeightPanel(panelW * 2 + gap * 2, 0, panelW, H, sum, "сумма")
+  drawText("+", panelW + gap / 2, H / 2, "rgba(23, 54, 88, 0.55)", "center", 22)
+  drawText("=", panelW * 2 + gap * 1.5, H / 2, "rgba(23, 54, 88, 0.55)", "center", 22)
+}
+
+function drawOctaveMany() {
+  const perm = makePermutation(37)
+  const gap = 6
+  const panelW = (W - gap * 3) / 4
+  const counts = [1, 2, 4, 6]
+  counts.forEach((octaves, index) => {
+    const valueAt = (x, y) => 0.5 + 0.5 * fbm2(x * 3, y * 3, perm, { octaves, persistence: 0.5, lacunarity: 2 })
+    renderHeightPanel(index * (panelW + gap), 0, panelW, H, valueAt, `${octaves} окт.`)
+  })
 }
 
 function renderSandbox() {
@@ -722,8 +863,14 @@ function draw() {
   if (step === 0) drawStep0()
   else if (step <= 6) drawCellStep(step)
   else if (step === 7) drawStep7()
-  else if (step === 8) draw2DCell()
-  else drawOctaves()
+  else if (step === 8) draw2DCell(0)
+  else if (step === 9) draw2DCell(1)
+  else if (step === 10) draw2DCell(2)
+  else if (step === 11) draw2DCell(3)
+  else if (step === 12) draw2DField()
+  else if (step === 13) drawOctaveSingle()
+  else if (step === 14) drawOctaveLayers()
+  else drawOctaveMany()
 }
 
 function updateSampleVisibility() {
