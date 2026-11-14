@@ -309,6 +309,12 @@ h1, h2, .page-title {
 
 .tag.ready { background: #e5f6ec; color: #146b3a; }
 
+.tag.theme-2 {
+  background: #efe5ff;
+  color: #6b3fa0;
+  border: 1px solid #d8c4f5;
+}
+
 .card img {
   width: 120px;
   height: auto;

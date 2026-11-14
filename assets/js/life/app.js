@@ -150,7 +150,6 @@ let H = 0
 let dpr = 1
 let level = 1
 let step = 0
-let hoverCell = null
 let pinnedCell = null
 let lifeGeometries = []
 
@@ -467,8 +466,7 @@ function drawTwo(boards, labels, timeline = null) {
       }
     }
     const pinned = pinnedCell && pinnedCell.boardIndex === index ? pinnedCell : null
-    const hover = !pinnedCell && hoverCell && hoverCell.boardIndex === index ? hoverCell : null
-    const focus = pinned || hover
+    const focus = pinned
     const dimAll = Boolean(pinnedCell && pinnedCell.boardIndex !== index)
     lifeGeometries.push({ boardIndex: index, board, left: boardLeft, top: boardTop, cell, size, mode: "pair" })
     drawBoard(board, boardLeft, boardTop, cell, { focus, changed, spotlight: Boolean(pinned), dimAll })
@@ -505,7 +503,7 @@ function drawStep() {
     drawTwo(current.boards, current.labels, current.timeline || null)
     return
   }
-  const focus = pinnedCell || hoverCell || current.focus
+  const focus = pinnedCell
   drawSingle(current.board, focus, Boolean(pinnedCell))
 }
 
@@ -598,35 +596,45 @@ function resultFor(alive, neighbors) {
     : { text: "останется мёртвой", kind: "neutral" }
 }
 
+function resultClassFor(text) {
+  if (text === "погибнет") return "bad"
+  if (text === "родится") return "born"
+  if (text === "останется живой") return "good"
+  return "born"
+}
+
 function updateLifeUi() {
   const current = steps[step]
   els.stepKicker.textContent = `Шаг ${step + 1} из ${steps.length}`
   els.stepTitle.textContent = current.title
   els.stepText.textContent = current.text
   els.stepFormula.textContent = "next = alive ? (2 ≤ n ≤ 3)\n       : (n = 3)"
-  const focus = pinnedCell || hoverCell || current.focus
   if (current.boards) {
-    if (focus) {
-      const board = current.boards[focus.boardIndex]
-      const alive = board[focus.y][focus.x] === 1
-      const neighbors = countNeighbors(board, focus.x, focus.y, false)
-      const mode = pinnedCell ? " · режим проверки" : ""
-      els.cellInfo.textContent = `${current.labels[focus.boardIndex]}: клетка (${focus.x}, ${focus.y}) ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}${mode}`
+    if (pinnedCell) {
+      const board = current.boards[pinnedCell.boardIndex]
+      const alive = board[pinnedCell.y][pinnedCell.x] === 1
+      const neighbors = countNeighbors(board, pinnedCell.x, pinnedCell.y, false)
+      els.cellInfo.textContent = `${current.labels[pinnedCell.boardIndex]}: клетка (${pinnedCell.x}, ${pinnedCell.y}) ${alive ? "живая" : "мёртвая"} · соседей ${neighbors} · режим проверки`
     } else {
-      els.cellInfo.textContent = "Наведите на клетку — покажу её состояние и число соседей. Клик включает режим проверки."
+      els.cellInfo.textContent = "Кликните по клетке — покажу её состояние, соседей и режим проверки."
     }
     els.stepResult.textContent = current.result
-    els.stepResult.className = "life-result born"
+    els.stepResult.className = `life-result ${resultClassFor(current.result)}`
+    els.stepCalc.textContent = current.calc
+    return
+  }
+  if (!pinnedCell) {
+    els.cellInfo.textContent = "Кликните по клетке — покажу её состояние, соседей и режим проверки."
+    els.stepResult.textContent = current.result
+    els.stepResult.className = `life-result ${resultClassFor(current.result)}`
     els.stepCalc.textContent = current.calc
     return
   }
   const board = current.board
-  const cell = focus || current.focus
-  const alive = board[cell.y][cell.x] === 1
-  const neighbors = countNeighbors(board, cell.x, cell.y, false)
+  const alive = board[pinnedCell.y][pinnedCell.x] === 1
+  const neighbors = countNeighbors(board, pinnedCell.x, pinnedCell.y, false)
   const result = resultFor(alive, neighbors)
-  const mode = pinnedCell ? " · режим проверки" : ""
-  els.cellInfo.textContent = `x = ${cell.x}, y = ${cell.y} · ${alive ? "живая" : "мёртвая"} · соседей ${neighbors}${mode}`
+  els.cellInfo.textContent = `x = ${pinnedCell.x}, y = ${pinnedCell.y} · ${alive ? "живая" : "мёртвая"} · соседей ${neighbors} · режим проверки`
   els.stepResult.textContent = result.text
   els.stepResult.className = `life-result ${result.kind}`
   els.stepCalc.textContent = `n = ${neighbors} · клетка ${alive ? "живая" : "мёртвая"} → ${result.text}.`
@@ -634,7 +642,6 @@ function updateLifeUi() {
 
 function setStep(next) {
   step = Math.max(0, Math.min(steps.length - 1, next))
-  hoverCell = null
   pinnedCell = null
   els.stepBack.disabled = step === 0
   els.stepNext.textContent = step === steps.length - 1 ? "В песочницу" : "Дальше"
@@ -740,43 +747,29 @@ els.placePattern.addEventListener("click", () => {
 })
 
 canvas.addEventListener("pointermove", (event) => {
-  if (level === 2) {
-    const cell = sandboxCellAt(event)
-    if (drawing && cell) {
-      sandbox.board[cell.y][cell.x] = paintState
-      sandboxHover = cell
-      updateSandboxStats()
-      updateSandboxInfo()
-      draw()
-      return
-    }
-    if (!cell) return
-    if (sandboxHover && sandboxHover.x === cell.x && sandboxHover.y === cell.y) return
+  if (level !== 2) return
+  const cell = sandboxCellAt(event)
+  if (drawing && cell) {
+    sandbox.board[cell.y][cell.x] = paintState
     sandboxHover = cell
+    updateSandboxStats()
     updateSandboxInfo()
     draw()
     return
   }
-  const cell = lifeCellAt(event)
   if (!cell) return
-  if (pinnedCell) return
-  if (hoverCell && hoverCell.x === cell.x && hoverCell.y === cell.y && hoverCell.boardIndex === cell.boardIndex) return
-  hoverCell = cell
-  updateLifeUi()
+  if (sandboxHover && sandboxHover.x === cell.x && sandboxHover.y === cell.y) return
+  sandboxHover = cell
+  updateSandboxInfo()
   draw()
 })
 
 canvas.addEventListener("pointerleave", () => {
-  if (level === 2) {
-    sandboxHover = null
-    drawing = false
-    paintState = null
-    updateSandboxInfo()
-    draw()
-    return
-  }
-  hoverCell = null
-  updateLifeUi()
+  if (level !== 2) return
+  sandboxHover = null
+  drawing = false
+  paintState = null
+  updateSandboxInfo()
   draw()
 })
 
@@ -809,7 +802,6 @@ canvas.addEventListener("click", (event) => {
   if (!cell) return
   if (pinnedCell && pinnedCell.x === cell.x && pinnedCell.y === cell.y && pinnedCell.boardIndex === cell.boardIndex) pinnedCell = null
   else pinnedCell = cell
-  hoverCell = null
   updateLifeUi()
   draw()
 })
