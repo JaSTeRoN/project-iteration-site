@@ -68,7 +68,7 @@ const steps = [
   },
   {
     title: "Продлеваем перпендикуляры",
-    text: "Продлим каждый серединный перпендикуляр до пересечения с другими. Эти прямые — границы между областями соседних точек: по одну сторону ближе одна точка, по другую — другая.",
+    text: "Продлим каждый серединный перпендикуляр до пересечения с другими. Синие отрезки — исходные связи между точками, зелёные штрихи — перпендикуляры в серединах, а жирные зелёные участки — те части перпендикуляров, которые действительно стали границами ячеек. Оранжевые точки на пересечениях — вершины ячеек.",
   },
   {
     title: "Собираем ячейки",
@@ -367,6 +367,28 @@ function drawPerpendicularTicks(points, edges) {
   }
 }
 
+function drawVoronoiVertices(cells) {
+  const seen = []
+  for (const cell of cells) {
+    for (const point of cell) {
+      if (point.x < 2 || point.x > W - 2 || point.y < 2 || point.y > H - 2) continue
+      if (seen.some((other) => Math.hypot(other.x - point.x, other.y - point.y) < 1.2)) continue
+      seen.push(point)
+    }
+  }
+  for (const point of seen) {
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(point.x, point.y, 5, 0, Math.PI * 2)
+    ctx.fillStyle = "#c96a1f"
+    ctx.fill()
+    ctx.strokeStyle = "white"
+    ctx.lineWidth = 2
+    ctx.stroke()
+    ctx.restore()
+  }
+}
+
 function drawLevel1() {
   const points = l1.points
   const cells = voronoiCells(points, W, H)
@@ -378,11 +400,14 @@ function drawLevel1() {
     drawDelaunay(points, edges, "rgba(70, 95, 125, 0.3)", 1.1)
     drawPerpendicularTicks(points, edges)
   } else if (l1.step === 3) {
-    drawDelaunay(points, edges, "rgba(70, 95, 125, 0.22)", 1)
+    drawDelaunay(points, edges, "rgba(47, 93, 145, 0.62)", 1.8)
     for (const [a, b] of edges) {
       const line = bisectorSegment(points[a], points[b], W, H)
-      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.38)", 1.1, [6, 5])
+      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.18)", 1, [4, 5])
     }
+    cells.forEach((cell) => strokeCell(cell, "rgba(15, 79, 43, 0.92)", 2.6))
+    drawPerpendicularTicks(points, edges)
+    drawVoronoiVertices(cells)
   } else if (l1.step === 4) {
     cells.forEach((cell, index) => fillCell(cell, points[index].color, 0.1))
     cells.forEach((cell) => strokeCell(cell, "rgba(15, 40, 65, 0.5)", 1.6))
@@ -504,7 +529,7 @@ function setStep(next) {
   els.stepTitle.textContent = step.title
   els.stepText.textContent = step.text
   els.stepBack.disabled = l1.step === 0
-  els.stepNext.textContent = l1.step === steps.length - 1 ? "В песочницу" : "Дальше"
+  els.stepNext.textContent = l1.step === steps.length - 1 ? "К уровню 2" : "Дальше"
   setHint(l1.step === 5 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
   draw()
 }
@@ -804,7 +829,7 @@ tabs.forEach((tab) => tab.addEventListener("click", () => setLevel(Number(tab.da
 
 els.stepBack.addEventListener("click", () => setStep(l1.step - 1))
 els.stepNext.addEventListener("click", () => {
-  if (l1.step === steps.length - 1) setLevel(3)
+  if (l1.step === steps.length - 1) setLevel(2)
   else setStep(l1.step + 1)
 })
 els.stepReset.addEventListener("click", () => {
