@@ -32,7 +32,7 @@
       <img class="lead-mascot" src="assets/brand/voxel/voronoi.webp" alt="" aria-hidden="true">
       <div>
         <h1>Диаграмма Вороного</h1>
-        <p>Карта «кто к кому ближе»: строим её по шагам, сглаживаем и пробуем в песочнице.</p>
+        <p>Разбиение плоскости на области по ближайшей точке: строим по шагам, сглаживаем и проверяем в песочнице.</p>
       </div>
     </div>
 
@@ -52,8 +52,8 @@
         <aside class="voronoi-side">
           <section class="voronoi-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
             <p class="voronoi-kicker" id="step-kicker">Шаг 1 из 6</p>
-            <h2 id="step-title">Две базы на поляне</h2>
-            <p id="step-text">Перед нами поляна и две базы — A и B. Любая точка поляны принадлежит той базе, которая к ней ближе.</p>
+            <h2 id="step-title">Семь точек</h2>
+            <p id="step-text">На плоскости семь точек — A, B, C, D, E, F, G. Каждая точка станет центром своей ячейки. Сначала определим, какие точки являются соседями.</p>
             <div class="voronoi-actions">
               <button type="button" id="step-back">Назад</button>
               <button type="button" class="primary" id="step-next">Дальше</button>
@@ -64,7 +64,14 @@
           <section class="voronoi-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
             <p class="voronoi-kicker">Итерация <span id="lloyd-iter">0</span></p>
             <h2>Релаксация Ллойда</h2>
-            <p id="lloyd-text">У каждой ячейки есть центр масс — точка, в которой ячейка «уравновешена». Если переставить базу в этот центр и повторить, карта постепенно становится ровнее.</p>
+            <p id="lloyd-text">Центр масс ячейки — это её точка равновесия. Если вырезать ячейку из картона и поставить на остриё в эту точку, она не упадёт. Чтобы его найти, разбей ячейку на много маленьких квадратиков, сложи их координаты x и y по отдельности и раздели на количество квадратиков — получится средняя точка. У прямоугольной ячейки это просто пересечение диагоналей.</p>
+            <p id="lloyd-text-2">На шаге каждая точка переезжает в центр масс своей ячейки. Ячейки перестраиваются, центры масс смещаются — повторяем.</p>
+            <label class="voronoi-field" for="lloyd-count"><span class="voronoi-field-head">Стартовых точек: <output id="lloyd-count-output">9</output></span>
+              <input id="lloyd-count" type="range" min="3" max="30" step="1" value="9">
+            </label>
+            <div class="voronoi-actions">
+              <button type="button" id="lloyd-random">Случайное расположение</button>
+            </div>
             <p class="voronoi-metric">Разброс площадей: <strong id="lloyd-spread">—</strong></p>
             <div class="voronoi-actions">
               <button type="button" class="primary" id="lloyd-step">Шаг</button>
@@ -76,11 +83,11 @@
 
           <section class="voronoi-panel" id="panel-3" role="tabpanel" aria-labelledby="tab-3" hidden>
             <p class="voronoi-kicker">Песочница</p>
-            <h2>Собери свою карту</h2>
+            <h2>Настрой диаграмму</h2>
             <p class="voronoi-note">Перетаскивай точки, кликай по ячейке, чтобы выбрать её и перекрасить. Правый клик по точке — удалить.</p>
 
-            <label class="voronoi-field" for="count-range"><span class="voronoi-field-head">Точек: <output id="count-output">12</output></span>
-              <input id="count-range" type="range" min="2" max="40" step="1" value="12">
+            <label class="voronoi-field" for="count-range"><span class="voronoi-field-head">Точек на плоскости: <output id="count-output">12</output></span>
+              <input id="count-range" type="range" min="2" max="50" step="1" value="12">
             </label>
 
             <div class="voronoi-actions">

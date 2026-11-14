@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import test from "node:test"
 import {
   bisectorSegment,
+  delaunayEdges,
   nearestIndex,
   polygonArea,
   polygonCentroid,
@@ -55,4 +56,22 @@ test("ближайшая точка определяется по расстоя
   assert.equal(nearestIndex(points, 10, 10), 0)
   assert.equal(nearestIndex(points, 90, 10), 1)
   assert.equal(nearestIndex(points, 50, 90), 2)
+})
+
+test("триангуляция Делоне соединяет соседние точки", () => {
+  const triangle = [{ x: 0, y: 0 }, { x: 100, y: 0 }, { x: 40, y: 80 }]
+  assert.deepEqual(delaunayEdges(triangle).sort(), [[0, 1], [0, 2], [1, 2]])
+  const collinear = [{ x: 0, y: 0 }, { x: 50, y: 0 }, { x: 100, y: 0 }]
+  assert.deepEqual(delaunayEdges(collinear), [])
+  const points = [
+    { x: 47, y: 47 }, { x: 57, y: 13 }, { x: 82, y: 29 }, { x: 78, y: 62 },
+    { x: 63, y: 84 }, { x: 31, y: 86 }, { x: 18, y: 32 },
+  ]
+  const edges = delaunayEdges(points)
+  assert.ok(edges.length >= 8)
+  for (const [a, b] of edges) {
+    assert.ok(a >= 0 && a < points.length)
+    assert.ok(b >= 0 && b < points.length)
+    assert.notEqual(a, b)
+  }
 })

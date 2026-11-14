@@ -131,3 +131,42 @@ export function bisectorSegment(a, b, width, height) {
     { x: mx + dx * t1, y: my + dy * t1 },
   ]
 }
+
+function circumcircle(a, b, c) {
+  const d = 2 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y))
+  if (Math.abs(d) < EPS) return null
+  const a2 = a.x * a.x + a.y * a.y
+  const b2 = b.x * b.x + b.y * b.y
+  const c2 = c.x * c.x + c.y * c.y
+  const x = (a2 * (b.y - c.y) + b2 * (c.y - a.y) + c2 * (a.y - b.y)) / d
+  const y = (a2 * (c.x - b.x) + b2 * (a.x - c.x) + c2 * (b.x - a.x)) / d
+  return { x, y, radius: Math.hypot(a.x - x, a.y - y) }
+}
+
+export function delaunayEdges(points) {
+  const edges = new Map()
+  for (let i = 0; i < points.length; i += 1) {
+    for (let j = i + 1; j < points.length; j += 1) {
+      for (let k = j + 1; k < points.length; k += 1) {
+        const circle = circumcircle(points[i], points[j], points[k])
+        if (!circle) continue
+        const radiusSquared = circle.radius * circle.radius
+        let empty = true
+        for (let m = 0; m < points.length; m += 1) {
+          if (m === i || m === j || m === k) continue
+          const distance = (points[m].x - circle.x) ** 2 + (points[m].y - circle.y) ** 2
+          if (distance < radiusSquared - 1e-6) {
+            empty = false
+            break
+          }
+        }
+        if (!empty) continue
+        for (const [a, b] of [[i, j], [j, k], [k, i]]) {
+          const key = a < b ? `${a}:${b}` : `${b}:${a}`
+          if (!edges.has(key)) edges.set(key, [Math.min(a, b), Math.max(a, b)])
+        }
+      }
+    }
+  }
+  return [...edges.values()]
+}

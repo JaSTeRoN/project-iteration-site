@@ -1,5 +1,6 @@
 import {
   bisectorSegment,
+  delaunayEdges,
   nearestIndex,
   polygonArea,
   polygonCentroid,
@@ -11,7 +12,7 @@ const COLORS = ["#4f8ef7", "#f2a65a", "#7bc47f", "#e07a8a", "#9b7bd4", "#5bc0be"
 const SEED_COLOR = "#123a63"
 const CENTROID_COLOR = "#c96a1f"
 const SELECTED_COLOR = "#0f4f2b"
-const MAX_POINTS = 40
+const MAX_POINTS = 50
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches
 
 const canvas = document.querySelector("#voronoi-canvas")
@@ -32,7 +33,10 @@ const els = {
   lloydStep: document.querySelector("#lloyd-step"),
   lloydAuto: document.querySelector("#lloyd-auto"),
   lloydReset: document.querySelector("#lloyd-reset"),
-  lloydText: document.querySelector("#lloyd-text"),
+  lloydText2: document.querySelector("#lloyd-text-2"),
+  lloydCount: document.querySelector("#lloyd-count"),
+  lloydCountOutput: document.querySelector("#lloyd-count-output"),
+  lloydRandom: document.querySelector("#lloyd-random"),
   lloydStatus: document.querySelector("#lloyd-status"),
   countRange: document.querySelector("#count-range"),
   countOutput: document.querySelector("#count-output"),
@@ -51,28 +55,28 @@ const els = {
 
 const steps = [
   {
-    title: "Две базы на поляне",
-    text: "Перед нами поляна и две базы — A и B. Любая точка поляны принадлежит той базе, которая к ней ближе. Пока непонятно, где именно проходит граница, — сейчас разберёмся.",
+    title: "Семь точек",
+    text: "На плоскости семь точек — A, B, C, D, E, F, G. Каждая точка станет центром своей ячейки. Сначала определим, какие точки являются соседями.",
   },
   {
-    title: "Граница — серединный перпендикуляр",
-    text: "Все точки, которые находятся на одинаковом расстоянии от A и B, лежат на одной прямой — серединном перпендикуляре к отрезку AB. Она делит поляну на две половины: слева владения A, справа — B.",
+    title: "Соединяем соседние точки",
+    text: "Соседние точки соединяем отрезками. Получается триангуляция Делоне: она соединяет именно те пары точек, у которых в диаграмме Вороного будет общая граница. Это скелет построения.",
   },
   {
-    title: "Добавим третью базу",
-    text: "Появляется база C. Теперь у каждой пары соседей есть своя граница: A–B, A–C и B–C. Но ячейке A нужна не вся прямая A–B, а только её часть, где A действительно ближе.",
+    title: "Серединные перпендикуляры",
+    text: "У каждого отрезка отметим середину и восстановим перпендикуляр к нему. Такой перпендикуляр — множество точек, равноудалённых от концов отрезка. Пока нарисуем только короткие штрихи.",
   },
   {
-    title: "Обрезаем лишнее",
-    text: "Ячейка A — это пересечение двух условий: «ближе к A, чем к B» и «ближе к A, чем к C». Поэтому от прямых остаются только нужные куски, а лишние области отрезаются.",
+    title: "Продлеваем перпендикуляры",
+    text: "Продлим каждый серединный перпендикуляр до пересечения с другими. Эти прямые — границы между областями соседних точек: по одну сторону ближе одна точка, по другую — другая.",
   },
   {
-    title: "Все три ячейки",
-    text: "Повторяем то же самое для B и C. Каждая ячейка — множество точек, для которых её база ближайшая. Вместе ячейки покрывают всю поляну без дырок и наложений.",
+    title: "Собираем ячейки",
+    text: "Пересечения перпендикуляров дают вершины ячеек. Оставляем только те участки, которые действительно ограничивают ячейку: для точки A — перпендикуляры к отрезкам, соединяющим A с соседями. Получается выпуклый многоугольник.",
   },
   {
-    title: "Это и есть диаграмма Вороного",
-    text: "Наведите курсор или коснитесь поляны: появится линия до ближайшей базы, а её ячейка подсветится. Диаграмма Вороного — это разбиение плоскости по правилу «кто ближе». В играх так делают биомы, пещеры, границы королевств и текстуры.",
+    title: "Диаграмма Вороного",
+    text: "Готово: плоскость разбита на ячейки. Ячейка каждой точки — это область, все точки которой ближе к ней, чем к любой другой. Наведите курсор или коснитесь плоскости: подсветится ячейка ближайшей точки.",
   },
 ]
 
@@ -88,7 +92,7 @@ let autoTimer = null
 let animationFrame = 0
 
 const l1 = { points: [], step: 0 }
-const l2 = { points: [], iter: 0, auto: false }
+const l2 = { points: [], startPoints: [], iter: 0, auto: false }
 const l3 = { points: [], selected: -1, addMode: false }
 
 function relativePoints(list, colors = COLORS) {
@@ -111,23 +115,22 @@ function randomPoints(count, seed) {
 
 function initLevels() {
   l1.points = relativePoints([
-    { x: 0.28, y: 0.4, label: "A" },
-    { x: 0.64, y: 0.28, label: "B" },
-    { x: 0.48, y: 0.74, label: "C" },
+    { x: 0.47, y: 0.47, label: "A" },
+    { x: 0.57, y: 0.13, label: "B" },
+    { x: 0.82, y: 0.29, label: "C" },
+    { x: 0.78, y: 0.62, label: "D" },
+    { x: 0.63, y: 0.84, label: "E" },
+    { x: 0.31, y: 0.86, label: "F" },
+    { x: 0.18, y: 0.32, label: "G" },
   ])
-  l2.points = relativePoints([
-    { x: 0.16, y: 0.2 },
-    { x: 0.3, y: 0.14 },
-    { x: 0.7, y: 0.18 },
-    { x: 0.86, y: 0.34 },
-    { x: 0.22, y: 0.66 },
-    { x: 0.47, y: 0.52 },
-    { x: 0.63, y: 0.78 },
-    { x: 0.34, y: 0.84 },
-    { x: 0.8, y: 0.64 },
-  ])
+  l2.points = randomPoints(9, 37)
+  l2.startPoints = clonePoints(l2.points)
   l3.points = randomPoints(12, 11)
   initialized = true
+}
+
+function clonePoints(points) {
+  return points.map((point) => ({ ...point }))
 }
 
 function scalePoints(points, sx, sy) {
@@ -155,6 +158,7 @@ function resize() {
   } else if (sx !== 1 || sy !== 1) {
     scalePoints(l1.points, sx, sy)
     scalePoints(l2.points, sx, sy)
+    scalePoints(l2.startPoints, sx, sy)
     scalePoints(l3.points, sx, sy)
   }
   draw()
@@ -335,46 +339,69 @@ function drawHover() {
   drawLabel(`ближе к ${nearest.label}`, hover.x, hover.y - 16, "#0f4f2b")
 }
 
+function drawDelaunay(points, edges, color, width) {
+  for (const [a, b] of edges) drawLine(points[a], points[b], color, width)
+}
+
+function drawPerpendicularTicks(points, edges) {
+  for (const [a, b] of edges) {
+    const first = points[a]
+    const second = points[b]
+    const mid = { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 }
+    const length = Math.hypot(second.x - first.x, second.y - first.y)
+    if (length < 1) continue
+    const nx = -(second.y - first.y) / length
+    const ny = (second.x - first.x) / length
+    drawLine(
+      { x: mid.x - nx * 11, y: mid.y - ny * 11 },
+      { x: mid.x + nx * 11, y: mid.y + ny * 11 },
+      "rgba(15, 79, 43, 0.8)",
+      2,
+    )
+    ctx.save()
+    ctx.beginPath()
+    ctx.arc(mid.x, mid.y, 2.6, 0, Math.PI * 2)
+    ctx.fillStyle = "#0f4f2b"
+    ctx.fill()
+    ctx.restore()
+  }
+}
+
 function drawLevel1() {
   const points = l1.points
-  const visible = l1.step >= 2 ? points : points.slice(0, 2)
-  const cells = voronoiCells(visible, W, H)
-  if (l1.step === 0) {
-    cells.forEach((cell) => fillCell(cell, "#dce9f8", 0.28))
-  } else if (l1.step === 1) {
-    fillCell(cells[0], points[0].color, 0.24)
-    fillCell(cells[1], points[1].color, 0.24)
-    const line = bisectorSegment(points[0], points[1], W, H)
-    if (line) {
-      drawLine(line[0], line[1], "rgba(15, 79, 43, 0.8)", 3, [9, 6])
-      drawLabel("граница", (line[0].x + line[1].x) / 2, (line[0].y + line[1].y) / 2 - 10)
-    }
+  const cells = voronoiCells(points, W, H)
+  const edges = delaunayEdges(points)
+
+  if (l1.step === 1) {
+    drawDelaunay(points, edges, "rgba(70, 95, 125, 0.72)", 1.6)
   } else if (l1.step === 2) {
-    drawCells(cells, points, 0.1, true)
-    for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) {
-      const line = bisectorSegment(points[a], points[b], W, H)
-      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.5)", 1.6, [7, 5])
-    }
+    drawDelaunay(points, edges, "rgba(70, 95, 125, 0.3)", 1.1)
+    drawPerpendicularTicks(points, edges)
   } else if (l1.step === 3) {
-    drawCells(cells, points, 0.07, true)
-    fillCell(cells[0], points[0].color, 0.45)
-    strokeCell(cells[0], SELECTED_COLOR, 3)
-    for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) {
+    drawDelaunay(points, edges, "rgba(70, 95, 125, 0.22)", 1)
+    for (const [a, b] of edges) {
       const line = bisectorSegment(points[a], points[b], W, H)
-      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.25)", 1.2, [6, 5])
+      if (line) drawLine(line[0], line[1], "rgba(15, 79, 43, 0.38)", 1.1, [6, 5])
     }
+  } else if (l1.step === 4) {
+    cells.forEach((cell, index) => fillCell(cell, points[index].color, 0.1))
+    cells.forEach((cell) => strokeCell(cell, "rgba(15, 40, 65, 0.5)", 1.6))
+    fillCell(cells[0], points[0].color, 0.38)
+    strokeCell(cells[0], SELECTED_COLOR, 3)
+    drawDelaunay(points, edges, "rgba(70, 95, 125, 0.16)", 1)
     const centroid = polygonCentroid(cells[0])
-    drawLabel("ячейка A", centroid.x, centroid.y)
-  } else {
+    drawLabel("ячейка A", centroid.x, centroid.y - 26)
+  } else if (l1.step === 5) {
     drawCells(cells, points, 0.3, true)
-    if (l1.step === 5 && hover) {
+    if (hover) {
       const index = nearestIndex(points, hover.x, hover.y)
       fillCell(cells[index], points[index].color, 0.32)
       strokeCell(cells[index], SELECTED_COLOR, 2.4)
     }
     drawHover()
   }
-  visible.forEach((point, index) => drawSeed(point, index, true))
+
+  points.forEach((point, index) => drawSeed(point, index, true))
 }
 
 function drawLevel2() {
@@ -478,7 +505,7 @@ function setStep(next) {
   els.stepText.textContent = step.text
   els.stepBack.disabled = l1.step === 0
   els.stepNext.textContent = l1.step === steps.length - 1 ? "В песочницу" : "Дальше"
-  setHint(l1.step === 5 ? "Наведите курсор или коснитесь поляны — подсветится ближайшая база" : "")
+  setHint(l1.step === 5 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
   draw()
 }
 
@@ -503,9 +530,11 @@ function updateLloydPanel() {
   els.lloydIter.textContent = String(l2.iter)
   const cells = voronoiCells(l2.points, W, H)
   els.lloydSpread.textContent = `${spreadPercent(cells).toFixed(1)}%`
-  els.lloydText.textContent = l2.iter >= 8
-    ? "После нескольких шагов ячейки становятся похожи по размеру и форме. Это и есть релаксация Ллойда: базы постепенно расходятся в «центры» своих территорий."
-    : "У каждой ячейки есть центр масс — точка, в которой ячейка «уравновешена». Если переставить базу в этот центр и повторить, карта постепенно становится ровнее."
+  els.lloydText2.textContent = l2.iter >= 8
+    ? "После нескольких шагов ячейки становятся похожи по размеру и форме. Это и есть релаксация Ллойда: точки постепенно сходятся к центрам своих областей."
+    : "На шаге каждая точка переезжает в центр масс своей ячейки. Ячейки перестраиваются, центры масс смещаются — повторяем."
+  els.lloydCountOutput.textContent = String(l2.points.length)
+  els.lloydCount.value = String(Math.min(30, Math.max(3, l2.points.length)))
 }
 
 function animatePoints(points, targets, duration = 420) {
@@ -550,7 +579,7 @@ async function lloydStep(animated = true) {
   busy = false
   els.lloydStep.disabled = false
   updateLloydPanel()
-  els.lloydStatus.textContent = `Шаг ${l2.iter}: базы переехали в центры масс своих ячеек.`
+  els.lloydStatus.textContent = `Шаг ${l2.iter}: точки переехали в центры масс своих ячеек.`
   draw()
 }
 
@@ -560,15 +589,22 @@ async function runAuto() {
   if (l2.auto) autoTimer = window.setTimeout(runAuto, 900)
 }
 
+function generateLloydMap(count = l2.points.length, seed = Math.floor(Math.random() * 100000)) {
+  stopAuto()
+  const safeCount = Math.max(3, Math.min(30, count))
+  l2.points = randomPoints(safeCount, seed)
+  l2.startPoints = clonePoints(l2.points)
+  l2.iter = 0
+  els.lloydStatus.textContent = "Новое стартовое расположение. Оранжевые кольца — центры масс."
+  updateLloydPanel()
+  draw()
+}
+
 function resetLloyd() {
   stopAuto()
-  l2.points = relativePoints([
-    { x: 0.16, y: 0.2 }, { x: 0.3, y: 0.14 }, { x: 0.7, y: 0.18 },
-    { x: 0.86, y: 0.34 }, { x: 0.22, y: 0.66 }, { x: 0.47, y: 0.52 },
-    { x: 0.63, y: 0.78 }, { x: 0.34, y: 0.84 }, { x: 0.8, y: 0.64 },
-  ])
+  l2.points = clonePoints(l2.startPoints)
   l2.iter = 0
-  els.lloydStatus.textContent = "Оранжевые кольца — центры масс ячеек."
+  els.lloydStatus.textContent = "Диаграмма вернулась к стартовому расположению точек."
   updateLloydPanel()
   draw()
 }
@@ -612,7 +648,7 @@ function lloydSandbox() {
   animatePoints(l3.points, targets, 360).then(() => {
     l3.selected = -1
     updateSelectionStatus()
-    updateSandboxStatus("Базы переехали в центры масс — карта стала ровнее.", "good")
+    updateSandboxStatus("Точки переехали в центры масс — диаграмма стала ровнее.", "good")
     draw()
   })
 }
@@ -627,7 +663,7 @@ function setLevel(next) {
   })
   if (level === 1) {
     setStep(l1.step)
-    setHint(l1.step === 5 ? "Наведите курсор или коснитесь поляны — подсветится ближайшая база" : "")
+    setHint(l1.step === 5 ? "Наведите курсор или коснитесь плоскости — подсветится ячейка ближайшей точки" : "")
   } else if (level === 2) {
     updateLloydPanel()
     setHint("Оранжевые кольца — центры масс ячеек")
@@ -773,15 +809,28 @@ els.stepNext.addEventListener("click", () => {
 })
 els.stepReset.addEventListener("click", () => {
   l1.points = relativePoints([
-    { x: 0.28, y: 0.4, label: "A" },
-    { x: 0.64, y: 0.28, label: "B" },
-    { x: 0.48, y: 0.74, label: "C" },
+    { x: 0.47, y: 0.47, label: "A" },
+    { x: 0.57, y: 0.13, label: "B" },
+    { x: 0.82, y: 0.29, label: "C" },
+    { x: 0.78, y: 0.62, label: "D" },
+    { x: 0.63, y: 0.84, label: "E" },
+    { x: 0.31, y: 0.86, label: "F" },
+    { x: 0.18, y: 0.32, label: "G" },
   ])
   setStep(0)
 })
 
 els.lloydStep.addEventListener("click", () => { lloydStep(true) })
 els.lloydReset.addEventListener("click", resetLloyd)
+els.lloydCount.addEventListener("input", () => {
+  els.lloydCountOutput.textContent = els.lloydCount.value
+})
+els.lloydCount.addEventListener("change", () => {
+  generateLloydMap(Number(els.lloydCount.value), Math.floor(Math.random() * 100000))
+})
+els.lloydRandom.addEventListener("click", () => {
+  generateLloydMap(l2.points.length, Math.floor(Math.random() * 100000))
+})
 els.lloydAuto.addEventListener("click", () => {
   if (l2.auto) {
     stopAuto()
