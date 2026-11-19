@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Процедурный и адаптивный саундтрек — Итерация-8</title>
+  <meta name="description" content="Процедурная музыка: лад, аккорды, слои, вертикальный ремикс и горизонтальные переходы между сценами.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/soundtrack.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"><span class="brand-home">| Главная</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть разделы">
+      <span class="nav-toggle-title">Приложения</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+      <a href="about.html">О курсе</a>
+    </nav>
+  </header>
+
+  <main class="wrap soundtrack-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/headphones_music.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Процедурный и адаптивный саундтрек</h1>
+        <p>Музыка, которая собирается из слоёв и меняется под сцену: спокойствие, бой, опасность и победа.</p>
+      </div>
+    </div>
+
+    <section class="soundtrack-card" aria-label="Интерактивный саундтрек">
+      <div class="soundtrack-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Как устроен саундтрек</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Песочница</button>
+      </div>
+
+      <div class="soundtrack-transport" aria-label="Транспорт">
+        <button type="button" class="transport-main" id="transport-play">▶ Играть</button>
+        <div class="transport-readout">
+          <strong id="transport-scene">Исследование</strong>
+          <span id="transport-status">Пауза · 84 BPM · 16 шагов</span>
+        </div>
+        <div class="transport-pulse" id="transport-pulse" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      </div>
+
+      <div class="soundtrack-layout">
+        <div class="soundtrack-stage">
+          <canvas id="soundtrack-canvas" aria-label="Piano roll с процедурной музыкой"></canvas>
+          <div class="soundtrack-legend" aria-hidden="true">
+            <span style="--c:#f0a34a">Барабаны</span>
+            <span style="--c:#4f9cff">Бас</span>
+            <span style="--c:#b179ff">Пэд</span>
+            <span style="--c:#47c98b">Мелодия</span>
+          </div>
+          <p class="soundtrack-overlay" id="soundtrack-hint"></p>
+        </div>
+
+        <aside class="soundtrack-side">
+          <section class="soundtrack-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+            <p class="soundtrack-kicker" id="step-kicker">ШАГ 1 ИЗ 7</p>
+            <h2 id="step-title">Лад и аккордовая сетка</h2>
+            <p class="soundtrack-text" id="step-text"></p>
+
+            <div class="soundtrack-steps" role="group" aria-label="Шаги разбора">
+              <button type="button" data-step="0" aria-pressed="true">Лад</button>
+              <button type="button" data-step="1" aria-pressed="false">Ритм</button>
+              <button type="button" data-step="2" aria-pressed="false">Мелодия</button>
+              <button type="button" data-step="3" aria-pressed="false">Слои</button>
+              <button type="button" data-step="4" aria-pressed="false">Ремикс</button>
+              <button type="button" data-step="5" aria-pressed="false">Переходы</button>
+              <button type="button" data-step="6" aria-pressed="false">SFX</button>
+            </div>
+
+            <div class="soundtrack-formula" id="step-formula"></div>
+
+            <div class="soundtrack-controls" data-step-panel="0">
+              <label class="soundtrack-field" for="step-scale">Лад
+                <select id="step-scale"></select>
+              </label>
+              <div class="soundtrack-readout" id="chord-readout"></div>
+              <button type="button" class="soundtrack-wide" id="preview-chord">Сыграть аккорд</button>
+              <p class="soundtrack-note">Аккорды строятся из ступеней лада. Сетка повторяется по тактам, а мелодия выбирает ноты внутри неё.</p>
+            </div>
+
+            <div class="soundtrack-controls" data-step-panel="1" hidden>
+              <label class="soundtrack-field" for="rhythm-intensity">Плотность ритма: <output id="rhythm-output">28%</output>
+                <input id="rhythm-intensity" type="range" min="0" max="100" step="1" value="28">
+              </label>
+              <p class="soundtrack-note">Чем выше интенсивность, тем чаще барабаны и бас. Это не громкость — это состав событий.</p>
+            </div>
+
+            <div class="soundtrack-controls" data-step-panel="2" hidden>
+              <label class="soundtrack-field" for="melody-probability">Вероятность ноты: <output id="melody-probability-output">70%</output>
+                <input id="melody-probability" type="range" min="0" max="100" step="1" value="70">
+              </label>
+              <label class="soundtrack-field" for="melody-rest">Вероятность паузы: <output id="melody-rest-output">18%</output>
+                <input id="melody-rest" type="range" min="0" max="100" step="1" value="18">
+              </label>
+              <p class="soundtrack-note">Мелодия идёт по ступеням лада случайным шагом. Пауза и вероятность ноты делают её живой.</p>
+            </div>
+
+            <div class="soundtrack-controls" data-step-panel="3" hidden>
+              <div class="soundtrack-layer-list" id="step-layers"></div>
+              <p class="soundtrack-note">Слои включаются по отдельности. На низкой интенсивности часть слоёв ещё не входит в аранжировку.</p>
+            </div>
+
+            <div class="soundtrack-controls" data-step-panel="4" hidden>
+              <div class="soundtrack-mixer" id="step-mixer"></div>
+              <p class="soundtrack-note">Громкость слоя — это микс. Адаптивность же меняет не громкость, а состав и плотность.</p>
+            </div>
+
+            <div class="soundtrack-controls" data-step-panel="5" hidden>
+              <div class="soundtrack-scenes" id="step-scenes"></div>
+              <label class="soundtrack-field" for="step-transition">Длина перехода: <output id="step-transition-output">2 такта</output>
+                <input id="step-transition" type="range" min="1" max="8" step="1" value="2">
+              </label>
+              <p class="soundtrack-note">Смена сцены встаёт в сетку тактов. Переход не обрывает музыку, а переносит её в новую сцену.</p>
+            </div>
+
+            <div class="soundtrack-controls" data-step-panel="6" hidden>
+              <div class="soundtrack-sfx">
+                <button type="button" data-sfx="footstep">Шаги</button>
+                <button type="button" data-sfx="wind">Ветер</button>
+                <button type="button" data-sfx="hit">Удар</button>
+              </div>
+              <p class="soundtrack-note">SFX синтезируются из шума и фильтров: шаги — короткий низкий импульс, ветер — полоса шума, удар — щелчок и низкий тон.</p>
+            </div>
+
+            <div class="soundtrack-output" id="step-output"></div>
+            <div class="soundtrack-actions">
+              <button type="button" id="step-back">Назад</button>
+              <button type="button" class="primary" id="step-next">Дальше</button>
+              <button type="button" id="step-reset">К началу</button>
+            </div>
+          </section>
+
+          <section class="soundtrack-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="soundtrack-kicker">ПЕСОЧНИЦА</p>
+            <h2>Адаптивный саундтрек</h2>
+            <p class="soundtrack-text">Сцена задаёт лад и темп, интенсивность — состав слоёв и плотность событий. Микшер остаётся ручным.</p>
+
+            <label class="soundtrack-field" for="lab-scene">Сцена
+              <select id="lab-scene"></select>
+            </label>
+            <label class="soundtrack-field" for="lab-intensity">Интенсивность: <output id="lab-intensity-output">28%</output>
+              <input id="lab-intensity" type="range" min="0" max="100" step="1" value="28">
+            </label>
+            <label class="soundtrack-field" for="lab-tempo">Темп: <output id="lab-tempo-output">84 BPM</output>
+              <input id="lab-tempo" type="range" min="60" max="160" step="1" value="84">
+            </label>
+            <label class="soundtrack-field" for="lab-scale">Лад
+              <select id="lab-scale"></select>
+            </label>
+            <label class="soundtrack-field" for="lab-instrument">Инструмент
+              <select id="lab-instrument"></select>
+            </label>
+            <label class="soundtrack-field" for="lab-transition">Длина перехода: <output id="lab-transition-output">2 такта</output>
+              <input id="lab-transition" type="range" min="1" max="8" step="1" value="2">
+            </label>
+
+            <details class="soundtrack-details">
+              <summary>Вероятности и паузы</summary>
+              <label class="soundtrack-field" for="lab-note-probability">Вероятность ноты: <output id="lab-note-probability-output">70%</output>
+                <input id="lab-note-probability" type="range" min="0" max="100" step="1" value="70">
+              </label>
+              <label class="soundtrack-field" for="lab-rest-probability">Вероятность паузы: <output id="lab-rest-probability-output">18%</output>
+                <input id="lab-rest-probability" type="range" min="0" max="100" step="1" value="18">
+              </label>
+            </details>
+
+            <details class="soundtrack-details">
+              <summary>Микшер слоёв</summary>
+              <div class="soundtrack-mixer" id="lab-mixer"></div>
+            </details>
+
+            <div class="soundtrack-activity" id="lab-activity" aria-label="Активность слоёв"></div>
+            <div class="soundtrack-stats" id="lab-stats"></div>
+            <p class="soundtrack-note">Интенсивность не делает музыку громче: она добавляет или убирает слои и события. Слушай, как меняется плотность.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
+  </footer>
+
+  <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/footer.js" defer></script>
+  <script type="module" src="assets/js/soundtrack/app.js"></script>
+</body>
+</html>

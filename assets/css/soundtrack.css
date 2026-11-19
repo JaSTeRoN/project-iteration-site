@@ -1,0 +1,587 @@
+.soundtrack-page .page-lead {
+  margin-bottom: 18px;
+}
+
+@media (min-width: 901px) {
+  .soundtrack-page .page-lead.with-mascot {
+    padding-top: 86px;
+  }
+
+  .soundtrack-page .page-lead h1 {
+    max-width: 1000px;
+    font-size: clamp(1.9rem, 3.2vw, 2.8rem);
+  }
+}
+
+.soundtrack-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(12, 31, 52, 0.16);
+  padding: 18px;
+}
+
+.soundtrack-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.soundtrack-tabs button {
+  min-height: 38px;
+  padding: 7px 14px;
+  border: 1px solid rgba(22, 60, 44, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  color: #24503d;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-tabs button[aria-selected="true"] {
+  border-color: #1d7a46;
+  background: #1d7a46;
+  color: #fff;
+}
+
+.soundtrack-transport {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  background: #102236;
+  color: #eaf3fd;
+}
+
+.soundtrack-transport button {
+  min-height: 34px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 8px;
+  background: transparent;
+  color: #eaf3fd;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-transport .transport-main {
+  border-color: #3dcf87;
+  background: #1d8a51;
+  color: #fff;
+}
+
+.soundtrack-transport .transport-main.is-playing {
+  background: #b84b3e;
+  border-color: #e08b7c;
+}
+
+.transport-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 160px;
+}
+
+.transport-readout strong {
+  font-size: 0.8rem;
+}
+
+.transport-readout span {
+  color: #a9c1d6;
+  font-size: 0.68rem;
+}
+
+.transport-pulse {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 24px;
+  margin-left: auto;
+}
+
+.transport-pulse i {
+  display: block;
+  width: 4px;
+  height: 8px;
+  border-radius: 3px;
+  background: #4fd28d;
+  opacity: 0.5;
+  transition: height 0.1s ease, opacity 0.1s ease;
+}
+
+.transport-pulse i.is-on {
+  height: 22px;
+  opacity: 1;
+}
+
+.soundtrack-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 14px;
+  align-items: start;
+}
+
+.soundtrack-stage {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 13px;
+  background: #0c1826;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.soundtrack-stage canvas {
+  display: block;
+  width: 100%;
+  height: 540px;
+}
+
+.soundtrack-legend {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+  color: #c9d9e8;
+  font-size: 0.66rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.soundtrack-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.soundtrack-legend span::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+.soundtrack-overlay {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  margin: 0;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: rgba(5, 15, 25, 0.76);
+  color: #dcebf7;
+  font-size: 0.66rem;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.soundtrack-side {
+  min-width: 0;
+}
+
+.soundtrack-panel {
+  padding: 2px;
+}
+
+.soundtrack-kicker {
+  margin: 0 0 2px;
+  color: #6f8799;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.soundtrack-panel h2 {
+  margin: 0 0 6px;
+  color: #173a2a;
+  font-family: Literata, Georgia, serif;
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.soundtrack-text,
+.soundtrack-note {
+  margin: 0 0 8px;
+  color: #536d80;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.soundtrack-note {
+  color: #72879a;
+  font-size: 0.7rem;
+}
+
+.soundtrack-steps {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin: 9px 0;
+}
+
+.soundtrack-steps button {
+  min-height: 29px;
+  padding: 3px 4px;
+  border: 1px solid rgba(20, 55, 80, 0.16);
+  border-radius: 6px;
+  background: #f4f8fb;
+  color: #40596e;
+  font: inherit;
+  font-size: 0.63rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-steps button[aria-pressed="true"] {
+  border-color: #1d7a46;
+  background: #1d7a46;
+  color: #fff;
+}
+
+.soundtrack-formula {
+  margin: 8px 0;
+  padding: 7px 8px;
+  border-left: 3px solid #54a0d8;
+  border-radius: 0 6px 6px 0;
+  background: #eef6fb;
+  color: #33536b;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+.soundtrack-controls[hidden],
+.soundtrack-panel[hidden] {
+  display: none;
+}
+
+.soundtrack-field {
+  display: block;
+  margin: 0 0 8px;
+  color: #334d62;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.soundtrack-field select {
+  display: block;
+  width: 100%;
+  height: 34px;
+  margin-top: 3px;
+  padding: 0 8px;
+  border: 1px solid rgba(20, 55, 80, 0.2);
+  border-radius: 7px;
+  background: #fbfdff;
+  color: #1c3548;
+  font: inherit;
+  font-size: 0.78rem;
+}
+
+.soundtrack-field input[type="range"] {
+  display: block;
+  width: 100%;
+  margin-top: 5px;
+  accent-color: #1d8a51;
+}
+
+.soundtrack-field output {
+  float: right;
+  color: #146b3a;
+  font-weight: 800;
+}
+
+.soundtrack-readout {
+  margin: 7px 0;
+  padding: 8px 9px;
+  border: 1px solid rgba(20, 55, 80, 0.12);
+  border-radius: 8px;
+  background: #f4f8fb;
+  color: #294a61;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.soundtrack-wide {
+  width: 100%;
+  min-height: 32px;
+  margin: 4px 0;
+  padding: 5px 8px;
+  border: 1px solid rgba(20, 55, 80, 0.19);
+  border-radius: 7px;
+  background: #fff;
+  color: #24503d;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-layer-list,
+.soundtrack-mixer {
+  display: grid;
+  gap: 6px;
+}
+
+.soundtrack-layer-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #334d62;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.soundtrack-layer-row input[type="checkbox"] {
+  accent-color: #1d8a51;
+}
+
+.soundtrack-layer-row .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+.soundtrack-mixer-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 8px;
+  align-items: center;
+  color: #334d62;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.soundtrack-mixer-row span {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.soundtrack-mixer-row input[type="checkbox"] {
+  width: 13px;
+  height: 13px;
+  accent-color: #1d8a51;
+}
+
+.soundtrack-mixer-row .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--c);
+}
+
+.soundtrack-mixer-row input {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: #1d8a51;
+}
+
+.soundtrack-scenes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 5px;
+  margin-bottom: 8px;
+}
+
+.soundtrack-scenes button {
+  min-height: 32px;
+  padding: 4px 6px;
+  border: 1px solid rgba(20, 55, 80, 0.18);
+  border-radius: 7px;
+  background: #f6f9fc;
+  color: #36536a;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-scenes button.is-active {
+  border-color: #1d7a46;
+  background: #e4f4ea;
+  color: #146b3a;
+}
+
+.soundtrack-sfx {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px;
+}
+
+.soundtrack-sfx button {
+  min-height: 34px;
+  border: 1px solid rgba(20, 55, 80, 0.18);
+  border-radius: 7px;
+  background: #f6f9fc;
+  color: #36536a;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-output {
+  margin: 8px 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #f1f6fa;
+  color: #547084;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.soundtrack-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.soundtrack-actions button {
+  min-height: 32px;
+  padding: 4px 9px;
+  border: 1px solid rgba(20, 55, 80, 0.18);
+  border-radius: 7px;
+  background: #fff;
+  color: #24503d;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-actions button.primary {
+  border-color: #1d7a46;
+  background: #1d7a46;
+  color: #fff;
+}
+
+.soundtrack-details {
+  margin: 6px 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(20, 55, 80, 0.12);
+  border-radius: 8px;
+  background: #fbfdff;
+}
+
+.soundtrack-details summary {
+  color: #334d62;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.soundtrack-details .soundtrack-field {
+  margin-top: 8px;
+}
+
+.soundtrack-activity {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.soundtrack-activity-row {
+  display: grid;
+  grid-template-columns: 69px 1fr;
+  align-items: center;
+  gap: 6px;
+  color: #547084;
+  font-size: 0.64rem;
+  font-weight: 700;
+}
+
+.soundtrack-activity-row i {
+  display: block;
+  height: 6px;
+  border-radius: 4px;
+  background: #e4edf4;
+  overflow: hidden;
+}
+
+.soundtrack-activity-row i b {
+  display: block;
+  width: 4%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c);
+  opacity: 0.4;
+  transition: width 0.15s ease, opacity 0.15s ease;
+}
+
+.soundtrack-activity-row.is-active i b {
+  opacity: 1;
+}
+
+.soundtrack-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 8px 0;
+}
+
+.soundtrack-stat {
+  padding: 6px;
+  border-radius: 7px;
+  background: #f3f7fa;
+}
+
+.soundtrack-stat span {
+  display: block;
+  color: #75899a;
+  font-size: 0.58rem;
+  font-weight: 700;
+}
+
+.soundtrack-stat strong {
+  display: block;
+  margin-top: 2px;
+  color: #173a2a;
+  font-size: 0.76rem;
+}
+
+@media (max-width: 980px) {
+  .soundtrack-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .soundtrack-stage canvas {
+    height: 380px;
+  }
+}
+
+@media (max-width: 620px) {
+  .soundtrack-card {
+    padding: 11px;
+  }
+
+  .soundtrack-steps {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .soundtrack-stage canvas {
+    height: 320px;
+  }
+
+  .soundtrack-legend {
+    display: none;
+  }
+
+  .soundtrack-transport {
+    gap: 5px;
+  }
+
+  .transport-pulse {
+    display: none;
+  }
+}
