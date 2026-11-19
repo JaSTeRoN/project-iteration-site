@@ -38,7 +38,7 @@
 
     <section class="bestiary-card" aria-label="Интерактивное приложение">
       <div class="bestiary-tabs" role="tablist" aria-label="Уровни приложения">
-        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Пять способов</button>
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Алгоритмы</button>
         <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Лаборатория</button>
       </div>
 
@@ -52,7 +52,7 @@
           <section class="bestiary-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
             <p class="bestiary-kicker" id="step-kicker">Шаг 1 из 5</p>
             <h2 id="step-title">Комбинаторика</h2>
-            <p id="step-text">Собери моба из готовых частей: голова, броня, палитра и глаза. Части можно менять местами и перекрашивать.</p>
+            <p id="step-text">Собери моба из готовых частей: голова, аксессуар, палитра, глаза, телосложение и рисунок крыльев. Части можно менять местами и перекрашивать.</p>
 
             <div class="bestiary-steps" role="group" aria-label="Способы генерации">
               <button type="button" data-step="0" aria-pressed="true">Части</button>
@@ -62,13 +62,13 @@
               <button type="button" data-step="4" aria-pressed="false">Эволюция</button>
             </div>
 
-            <div class="bestiary-formula" id="step-formula">4 × 4 × 4 × 3 = 192 комбинации</div>
+            <div class="bestiary-formula" id="step-formula">8 голов × 8 аксессуаров × 10 палитр × 3 варианта глаз × 3 телосложения × 3 рисунка крыльев = 17 280 комбинаций</div>
 
             <div class="bestiary-controls" data-step-panel="0">
               <label class="bestiary-field" for="combo-head">Голова
                 <select id="combo-head"></select>
               </label>
-              <label class="bestiary-field" for="combo-accessory">Броня
+              <label class="bestiary-field" for="combo-accessory">Аксессуар
                 <select id="combo-accessory"></select>
               </label>
               <label class="bestiary-field" for="combo-palette">Палитра
@@ -76,6 +76,12 @@
               </label>
               <label class="bestiary-field" for="combo-eye">Глаза
                 <select id="combo-eye"></select>
+              </label>
+              <label class="bestiary-field" for="combo-body">Телосложение
+                <select id="combo-body"></select>
+              </label>
+              <label class="bestiary-field" for="combo-wing">Рисунок крыльев
+                <select id="combo-wing"></select>
               </label>
               <button type="button" class="bestiary-wide" id="combo-random">Случайные части</button>
               <p class="bestiary-note">Меняем части и цвета — получаем новые визуалы без новой геометрии.</p>
@@ -123,20 +129,31 @@
             </div>
 
             <div class="bestiary-controls" data-step-panel="4" hidden>
-              <label class="bestiary-field" for="evo-target">Цель эволюции
-                <select id="evo-target">
-                  <option value="hunter">Ночной охотник</option>
-                  <option value="frost">Ледяной страж</option>
-                  <option value="cute">Лесной малыш</option>
-                </select>
-              </label>
-              <label class="bestiary-field" for="evo-mutation">Мутация: <output id="evo-mutation-output">0.18</output>
-                <input id="evo-mutation" type="range" min="0.05" max="0.5" step="0.01" value="0.18">
-              </label>
-              <button type="button" class="bestiary-wide primary" id="evo-run">Следующее поколение</button>
-              <button type="button" class="bestiary-wide" id="evo-reset">Новая популяция</button>
-              <div class="bestiary-stats" id="evo-stats"></div>
-              <p class="bestiary-note">Популяция из 50 мобов: отбор, скрещивание и небольшие мутации.</p>
+              <div id="evo-controls">
+                <label class="bestiary-field" for="evo-target">Цель эволюции
+                  <select id="evo-target">
+                    <option value="hunter">Ночной охотник</option>
+                    <option value="frost">Ледяной страж</option>
+                    <option value="cute">Лесной малыш</option>
+                  </select>
+                </label>
+                <label class="bestiary-field" for="evo-mutation">Мутация: <output id="evo-mutation-output">0.18</output>
+                  <input id="evo-mutation" type="range" min="0.05" max="0.5" step="0.01" value="0.18">
+                </label>
+                <button type="button" class="bestiary-wide primary" id="evo-run">Следующее поколение</button>
+                <button type="button" class="bestiary-wide" id="evo-reset">Новая популяция</button>
+                <div class="bestiary-stats" id="evo-stats"></div>
+                <p class="bestiary-note">Популяция из 50 мобов: отбор, скрещивание и небольшие мутации. Нажмите на любого моба, чтобы рассмотреть его и увидеть расчёт пригодности.</p>
+              </div>
+              <div class="bestiary-evo-detail" id="evo-detail" hidden>
+                <div class="bestiary-evo-head">
+                  <strong id="evo-detail-title">Особь</strong>
+                  <button type="button" id="evo-back">← К популяции</button>
+                </div>
+                <div class="bestiary-stats" id="evo-detail-stats"></div>
+                <p class="bestiary-note" id="evo-origin"></p>
+                <div class="bestiary-breakdown" id="evo-breakdown"></div>
+              </div>
             </div>
 
             <p class="bestiary-output" id="step-output"></p>
@@ -176,7 +193,7 @@
               <label class="bestiary-field" for="lab-head">Голова
                 <select id="lab-head"></select>
               </label>
-              <label class="bestiary-field" for="lab-accessory">Броня
+              <label class="bestiary-field" for="lab-accessory">Аксессуар
                 <select id="lab-accessory"></select>
               </label>
               <label class="bestiary-field" for="lab-palette">Палитра
@@ -184,6 +201,12 @@
               </label>
               <label class="bestiary-field" for="lab-eye">Глаза
                 <select id="lab-eye"></select>
+              </label>
+              <label class="bestiary-field" for="lab-body">Телосложение
+                <select id="lab-body"></select>
+              </label>
+              <label class="bestiary-field" for="lab-wing">Рисунок крыльев
+                <select id="lab-wing"></select>
               </label>
             </details>
 

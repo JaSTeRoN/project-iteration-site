@@ -1,12 +1,14 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import {
+  ACCESSORIES,
+  BODY_SHAPES,
   COMBINATION_COUNT,
   EYES,
   HEADS,
-  ACCESSORIES,
   PALETTES,
   TYPES,
+  WING_PATTERNS,
   bestOf,
   combinationCount,
   createGenome,
@@ -14,6 +16,7 @@ import {
   createPopulation,
   crossover,
   evolvePopulation,
+  fitnessBreakdown,
   grammarTrace,
   mutate,
   updateGenome,
@@ -29,7 +32,12 @@ test("combination count matches the parts library", () => {
   assert.equal(combinationCount(), COMBINATION_COUNT)
   assert.equal(
     combinationCount(),
-    Object.keys(HEADS).length * Object.keys(ACCESSORIES).length * Object.keys(PALETTES).length * Object.keys(EYES).length,
+    Object.keys(HEADS).length *
+      Object.keys(ACCESSORIES).length *
+      Object.keys(PALETTES).length *
+      Object.keys(EYES).length *
+      Object.keys(BODY_SHAPES).length *
+      Object.keys(WING_PATTERNS).length,
   )
 })
 
@@ -57,7 +65,7 @@ test("parametric dependencies update health and speed", () => {
 })
 
 test("noise samplers are deterministic and stay in 0..1", () => {
-  for (const kind of ["perlin", "worley"]) {
+  for (const kind of ["perlin", "worley", "bands", "cells", "grain"]) {
     const sampler = createNoiseSampler(kind, 4, 11)
     const again = createNoiseSampler(kind, 4, 11)
     for (const [x, y] of [[0, 0], [0.2, 0.6], [0.9, 0.4]]) {
@@ -77,8 +85,18 @@ test("crossover and mutation keep a valid genome", () => {
     assert.ok(genome.height >= 1.9 && genome.height <= 3.7)
     assert.ok(genome.wingspan >= 0.75 && genome.wingspan <= 1.7)
     assert.ok(TYPES[genome.type])
+    assert.ok(BODY_SHAPES[genome.bodyShape])
+    assert.ok(WING_PATTERNS[genome.wingPattern])
     assert.ok([2, 4, 6, 8].includes(genome.wingCount))
   }
+})
+
+test("fitness breakdown is consistent with the score", () => {
+  const genome = createGenome(12)
+  const breakdown = fitnessBreakdown(genome, "hunter")
+  const sum = breakdown.parts.reduce((total, part) => total + part.score * part.weight, 0)
+  assert.equal(breakdown.score, Math.round(sum * 100))
+  assert.equal(breakdown.parts.length, 6)
 })
 
 test("evolution does not lose the best fitness", () => {

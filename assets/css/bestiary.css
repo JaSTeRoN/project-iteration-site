@@ -337,6 +337,84 @@
   cursor: pointer;
 }
 
+.bestiary-evo-detail {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(20, 45, 75, 0.14);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.bestiary-evo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bestiary-evo-head strong {
+  color: #173a2a;
+  font-size: 0.88rem;
+}
+
+.bestiary-evo-head button {
+  min-height: 30px;
+  padding: 3px 7px;
+  font-size: 0.7rem;
+}
+
+.bestiary-breakdown {
+  margin-top: 8px;
+  border-top: 1px solid rgba(20, 45, 75, 0.12);
+  padding-top: 6px;
+}
+
+.bestiary-breakdown-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 6px;
+  align-items: baseline;
+  padding: 3px 0;
+  color: #4b657f;
+  font-size: 0.7rem;
+}
+
+.bestiary-breakdown-row strong {
+  color: #146b3a;
+  font-size: 0.72rem;
+}
+
+.bestiary-breakdown-row span:nth-child(2) {
+  color: #7a8da3;
+  font-size: 0.68rem;
+}
+
+.bestiary-breakdown-head {
+  margin-bottom: 5px;
+  color: #173a2a;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.bestiary-breakdown-formula {
+  margin-bottom: 4px;
+  color: #6b7f95;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.62rem;
+  line-height: 1.4;
+}
+
+.bestiary-breakdown-total {
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px solid rgba(20, 45, 75, 0.12);
+  color: #173a2a;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-align: right;
+}
+
 @media (max-width: 900px) {
   .bestiary-card { padding: 12px; }
   .bestiary-layout { grid-template-columns: 1fr; gap: 12px; }
