@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Процедурный бестиарий — Итерация-8</title>
+  <meta name="description" content="Пять способов собрать игрового моба: комбинаторика, параметры, грамматика, шум и эволюция.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/bestiary.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"><span class="brand-home">| Главная</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть разделы">
+      <span class="nav-toggle-title">Приложения</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+      <a href="about.html">О курсе</a>
+    </nav>
+  </header>
+
+  <main class="wrap bestiary-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/building_blocks.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Процедурный бестиарий</h1>
+        <p>Один моб — пять способов его собрать: части, параметры, грамматика, шум и эволюция.</p>
+      </div>
+    </div>
+
+    <section class="bestiary-card" aria-label="Интерактивное приложение">
+      <div class="bestiary-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Пять способов</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Лаборатория</button>
+      </div>
+
+      <div class="bestiary-layout">
+        <div class="bestiary-stage">
+          <canvas id="bestiary-canvas" aria-label="Сгенерированный моб"></canvas>
+          <p class="bestiary-overlay" id="canvas-hint"></p>
+        </div>
+
+        <aside class="bestiary-side">
+          <section class="bestiary-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+            <p class="bestiary-kicker" id="step-kicker">Шаг 1 из 5</p>
+            <h2 id="step-title">Комбинаторика</h2>
+            <p id="step-text">Собери моба из готовых частей: голова, броня, палитра и глаза. Части можно менять местами и перекрашивать.</p>
+
+            <div class="bestiary-steps" role="group" aria-label="Способы генерации">
+              <button type="button" data-step="0" aria-pressed="true">Части</button>
+              <button type="button" data-step="1" aria-pressed="false">Параметры</button>
+              <button type="button" data-step="2" aria-pressed="false">Грамматика</button>
+              <button type="button" data-step="3" aria-pressed="false">Шум</button>
+              <button type="button" data-step="4" aria-pressed="false">Эволюция</button>
+            </div>
+
+            <div class="bestiary-formula" id="step-formula">4 × 4 × 4 × 3 = 192 комбинации</div>
+
+            <div class="bestiary-controls" data-step-panel="0">
+              <label class="bestiary-field" for="combo-head">Голова
+                <select id="combo-head"></select>
+              </label>
+              <label class="bestiary-field" for="combo-accessory">Броня
+                <select id="combo-accessory"></select>
+              </label>
+              <label class="bestiary-field" for="combo-palette">Палитра
+                <select id="combo-palette"></select>
+              </label>
+              <label class="bestiary-field" for="combo-eye">Глаза
+                <select id="combo-eye"></select>
+              </label>
+              <button type="button" class="bestiary-wide" id="combo-random">Случайные части</button>
+              <p class="bestiary-note">Меняем части и цвета — получаем новые визуалы без новой геометрии.</p>
+            </div>
+
+            <div class="bestiary-controls" data-step-panel="1" hidden>
+              <label class="bestiary-field" for="param-height">Высота: <output id="param-height-output">2.8</output>
+                <input id="param-height" type="range" min="1.9" max="3.7" step="0.05" value="2.8">
+              </label>
+              <label class="bestiary-field" for="param-wingspan">Размах крыльев: <output id="param-wingspan-output">1.2</output>
+                <input id="param-wingspan" type="range" min="0.75" max="1.7" step="0.01" value="1.2">
+              </label>
+              <label class="bestiary-field" for="param-legs">Длина лап: <output id="param-legs-output">1.0</output>
+                <input id="param-legs" type="range" min="0.55" max="1.5" step="0.01" value="1.0">
+              </label>
+              <div class="bestiary-stats" id="param-stats"></div>
+              <p class="bestiary-note">Высота управляет здоровьем и скоростью, а размах крыльев и лапы — силуэтом.</p>
+            </div>
+
+            <div class="bestiary-controls" data-step-panel="2" hidden>
+              <label class="bestiary-field" for="grammar-size">Размер тела
+                <select id="grammar-size">
+                  <option value="small">Маленькое</option>
+                  <option value="medium">Среднее</option>
+                  <option value="large">Большое</option>
+                </select>
+              </label>
+              <label class="bestiary-field" for="grammar-type">Тип моба
+                <select id="grammar-type"></select>
+              </label>
+              <button type="button" class="bestiary-wide" id="grammar-reroll">Перегенерировать модули</button>
+              <div class="bestiary-trace" id="grammar-trace"></div>
+            </div>
+
+            <div class="bestiary-controls" data-step-panel="3" hidden>
+              <label class="bestiary-field" for="noise-kind">Текстура
+                <select id="noise-kind"></select>
+              </label>
+              <label class="bestiary-field" for="noise-scale">Масштаб: <output id="noise-scale-output">4</output>
+                <input id="noise-scale" type="range" min="1" max="12" step="1" value="4">
+              </label>
+              <label class="bestiary-check"><input type="checkbox" id="noise-mask" checked> Не текстурировать голову</label>
+              <button type="button" class="bestiary-wide" id="noise-random">Другая текстура</button>
+              <p class="bestiary-note" id="noise-info">Perlin — для ткани и курток, Worley — для кожи рептилии.</p>
+            </div>
+
+            <div class="bestiary-controls" data-step-panel="4" hidden>
+              <label class="bestiary-field" for="evo-target">Цель эволюции
+                <select id="evo-target">
+                  <option value="hunter">Ночной охотник</option>
+                  <option value="frost">Ледяной страж</option>
+                  <option value="cute">Лесной малыш</option>
+                </select>
+              </label>
+              <label class="bestiary-field" for="evo-mutation">Мутация: <output id="evo-mutation-output">0.18</output>
+                <input id="evo-mutation" type="range" min="0.05" max="0.5" step="0.01" value="0.18">
+              </label>
+              <button type="button" class="bestiary-wide primary" id="evo-run">Следующее поколение</button>
+              <button type="button" class="bestiary-wide" id="evo-reset">Новая популяция</button>
+              <div class="bestiary-stats" id="evo-stats"></div>
+              <p class="bestiary-note">Популяция из 50 мобов: отбор, скрещивание и небольшие мутации.</p>
+            </div>
+
+            <p class="bestiary-output" id="step-output"></p>
+
+            <div class="bestiary-actions">
+              <button type="button" id="step-back">Назад</button>
+              <button type="button" class="primary" id="step-next">Дальше</button>
+            </div>
+            <button type="button" class="quiet" id="step-reset">Начать заново</button>
+          </section>
+
+          <section class="bestiary-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="bestiary-kicker">Лаборатория</p>
+            <h2>Собери своего моба</h2>
+            <p class="bestiary-note">Все параметры вместе. Меняйте части, пропорции и текстуру — спрайт пересобирается сразу.</p>
+
+            <div class="bestiary-seedrow">
+              <span id="lab-seed">сид 37</span>
+              <button type="button" id="lab-random">Новый моб</button>
+            </div>
+
+            <label class="bestiary-field" for="lab-type">Тип
+              <select id="lab-type"></select>
+            </label>
+            <label class="bestiary-field" for="lab-height">Высота: <output id="lab-height-output">2.8</output>
+              <input id="lab-height" type="range" min="1.9" max="3.7" step="0.05" value="2.8">
+            </label>
+            <label class="bestiary-field" for="lab-wingspan">Размах крыльев: <output id="lab-wingspan-output">1.2</output>
+              <input id="lab-wingspan" type="range" min="0.75" max="1.7" step="0.01" value="1.2">
+            </label>
+            <label class="bestiary-field" for="lab-texture">Текстура
+              <select id="lab-texture"></select>
+            </label>
+
+            <details class="bestiary-details">
+              <summary>Части и окрас</summary>
+              <label class="bestiary-field" for="lab-head">Голова
+                <select id="lab-head"></select>
+              </label>
+              <label class="bestiary-field" for="lab-accessory">Броня
+                <select id="lab-accessory"></select>
+              </label>
+              <label class="bestiary-field" for="lab-palette">Палитра
+                <select id="lab-palette"></select>
+              </label>
+              <label class="bestiary-field" for="lab-eye">Глаза
+                <select id="lab-eye"></select>
+              </label>
+            </details>
+
+            <details class="bestiary-details">
+              <summary>Дополнительно</summary>
+              <label class="bestiary-field" for="lab-legs">Длина лап: <output id="lab-legs-output">1.0</output>
+                <input id="lab-legs" type="range" min="0.55" max="1.5" step="0.01" value="1.0">
+              </label>
+              <label class="bestiary-field" for="lab-scale">Масштаб текстуры: <output id="lab-scale-output">4</output>
+                <input id="lab-scale" type="range" min="1" max="12" step="1" value="4">
+              </label>
+              <label class="bestiary-check"><input type="checkbox" id="lab-mask" checked> Не текстурировать голову</label>
+            </details>
+
+            <div class="bestiary-stats" id="lab-stats"></div>
+            <div class="bestiary-actions">
+              <button type="button" id="lab-reset">Сброс</button>
+              <button type="button" class="primary" id="lab-download">Скачать PNG</button>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
+  </footer>
+
+  <script type="module" src="assets/js/bestiary/app.js"></script>
+  <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/footer.js" defer></script>
+</body>
+</html>
