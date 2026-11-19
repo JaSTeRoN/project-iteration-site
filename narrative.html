@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Генерация нарратива — Итерация-8</title>
+  <meta name="description" content="Процедурная генерация истории: граф квеста, текст и журнал правил. Песочница с жанром, тоном, персонажами и блокировкой узлов.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/narrative.css">
+</head>
+<body class="crystal">
+  <header class="site-header">
+    <a class="brand" href="index.html"><img src="assets/brand/logo.webp" alt="Итерация-8"><span class="brand-home">| Главная</span></a>
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Открыть разделы">
+      <span class="nav-toggle-title">Приложения</span>
+      <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    </button>
+    <nav class="site-nav" id="site-nav" aria-label="Разделы">
+      <a href="schedule.html">Расписание</a>
+      <a href="projects.html">Проекты и команды</a>
+      <a href="materials.html">Материалы</a>
+      <a href="apps.html" aria-current="page">Приложения</a>
+      <a href="about.html">О курсе</a>
+    </nav>
+  </header>
+
+  <main class="wrap narrative-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/writing_down.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Генерация нарратива</h1>
+        <p>Собери историю из правил: герой, цель, препятствие, помощник, ложный след и развязка — с графом и журналом решений.</p>
+      </div>
+    </div>
+
+    <section class="narrative-card" aria-label="Генерация нарратива">
+      <div class="narrative-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="level-1" aria-selected="true" data-level="1">1. Как строится история</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="level-2" aria-selected="false" data-level="2">2. Песочница</button>
+      </div>
+
+      <section class="narrative-level narrative-level-one" id="level-1" role="tabpanel" aria-labelledby="tab-1">
+        <div class="narrative-stage">
+          <span class="narrative-stage-label" id="stage-label">Пример истории</span>
+          <canvas id="story-canvas" aria-label="Граф истории по шагам"></canvas>
+        </div>
+        <aside class="narrative-side">
+          <p class="narrative-kicker" id="step-kicker">Шаг 1 из 7</p>
+          <h2 id="step-title">Завязка</h2>
+          <p id="step-text"></p>
+          <div class="narrative-formula" id="step-formula"></div>
+          <div class="narrative-trace" id="step-trace"></div>
+          <div class="narrative-nav">
+            <button type="button" id="step-prev">Назад</button>
+            <button type="button" class="primary" id="step-next">Дальше</button>
+          </div>
+          <p class="narrative-seed" id="step-seed"></p>
+        </aside>
+      </section>
+
+      <section class="narrative-lab" id="level-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+        <div class="narrative-toolbar">
+          <label class="narrative-field" for="lab-genre">Жанр
+            <select id="lab-genre"></select>
+          </label>
+          <label class="narrative-field" for="lab-tone">Тон
+            <select id="lab-tone"></select>
+          </label>
+          <label class="narrative-field" for="lab-length">Длина
+            <select id="lab-length"></select>
+          </label>
+          <label class="narrative-field" for="lab-hero">Герой
+            <select id="lab-hero"></select>
+          </label>
+          <label class="narrative-field" for="lab-ally">Помощник
+            <select id="lab-ally"></select>
+          </label>
+          <label class="narrative-field" for="lab-villain">Антагонист
+            <select id="lab-villain"></select>
+          </label>
+          <label class="narrative-field" for="lab-relationship">Отношения
+            <select id="lab-relationship"></select>
+          </label>
+          <label class="narrative-field" for="lab-required">Обязательное событие
+            <select id="lab-required"></select>
+          </label>
+          <label class="narrative-field" for="lab-forbidden">Запрещённое событие
+            <select id="lab-forbidden"></select>
+          </label>
+          <div class="narrative-toolbar-actions">
+            <button type="button" class="primary" id="lab-regen">Перегенерировать</button>
+            <button type="button" id="lab-reset">Сброс</button>
+          </div>
+        </div>
+
+        <div class="narrative-workbench">
+          <section class="narrative-graph-panel" aria-label="Граф истории">
+            <header class="narrative-panel-head">
+              <h2>Граф истории</h2>
+              <span id="lab-seed"></span>
+            </header>
+            <div class="narrative-graph-wrap">
+              <canvas id="lab-canvas" aria-label="Интерактивный граф истории"></canvas>
+            </div>
+            <p class="narrative-hint">Нажмите на узел, чтобы выбрать его и заменить.</p>
+          </section>
+
+          <section class="narrative-text-panel" aria-label="Текст истории">
+            <header class="narrative-panel-head">
+              <h2>Текст</h2>
+            </header>
+            <article id="lab-text"></article>
+          </section>
+
+          <section class="narrative-rule-panel" aria-label="Журнал правил">
+            <header class="narrative-panel-head">
+              <h2>Журнал правил</h2>
+            </header>
+            <div id="lab-trace"></div>
+          </section>
+        </div>
+
+        <div class="narrative-nodebar" id="node-bar" hidden>
+          <div class="narrative-nodebar-text">
+            <strong id="selected-label">Узел</strong>
+            <p id="selected-text"></p>
+          </div>
+          <div class="narrative-nodebar-actions">
+            <button type="button" class="primary" id="node-replace">Заменить узел</button>
+            <button type="button" id="node-lock">Закрепить</button>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
+  </footer>
+
+  <script src="assets/js/nav.js" defer></script>
+  <script src="assets/js/footer.js" defer></script>
+  <script type="module" src="assets/js/narrative/app.js"></script>
+</body>
+</html>
