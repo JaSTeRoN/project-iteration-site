@@ -72,18 +72,15 @@
 
   <!-- HEAD / HOOD. Neck pivot: (450, 490). -->
   <g id="head" data-pivot="450,490">
-    <!-- rear hood silhouette: peaked crown and draped sides -->
-    <path d="M450 491 C386 488 338 450 315 397 C291 341 282 281 295 226 C305 183 329 143 362 116 C382 100 400 86 424 80 C442 76 460 78 476 84 C504 92 532 108 558 128 C594 151 622 195 630 244 C638 306 618 363 580 413 C550 449 500 478 450 491Z" fill="url(#hood)" stroke="#06163f" stroke-width="15" stroke-linejoin="round"/>
-    <!-- soft crown fold, kept inside the silhouette -->
-    <path d="M424 82 C386 96 352 122 330 158 C350 166 371 164 390 156 C382 131 398 103 424 82Z" fill="#3975e2" opacity=".42"/>
-    <!-- hood peak folds and back drape -->
-    <path d="M428 82 C440 120 438 170 430 210 C420 250 415 290 421 326" fill="none" stroke="#3975e2" stroke-width="10" stroke-linecap="round" opacity=".8"/>
-    <path d="M400 90 C370 118 348 155 338 198 C323 241 322 287 333 329" fill="none" stroke="#79a6ff" stroke-width="7" stroke-linecap="round" opacity=".5"/>
-    <path d="M602 142 C570 188 556 244 566 302 C574 356 554 408 515 446" fill="none" stroke="#071b50" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+    <!-- rear hood silhouette -->
+    <path d="M450 92 Q536 108 592 174 Q637 226 621 312 Q608 393 548 453 Q508 486 450 491 Q392 486 352 453 Q292 393 279 312 Q263 226 308 174 Q364 108 450 92Z" fill="url(#hood)" stroke="#06163f" stroke-width="15" stroke-linejoin="round"/>
+    <!-- hood crown fold -->
+    <path d="M315 195 Q359 120 440 111 Q512 107 565 163 Q516 139 472 154 Q399 171 363 231 Q330 273 297 285 Q289 239 315 195Z" fill="#3975e2" stroke="#0a286d" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M317 190 Q349 151 395 135" fill="none" stroke="#79a6ff" stroke-width="7" stroke-linecap="round" opacity=".55"/>
     <!-- hood front rim, pale band -->
-    <path d="M450 112 L505 132 C540 148 562 176 574 208 L586 274 L560 330 L450 416 L340 330 L314 274 L326 208 C338 176 360 148 395 132Z" fill="url(#trim)" stroke="#071b50" stroke-width="10" stroke-linejoin="round"/>
-    <!-- dark face opening: angular brow and pointed chin -->
-    <path d="M450 146 L496 162 C526 178 544 204 552 234 L558 280 L536 326 L450 392 L364 326 L342 280 L348 234 C356 204 374 178 404 162Z" fill="url(#visor)" stroke="#0b2a70" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M451 135 Q548 160 588 244 Q602 278 587 319 Q558 390 450 429 Q342 390 313 319 Q298 278 312 244 Q352 160 451 135Z" fill="url(#trim)" stroke="#071b50" stroke-width="10" stroke-linejoin="round"/>
+    <!-- dark face opening -->
+    <path d="M450 177 Q530 193 565 256 Q577 282 560 314 Q531 365 450 392 Q369 365 340 314 Q323 282 335 256 Q370 193 450 177Z" fill="url(#visor)" stroke="#0b2a70" stroke-width="7"/>
     <!-- subtle visor reflections -->
     <path d="M359 267 Q374 222 421 207" fill="none" stroke="#16427e" stroke-width="7" stroke-linecap="round" opacity=".55"/>
     <!-- eyes are separate groups for blinking / expression changes -->
