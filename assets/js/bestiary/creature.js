@@ -36,7 +36,7 @@ export const HEADS = {
   skull: { label: "Череп" },
   hooded: { label: "В капюшоне" },
   wide: { label: "Широкая" },
-  split: { label: "Двуликая" },
+  mask: { label: "Маска" },
 }
 
 export const ACCESSORIES = {

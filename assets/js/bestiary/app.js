@@ -509,18 +509,40 @@ function drawHead(g, genome, palette) {
     g.fillStyle = palette.body
     g.fill()
     g.stroke()
-  } else if (genome.head === "split") {
+  } else if (genome.head === "mask") {
+    g.beginPath()
+    g.moveTo(160 - r * 0.95, headY - r * 0.08)
+    g.quadraticCurveTo(160 - r * 0.86, headY - r * 0.95, 160, headY - r * 1.08)
+    g.quadraticCurveTo(160 + r * 0.86, headY - r * 0.95, 160 + r * 0.95, headY - r * 0.08)
+    g.quadraticCurveTo(160 + r * 0.74, headY + r * 0.9, 160, headY + r * 1.02)
+    g.quadraticCurveTo(160 - r * 0.74, headY + r * 0.9, 160 - r * 0.95, headY - r * 0.08)
+    g.closePath()
+    g.fillStyle = "#ded2ba"
+    g.fill()
+    g.strokeStyle = "#f7eedb"
+    g.lineWidth = 2
+    g.stroke()
     for (const side of [-1, 1]) {
       g.beginPath()
-      g.ellipse(160 + side * r * 0.46, headY, r * 0.58, r * 0.86, 0, 0, Math.PI * 2)
-      g.fillStyle = palette.body
+      g.ellipse(160 + side * r * 0.36, headY + 1, r * 0.27, r * 0.31, 0, 0, Math.PI * 2)
+      g.fillStyle = "#2b2630"
       g.fill()
-      g.stroke()
     }
+    g.strokeStyle = "rgba(118, 78, 48, 0.72)"
+    g.lineWidth = 1.4
     g.beginPath()
-    g.moveTo(160, headY - r * 0.8)
-    g.lineTo(160, headY + r * 0.75)
-    g.strokeStyle = palette.accent
+    g.moveTo(160, headY - r * 0.92)
+    g.lineTo(160, headY - r * 0.5)
+    g.moveTo(160 - r * 0.2, headY + r * 0.62)
+    g.lineTo(160, headY + r * 0.86)
+    g.lineTo(160 + r * 0.2, headY + r * 0.62)
+    g.stroke()
+    g.beginPath()
+    g.moveTo(160, headY - r * 0.48)
+    g.lineTo(160 + r * 0.2, headY - r * 0.18)
+    g.lineTo(160, headY + r * 0.08)
+    g.lineTo(160 - r * 0.2, headY - r * 0.18)
+    g.closePath()
     g.stroke()
   } else {
     g.beginPath()
