@@ -1,0 +1,415 @@
+.animation-page {
+  padding-bottom: 42px;
+}
+
+.animation-card {
+  overflow: hidden;
+  border: 1px solid rgba(20, 45, 75, 0.12);
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgba(7, 27, 62, 0.12);
+}
+
+.animation-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 16px 20px 10px;
+}
+
+.animation-tabs button {
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid rgba(20, 45, 75, 0.16);
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2b425c;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.animation-tabs button[aria-selected="true"] {
+  border-color: #146b3a;
+  background: #146b3a;
+  color: #ffffff;
+}
+
+.animation-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 344px;
+  gap: 16px;
+  padding: 8px 20px 20px;
+}
+
+.animation-stage {
+  position: relative;
+  min-height: 636px;
+  overflow: hidden;
+  border: 1px solid rgba(20, 45, 75, 0.14);
+  border-radius: 14px;
+  background-color: #eef5fd;
+  background-image:
+    linear-gradient(rgba(18, 54, 98, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 54, 98, 0.07) 1px, transparent 1px),
+    radial-gradient(circle at 50% 38%, rgba(255, 255, 255, 0.85), transparent 62%),
+    linear-gradient(180deg, #f4f9ff 0%, #e6f1fc 72%, #dcebfa 100%);
+  background-size: 48px 48px, 48px 48px, auto, auto;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.animation-stage::after {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+  box-shadow: inset 0 0 70px rgba(49, 96, 151, 0.08);
+}
+
+.animation-floor {
+  position: absolute;
+  right: 8%;
+  bottom: 8%;
+  left: 8%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(33, 75, 128, 0.2) 20%, rgba(33, 75, 128, 0.2) 80%, transparent);
+}
+
+.animation-floor::after {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 62%;
+  height: 54px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(24, 57, 104, 0.12), transparent 72%);
+  content: "";
+  transform: translate(-50%, 0);
+}
+
+.puppet-host {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.puppet-host svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 22px 18px rgba(8, 29, 63, 0.16));
+  overflow: visible;
+}
+
+.animation-loading {
+  margin: 0;
+  color: #4f6884;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.animation-target {
+  position: absolute;
+  z-index: 3;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #146b3a;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  transition: opacity 160ms ease;
+}
+
+.animation-target.visible {
+  opacity: 1;
+}
+
+.animation-target::after {
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: #146b3a;
+  content: "";
+}
+
+.animation-hint {
+  position: absolute;
+  right: 12px;
+  bottom: 10px;
+  z-index: 4;
+  max-width: calc(100% - 24px);
+  margin: 0;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(7, 18, 33, 0.68);
+  color: #eaf3fd;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+.animation-side {
+  min-width: 0;
+}
+
+.animation-panel {
+  padding: 14px;
+  border: 1px solid rgba(20, 45, 75, 0.14);
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+.animation-kicker {
+  margin: 0 0 6px;
+  color: #146b3a;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.animation-panel h2 {
+  margin: 0 0 7px;
+  color: #102f4f;
+  font-family: "Literata", Georgia, serif;
+  font-size: 1.16rem;
+  line-height: 1.18;
+}
+
+.animation-panel p {
+  margin: 0 0 9px;
+  color: #4c6179;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.animation-lead {
+  margin-bottom: 12px !important;
+}
+
+.animation-formula {
+  margin: 9px 0 10px;
+  padding: 8px 10px;
+  border-left: 3px solid #146b3a;
+  border-radius: 0 8px 8px 0;
+  background: #f1f8f4;
+  color: #146b3a;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.67rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.animation-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 8px 0 10px;
+}
+
+.animation-steps button {
+  min-height: 32px;
+  padding: 4px 6px;
+  border: 1px solid rgba(20, 45, 75, 0.16);
+  border-radius: 7px;
+  background: #f7fafe;
+  color: #38536e;
+  font: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.animation-steps button[aria-pressed="true"] {
+  border-color: #146b3a;
+  background: #146b3a;
+  color: #ffffff;
+}
+
+.animation-note {
+  margin: 9px 0 !important;
+  color: #6a7e93 !important;
+  font-size: 0.7rem !important;
+}
+
+.animation-field {
+  display: block;
+  margin-top: 10px;
+  color: #334d68;
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.animation-field output {
+  float: right;
+  color: #146b3a;
+  font-variant-numeric: tabular-nums;
+}
+
+.animation-field input[type="range"] {
+  display: block;
+  width: 100%;
+  margin: 6px 0 0;
+  accent-color: #146b3a;
+}
+
+.animation-check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  color: #334d68;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.animation-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: #146b3a;
+}
+
+.animation-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+  margin: 12px 0 0;
+}
+
+.animation-stat {
+  min-width: 0;
+  padding: 6px 7px;
+  border-radius: 7px;
+  background: #f4f8fd;
+}
+
+.animation-stat span {
+  display: block;
+  margin-bottom: 2px;
+  color: #7890a7;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.animation-stat strong {
+  display: block;
+  overflow: hidden;
+  color: #173a2a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.animation-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.animation-actions button,
+.animation-wide {
+  min-height: 36px;
+  padding: 6px 10px;
+  border: 1px solid rgba(20, 45, 75, 0.18);
+  border-radius: 8px;
+  background: #f7fafe;
+  color: #2b425c;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.animation-actions button.primary,
+.animation-wide.primary {
+  border-color: #146b3a;
+  background: #146b3a;
+  color: #ffffff;
+}
+
+.animation-wide {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.animation-actions button:disabled,
+.animation-wide:disabled {
+  cursor: default;
+  opacity: 0.42;
+}
+
+.animation-output {
+  margin-top: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #f4f8fd;
+  color: #526b84;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+@media (max-width: 1100px) {
+  .animation-layout {
+    grid-template-columns: minmax(0, 1fr) 316px;
+  }
+
+  .animation-stage {
+    min-height: 560px;
+  }
+}
+
+@media (max-width: 900px) {
+  .animation-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .animation-stage {
+    min-height: 500px;
+  }
+}
+
+@media (max-width: 560px) {
+  .animation-tabs {
+    padding: 12px 12px 8px;
+  }
+
+  .animation-layout {
+    padding: 6px 12px 14px;
+  }
+
+  .animation-stage {
+    min-height: 380px;
+  }
+
+  .animation-hint {
+    right: 8px;
+    bottom: 8px;
+    font-size: 0.62rem;
+  }
+
+  .animation-panel {
+    padding: 12px;
+  }
+
+  .animation-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

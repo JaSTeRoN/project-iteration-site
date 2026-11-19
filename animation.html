@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Процедурная анимация — Итерация-8</title>
-  <meta name="description" content="Процедурная анимация маскота: скелет, IK-ноги, походка и вторичные движения.">
+  <meta name="description" content="Процедурная анимация маскота: пивоты, фаза шага, наклон, вторичные движения и прыжок.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,700&family=Manrope:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/site.css">
+  <link rel="stylesheet" href="assets/css/animation.css">
 </head>
 <body class="crystal">
   <header class="site-header">
@@ -26,8 +27,89 @@
     </nav>
   </header>
 
-  <main class="wrap" id="animation-app">
-    <!-- Здесь появится приложение «Процедурная анимация». -->
+  <main class="wrap animation-page">
+    <div class="page-lead with-mascot">
+      <img class="lead-mascot" src="assets/brand/voxel/dash_smoke.webp" alt="" aria-hidden="true">
+      <div>
+        <h1>Процедурная анимация</h1>
+        <p>Оживляем маскота без покадровой анимации: пивоты, фазы, инерция и вес.</p>
+      </div>
+    </div>
+
+    <section class="animation-card" aria-label="Интерактивное приложение">
+      <div class="animation-tabs" role="tablist" aria-label="Уровни приложения">
+        <button type="button" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" data-level="1">1. Как это работает</button>
+        <button type="button" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" data-level="2">2. Песочница</button>
+      </div>
+
+      <div class="animation-layout">
+        <div class="animation-stage" id="animation-stage" aria-label="Сцена с процедурно анимированным маскотом">
+          <div class="animation-floor" aria-hidden="true"></div>
+          <div class="puppet-host" id="puppet-host">
+            <p class="animation-loading" id="animation-loading">Загружаем куклу…</p>
+          </div>
+          <div class="animation-target" id="animation-target" aria-hidden="true"></div>
+          <p class="animation-hint" id="animation-hint">Двигайте курсором по сцене · клик — прыжок</p>
+        </div>
+
+        <aside class="animation-side">
+          <section class="animation-panel" id="panel-1" role="tabpanel" aria-labelledby="tab-1">
+            <p class="animation-kicker" id="step-kicker">Шаг 1 из 5</p>
+            <h2 id="step-title">Пивоты</h2>
+            <p id="step-text">У каждой части есть точка вращения. Голова крутится вокруг шеи, руки — вокруг плеч, ноги — вокруг бёдер.</p>
+            <div class="animation-formula" id="step-formula">rotate(angle, pivotX, pivotY)</div>
+
+            <div class="animation-steps" role="group" aria-label="Этапы анимации">
+              <button type="button" data-step="0" aria-pressed="true">Пивоты</button>
+              <button type="button" data-step="1" aria-pressed="false">Фаза</button>
+              <button type="button" data-step="2" aria-pressed="false">Наклон</button>
+              <button type="button" data-step="3" aria-pressed="false">Инерция</button>
+              <button type="button" data-step="4" aria-pressed="false">Прыжок</button>
+            </div>
+
+            <p class="animation-note" id="step-note">Красным показаны пивоты и связи скелета.</p>
+            <div class="animation-actions">
+              <button type="button" id="step-prev">Назад</button>
+              <button type="button" class="primary" id="step-next">Дальше</button>
+            </div>
+            <button type="button" class="animation-wide" id="step-reset">Начать заново</button>
+            <div class="animation-output" id="step-output">Покой · 0°</div>
+          </section>
+
+          <section class="animation-panel" id="panel-2" role="tabpanel" aria-labelledby="tab-2" hidden>
+            <p class="animation-kicker">Песочница</p>
+            <h2>Пульт куклы</h2>
+            <p class="animation-lead">Двигайте маскота курсором, меняйте походку и включайте отладку.</p>
+
+            <label class="animation-field" for="lab-speed">Скорость: <output id="lab-speed-output">1.0</output>
+              <input id="lab-speed" type="range" min="0.4" max="2" step="0.05" value="1">
+            </label>
+            <label class="animation-field" for="lab-step">Амплитуда шага: <output id="lab-step-output">18</output>
+              <input id="lab-step" type="range" min="4" max="30" step="1" value="18">
+            </label>
+            <label class="animation-field" for="lab-sway">Покачивание: <output id="lab-sway-output">5</output>
+              <input id="lab-sway" type="range" min="0" max="12" step="0.5" value="5">
+            </label>
+            <label class="animation-field" for="lab-head">Взгляд за курсором: <output id="lab-head-output">100%</output>
+              <input id="lab-head" type="range" min="0" max="1" step="0.05" value="1">
+            </label>
+            <label class="animation-field" for="lab-blink">Интервал мигания: <output id="lab-blink-output">2.2 с</output>
+              <input id="lab-blink" type="range" min="0.5" max="4" step="0.1" value="2.2">
+            </label>
+            <label class="animation-check"><input id="lab-follow" type="checkbox" checked> Идти за курсором</label>
+            <label class="animation-check"><input id="lab-rig" type="checkbox"> Показывать скелет</label>
+            <label class="animation-check"><input id="lab-pause" type="checkbox"> Пауза</label>
+
+            <div class="animation-stats" id="lab-stats"></div>
+            <div class="animation-actions">
+              <button type="button" class="primary" id="lab-jump">Прыжок</button>
+              <button type="button" id="lab-reset">Сброс</button>
+            </div>
+            <p class="animation-note">Клик по сцене тоже заставляет маскота прыгнуть.</p>
+          </section>
+        </aside>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -36,5 +118,6 @@
 
   <script src="assets/js/nav.js" defer></script>
   <script src="assets/js/footer.js" defer></script>
+  <script type="module" src="assets/js/animation/app.js"></script>
 </body>
 </html>

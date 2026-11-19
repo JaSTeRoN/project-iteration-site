@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="900" height="900" viewBox="0 0 900 900">
+  <title>Blue Hooded Mage — Procedural Animation Puppet</title>
+  <desc>Layered vector character puppet. Each limb and facial element is a separate SVG group with a documented pivot point.</desc>
+  <defs>
+    <linearGradient id="hood" x1="0" y1="0" x2=".85" y2="1"><stop stop-color="#3979ed"/><stop offset=".52" stop-color="#1748b5"/><stop offset="1" stop-color="#09245f"/></linearGradient>
+    <linearGradient id="cloth" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2864d4"/><stop offset=".55" stop-color="#123b96"/><stop offset="1" stop-color="#071c50"/></linearGradient>
+    <linearGradient id="trim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffffff"/><stop offset=".55" stop-color="#c8dcff"/><stop offset="1" stop-color="#789ce5"/></linearGradient>
+    <linearGradient id="visor" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#061b48"/><stop offset="1" stop-color="#010817"/></linearGradient>
+    <linearGradient id="boot" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#183c91"/><stop offset="1" stop-color="#050f30"/></linearGradient>
+    <radialGradient id="eyeGlow"><stop stop-color="#a9f8ff"/><stop offset=".45" stop-color="#42dfff"/><stop offset="1" stop-color="#087dff"/></radialGradient>
+    <filter id="softGlow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="7"/></filter>
+  </defs>
+
+  <!-- Optional ground shadow; remove for a completely shadow-free rig. -->
+  <ellipse id="ground-shadow" cx="450" cy="818" rx="190" ry="24" fill="#020817" opacity=".35" filter="url(#shadow)"/>
+
+  <g id="puppet-root">
+
+  <!-- BACK LEGS. Pivot: (397, 700) and (503, 700). -->
+  <g id="leg-left" data-pivot="397,700">
+    <path d="M385 680 Q365 716 363 762 Q357 790 379 799 L425 799 Q440 789 429 770 L423 700Z" fill="url(#boot)" stroke="#06163f" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M369 774 Q393 785 430 774 L435 795 Q415 810 377 805 Q361 800 369 774Z" fill="#2859b8" stroke="#06163f" stroke-width="6"/>
+    <path d="M381 713 Q397 725 424 714" fill="none" stroke="#527ed2" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+  </g>
+  <g id="leg-right" data-pivot="503,700">
+    <path d="M478 695 Q470 735 477 770 Q473 795 495 802 L541 799 Q557 788 541 767 L535 698Z" fill="url(#boot)" stroke="#06163f" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M478 773 Q510 783 547 768 L552 790 Q542 810 499 807 Q479 805 478 773Z" fill="#2859b8" stroke="#06163f" stroke-width="6"/>
+    <path d="M484 719 Q506 731 535 718" fill="none" stroke="#527ed2" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+  </g>
+
+  <!-- TORSO / ROBE. Main body pivot: (450, 690). -->
+  <g id="body" data-pivot="450,690">
+    <path d="M350 490 Q450 451 550 490 Q579 548 592 674 Q599 735 561 766 Q450 794 339 766 Q301 735 308 674 Q321 548 350 490Z" fill="url(#cloth)" stroke="#06163f" stroke-width="12" stroke-linejoin="round"/>
+    <path d="M350 493 Q374 521 385 566 L365 760 Q331 750 319 727 Q322 595 350 493Z" fill="#2d67d1" opacity=".85"/>
+    <path d="M550 493 Q526 521 515 566 L535 760 Q569 750 581 727 Q578 595 550 493Z" fill="#0b2a70" opacity=".9"/>
+    <!-- Front mantle panels -->
+    <path d="M401 490 Q424 527 450 541 Q476 527 499 490 L528 758 Q489 775 450 777 Q411 775 372 758Z" fill="#1748a9" stroke="#071b50" stroke-width="6"/>
+    <path d="M402 504 Q414 539 432 557 L414 764 L383 757Z" fill="url(#trim)" stroke="#0a286d" stroke-width="5"/>
+    <path d="M498 504 Q486 539 468 557 L486 764 L517 757Z" fill="url(#trim)" stroke="#0a286d" stroke-width="5"/>
+    <path d="M450 544 L450 770" stroke="#071b50" stroke-width="5" opacity=".65"/>
+    <!-- Hem -->
+    <path d="M326 733 Q450 773 574 733 Q573 757 560 766 Q450 795 340 766Z" fill="#0a286c" stroke="#06163f" stroke-width="7"/>
+    <path d="M354 751 Q450 777 546 751" fill="none" stroke="#6d95e8" stroke-width="5" opacity=".7"/>
+    <!-- Shoulder mantle -->
+    <path d="M340 492 Q382 454 450 462 Q518 454 560 492 Q540 546 450 565 Q360 546 340 492Z" fill="url(#hood)" stroke="#06163f" stroke-width="9"/>
+    <path d="M360 493 Q405 470 450 480 Q495 470 540 493 Q516 524 450 539 Q384 524 360 493Z" fill="none" stroke="#5b8ce9" stroke-width="5" opacity=".75"/>
+    <!-- Chest medallion -->
+    <path d="M450 520 L474 535 L474 562 L450 578 L426 562 L426 535Z" fill="#071c50" stroke="#06163f" stroke-width="7"/>
+    <circle cx="450" cy="548" r="21" fill="#2368d6" stroke="#b9d6ff" stroke-width="6"/>
+    <path d="M450 532 L455 544 L467 548 L455 553 L450 565 L445 553 L433 548 L445 544Z" fill="#d8f1ff" stroke="#4d9bff" stroke-width="2"/>
+  </g>
+
+  <!-- LEFT ARM. Shoulder pivot: (350, 525). Rotate this whole group. -->
+  <g id="arm-left" data-pivot="350,525">
+    <path d="M354 514 Q316 507 287 536 Q267 558 259 606 L292 632 Q328 610 355 581Z" fill="url(#cloth)" stroke="#06163f" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M277 590 Q301 605 324 607 L310 632 Q287 643 258 615Z" fill="url(#trim)" stroke="#09245f" stroke-width="6"/>
+    <path d="M274 550 Q304 524 340 531" fill="none" stroke="#5d8be6" stroke-width="6" stroke-linecap="round" opacity=".65"/>
+    <!-- mitten hand -->
+    <path d="M267 604 Q245 594 231 607 Q219 620 228 637 Q240 652 260 641 L281 627Z" fill="#102e75" stroke="#06163f" stroke-width="8"/>
+    <path d="M232 619 Q246 625 258 616" fill="none" stroke="#4f7ed4" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- RIGHT ARM. Shoulder pivot: (550, 525). -->
+  <g id="arm-right" data-pivot="550,525">
+    <path d="M546 514 Q584 507 613 536 Q633 558 641 606 L608 632 Q572 610 545 581Z" fill="url(#cloth)" stroke="#06163f" stroke-width="10" stroke-linejoin="round"/>
+    <path d="M623 590 Q599 605 576 607 L590 632 Q613 643 642 615Z" fill="url(#trim)" stroke="#09245f" stroke-width="6"/>
+    <path d="M626 550 Q596 524 560 531" fill="none" stroke="#5d8be6" stroke-width="6" stroke-linecap="round" opacity=".65"/>
+    <path d="M633 604 Q655 594 669 607 Q681 620 672 637 Q660 652 640 641 L619 627Z" fill="#102e75" stroke="#06163f" stroke-width="8"/>
+    <path d="M668 619 Q654 625 642 616" fill="none" stroke="#4f7ed4" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <!-- HEAD / HOOD. Neck pivot: (450, 490). -->
+  <g id="head" data-pivot="450,490">
+    <!-- rear hood silhouette -->
+    <path d="M450 92 Q536 108 592 174 Q637 226 621 312 Q608 393 548 453 Q508 486 450 491 Q392 486 352 453 Q292 393 279 312 Q263 226 308 174 Q364 108 450 92Z" fill="url(#hood)" stroke="#06163f" stroke-width="15" stroke-linejoin="round"/>
+    <!-- hood crown fold -->
+    <path d="M315 195 Q359 120 440 111 Q512 107 565 163 Q516 139 472 154 Q399 171 363 231 Q330 273 297 285 Q289 239 315 195Z" fill="#3975e2" stroke="#0a286d" stroke-width="7" stroke-linejoin="round"/>
+    <path d="M317 190 Q349 151 395 135" fill="none" stroke="#79a6ff" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+    <!-- hood front rim, pale band -->
+    <path d="M451 135 Q548 160 588 244 Q602 278 587 319 Q558 390 450 429 Q342 390 313 319 Q298 278 312 244 Q352 160 451 135Z" fill="url(#trim)" stroke="#071b50" stroke-width="10" stroke-linejoin="round"/>
+    <!-- dark face opening -->
+    <path d="M450 177 Q530 193 565 256 Q577 282 560 314 Q531 365 450 392 Q369 365 340 314 Q323 282 335 256 Q370 193 450 177Z" fill="url(#visor)" stroke="#0b2a70" stroke-width="7"/>
+    <!-- subtle visor reflections -->
+    <path d="M359 267 Q374 222 421 207" fill="none" stroke="#16427e" stroke-width="7" stroke-linecap="round" opacity=".55"/>
+    <!-- eyes are separate groups for blinking / expression changes -->
+    <g id="eye-left" data-pivot="402,293" filter="url(#softGlow)">
+      <path d="M373 300 Q391 269 414 290" fill="none" stroke="url(#eyeGlow)" stroke-width="13" stroke-linecap="round"/>
+    </g>
+    <g id="eye-right" data-pivot="497,293" filter="url(#softGlow)">
+      <path d="M474 290 Q499 268 518 300" fill="none" stroke="url(#eyeGlow)" stroke-width="13" stroke-linecap="round"/>
+    </g>
+    <!-- hood side seams -->
+    <path d="M318 309 Q331 370 386 409" fill="none" stroke="#5d8ce9" stroke-width="6" opacity=".7"/>
+    <path d="M582 309 Q569 370 514 409" fill="none" stroke="#071b50" stroke-width="6" opacity=".6"/>
+  </g>
+
+  <!-- Rig guide (hidden by default). Toggle display for setup in an editor. -->
+  <g id="rig-guides" display="none" fill="none" stroke="#ff3b78" stroke-width="3" stroke-dasharray="7 6">
+    <circle cx="450" cy="490" r="10"/><circle cx="350" cy="525" r="10"/><circle cx="550" cy="525" r="10"/>
+    <circle cx="397" cy="700" r="10"/><circle cx="503" cy="700" r="10"/>
+    <path d="M450 490 V525 M350 525 L450 548 L550 525 M397 700 L503 700"/>
+  </g>
+  </g>
+</svg>
