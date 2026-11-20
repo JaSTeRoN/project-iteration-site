@@ -2,15 +2,47 @@
   "presentations": [
     {
       "id": "p-423b753ae8",
+      "title": "Тема №1 - Процедурные алгоритмы и их история. Плитки Вана. Генерация подземелий на примере Rogue",
+      "date": "2026-11-05",
+      "note": "",
+      "kind": "file",
+      "url": "materials/1795184076006-8-1.pdf",
+      "links": []
+    },
+    {
+      "id": "p-e75cb0147e",
       "title": "Тема №2 - Графические процедурные алгоритмы: диаграмма Вороного. Шум Перлина. Diamond-Square. Клеточные автоматы и игра «Жизнь»",
       "date": "2026-11-14",
       "note": "",
       "kind": "file",
-      "url": "materials/1795183569035-8-2.pdf",
+      "url": "materials/1795184083338-8-2.pdf",
       "links": []
     }
   ],
-  "recordings": [],
+  "recordings": [
+    {
+      "id": "r-bffbc1dfbd",
+      "title": "Запись занятия по теме №1 - очное занятие 5 ноября 2026 г.",
+      "date": "",
+      "note": "",
+      "kind": "link",
+      "url": "https://vkvideo.ru/video-243052415_456239017?list=ln-vrbpN4BwsJFQniiTBe",
+      "links": [],
+      "presentation": "p-423b753ae8",
+      "lessonId": "ev-2026-11-05-1700"
+    },
+    {
+      "id": "r-9fbaa2f5ed",
+      "title": "Запись занятия по теме №2 - дистанционное занятие 14 ноября 2026 г.",
+      "date": "",
+      "note": "",
+      "kind": "link",
+      "url": "https://skynet.tusur.ru/playback/presentation/2.3/329d0c43ac51b0d25603f7b3865ae2a3d0964a68-1794655877444",
+      "links": [],
+      "presentation": "p-e75cb0147e",
+      "lessonId": "ev-2026-11-14-2000"
+    }
+  ],
   "articles": [],
   "books": []
 }
