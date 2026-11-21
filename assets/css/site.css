@@ -59,7 +59,7 @@ a { color: inherit; }
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 6px 16px;
+  padding: 0 16px;
   background: rgba(7, 17, 28, 0.92);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   position: sticky;
@@ -412,7 +412,7 @@ h1, h2, .page-title {
   .page-lead { flex-direction: column; align-items: stretch; }
   .brand img { height: 44px; }
   .brand-home { display: none; }
-  .site-header { padding: 6px 12px; gap: 8px; }
+  .site-header { padding: 0 12px; gap: 8px; }
   .site-header.nav-ready .nav-toggle { display: inline-flex; }
   .site-header.nav-ready .site-nav { display: none; }
   .site-header.nav-open .nav-toggle { background: rgba(255, 255, 255, 0.16); }
