@@ -2,6 +2,7 @@ import { generateBar, sceneDefaults } from "./music.js"
 
 const LOOKAHEAD_MS = 25
 const SCHEDULE_AHEAD = 0.18
+const MASTER_BASE_GAIN = 1.44
 
 function midiToFrequency(midi) {
   return 440 * 2 ** ((midi - 69) / 12)
@@ -12,6 +13,7 @@ export class SoundtrackEngine {
     this.callbacks = callbacks
     this.context = null
     this.master = null
+    this.limiter = null
     this.layerGains = {}
     this.noiseBuffer = null
     this.timer = null
@@ -33,6 +35,7 @@ export class SoundtrackEngine {
       instrument: "soft",
       layers: { drums: true, bass: true, pad: true, melody: true },
       volumes: { drums: 0.7, bass: 0.65, pad: 0.55, melody: 0.65 },
+      masterVolume: 1,
     }
     this.pendingScene = null
     this.sceneSwitchBar = null
@@ -52,8 +55,15 @@ export class SoundtrackEngine {
       const Ctx = window.AudioContext || window.webkitAudioContext
       this.context = new Ctx()
       this.master = this.context.createGain()
-      this.master.gain.value = 0.72
-      this.master.connect(this.context.destination)
+      this.master.gain.value = MASTER_BASE_GAIN * (this.state.masterVolume ?? 1)
+      this.limiter = this.context.createDynamicsCompressor()
+      this.limiter.threshold.value = -10
+      this.limiter.knee.value = 12
+      this.limiter.ratio.value = 6
+      this.limiter.attack.value = 0.003
+      this.limiter.release.value = 0.25
+      this.master.connect(this.limiter)
+      this.limiter.connect(this.context.destination)
       for (const layer of ["drums", "bass", "pad", "melody"]) {
         const gain = this.context.createGain()
         gain.gain.value = this.state.volumes[layer]
@@ -76,6 +86,24 @@ export class SoundtrackEngine {
     for (const [layer, gain] of Object.entries(this.layerGains)) {
       gain.gain.setTargetAtTime(this.state.volumes[layer], this.context.currentTime, 0.05)
     }
+    if (this.master && this.context) {
+      this.master.gain.setTargetAtTime(
+        MASTER_BASE_GAIN * this.state.masterVolume,
+        this.context.currentTime,
+        0.04,
+      )
+    }
+  }
+
+  setMasterVolume(value) {
+    this.state.masterVolume = Math.max(0, Math.min(1, Number(value) || 0))
+    if (!this.master || !this.context) return
+    this.master.gain.cancelScheduledValues(this.context.currentTime)
+    this.master.gain.setTargetAtTime(
+      MASTER_BASE_GAIN * this.state.masterVolume,
+      this.context.currentTime,
+      0.04,
+    )
   }
 
   requestScene(sceneKey, transitionBars = 2) {
@@ -104,7 +132,10 @@ export class SoundtrackEngine {
     this.sceneSwitchBar = null
     this.nextTime = this.context.currentTime + 0.08
     this.master.gain.cancelScheduledValues(this.context.currentTime)
-    this.master.gain.setValueAtTime(0.72, this.context.currentTime)
+    this.master.gain.setValueAtTime(
+      MASTER_BASE_GAIN * (this.state.masterVolume ?? 1),
+      this.context.currentTime,
+    )
     this.timer = window.setInterval(() => this.tick(), LOOKAHEAD_MS)
     this.tick()
   }
@@ -293,7 +324,10 @@ export class SoundtrackEngine {
     await this.ensure()
     const time = this.context.currentTime + 0.01
     this.master.gain.cancelScheduledValues(time)
-    this.master.gain.setValueAtTime(0.72, time)
+    this.master.gain.setValueAtTime(
+      MASTER_BASE_GAIN * (this.state.masterVolume ?? 1),
+      time,
+    )
     if (kind === "footstep") {
       this.playNoise(time, 0.09, 80, 700, 0.1)
       this.playKick(time, 0.35)

@@ -65,6 +65,8 @@ const els = {
   transportScene: document.querySelector("#transport-scene"),
   transportStatus: document.querySelector("#transport-status"),
   transportPulse: document.querySelector("#transport-pulse"),
+  masterVolume: document.querySelector("#master-volume"),
+  masterVolumeOutput: document.querySelector("#master-volume-output"),
   hint: document.querySelector("#soundtrack-hint"),
   stepKicker: document.querySelector("#step-kicker"),
   stepTitle: document.querySelector("#step-title"),
@@ -124,6 +126,7 @@ const state = {
   transitionBars: 2,
   layers: { drums: true, bass: true, pad: true, melody: true },
   volumes: { drums: 0.7, bass: 0.65, pad: 0.55, melody: 0.65 },
+  masterVolume: 1,
   pattern: null,
   preview: null,
   playing: false,
@@ -203,6 +206,8 @@ function syncControls() {
   els.stepTransitionOutput.textContent = `${state.transitionBars} такт.`
   els.labTransition.value = String(state.transitionBars)
   els.labTransitionOutput.textContent = `${state.transitionBars} такт.`
+  els.masterVolume.value = String(Math.round(state.masterVolume * 100))
+  els.masterVolumeOutput.textContent = `${Math.round(state.masterVolume * 100)}%`
   document.querySelectorAll("[data-layer]").forEach((input) => {
     input.checked = Boolean(state.layers[input.dataset.layer])
   })
@@ -409,6 +414,11 @@ function buildLayerControls() {
 
 function bindControls() {
   els.transportPlay.addEventListener("click", togglePlay)
+  els.masterVolume.addEventListener("input", () => {
+    state.masterVolume = Number(els.masterVolume.value) / 100
+    els.masterVolumeOutput.textContent = `${Math.round(state.masterVolume * 100)}%`
+    engine?.setMasterVolume(state.masterVolume)
+  })
 
   els.tabs.forEach((tab) => tab.addEventListener("click", () => setLevel(tab.dataset.level)))
   els.stepButtons.forEach((button) => button.addEventListener("click", () => setStep(button.dataset.step)))

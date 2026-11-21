@@ -11,6 +11,18 @@ import {
   noteName,
   sceneDefaults,
 } from "../assets/js/soundtrack/music.js"
+import { SoundtrackEngine } from "../assets/js/soundtrack/audio.js"
+
+test("master volume defaults to full and is clamped", () => {
+  const engine = new SoundtrackEngine()
+  assert.equal(engine.state.masterVolume, 1)
+  engine.setMasterVolume(0.35)
+  assert.equal(engine.state.masterVolume, 0.35)
+  engine.setMasterVolume(3)
+  assert.equal(engine.state.masterVolume, 1)
+  engine.setMasterVolume(-1)
+  assert.equal(engine.state.masterVolume, 0)
+})
 
 test("scales expose seven-note and pentatonic step sets", () => {
   assert.equal(SCALES.major.steps.length, 7)

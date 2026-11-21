@@ -98,12 +98,38 @@
   font-size: 0.68rem;
 }
 
+.soundtrack-volume {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  margin-left: auto;
+  color: #a9c1d6;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.soundtrack-volume input[type="range"] {
+  width: 104px;
+  margin: 0;
+  accent-color: #4fd28d;
+}
+
+.soundtrack-volume output {
+  min-width: 38px;
+  color: #eaf3fd;
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
 .transport-pulse {
   display: flex;
   align-items: flex-end;
   gap: 3px;
   height: 24px;
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .transport-pulse i {
@@ -583,5 +609,11 @@
 
   .transport-pulse {
     display: none;
+  }
+
+  .soundtrack-volume {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
   }
 }
