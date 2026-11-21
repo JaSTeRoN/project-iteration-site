@@ -44,6 +44,11 @@ test("layer activation follows scene thresholds", () => {
   assert.equal(activeLayers(1, "combat").melody, true)
 })
 
+test("teaching intensity includes every instrument", () => {
+  const active = activeLayers(0.65, "explore")
+  assert.deepEqual(active, { pad: true, bass: true, drums: true, melody: true })
+})
+
 test("bar generation is deterministic for a seed", () => {
   const options = { bar: 3, scene: "combat", intensity: 0.8, seed: 99, noteProbability: 0.8 }
   assert.deepEqual(generateBar(options), generateBar(options))

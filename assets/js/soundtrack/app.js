@@ -20,7 +20,7 @@ const STEPS = [
   },
   {
     title: "Ритм и вероятности",
-    text: "Барабаны и бас не играют фиксированный паттерн. Интенсивность меняет, сколько событий вообще появится в такте — и какие слои уже включены.",
+    text: "Барабаны и бас не играют фиксированный паттерн. Интенсивность меняет, сколько событий вообще появится в такте — и какие слои уже включены. В учебном миксе по умолчанию включены все четыре слоя.",
     formula: "density = base + intensity × range",
     output: (pattern) => `Интенсивность ${Math.round(pattern.intensity * 100)}% · активны: ${activeNames(pattern)}`,
   },
@@ -116,7 +116,7 @@ const state = {
   step: 0,
   scene: "explore",
   pendingScene: null,
-  intensity: 0.28,
+  intensity: 0.65,
   bpm: 84,
   scale: "dorian",
   root: 57,
@@ -179,7 +179,7 @@ function applyDefaults(sceneKey) {
   const defaults = sceneDefaults(sceneKey)
   state.bpm = defaults.bpm
   state.scale = defaults.scale
-  state.intensity = defaults.intensity
+  state.intensity = state.level === 1 ? Math.max(defaults.intensity, 0.65) : defaults.intensity
   state.root = SCENES[sceneKey].root
 }
 
@@ -315,6 +315,12 @@ function setLevel(level) {
   els.panels.forEach((panel) => {
     panel.hidden = Number(panel.id.replace("panel-", "")) !== state.level
   })
+  if (state.level === 1 && state.intensity < 0.65) {
+    state.intensity = 0.65
+    applySettings()
+    syncControls()
+    return
+  }
   updateReadouts()
 }
 
