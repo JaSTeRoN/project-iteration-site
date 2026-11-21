@@ -49,6 +49,31 @@ test("teaching intensity includes every instrument", () => {
   assert.deepEqual(active, { pad: true, bass: true, drums: true, melody: true })
 })
 
+test("allowed layers let the tutorial isolate one instrument at a time", () => {
+  const padOnly = generateBar({
+    bar: 0,
+    scene: "explore",
+    intensity: 0.65,
+    seed: 37,
+    allowedLayers: { pad: true, bass: false, drums: false, melody: false },
+  })
+  assert.ok(padOnly.events.pad.length > 0)
+  assert.equal(padOnly.events.bass.length, 0)
+  assert.equal(padOnly.events.drums.length, 0)
+  assert.equal(padOnly.events.melody.length, 0)
+
+  const rhythm = generateBar({
+    bar: 0,
+    scene: "explore",
+    intensity: 0.65,
+    seed: 37,
+    allowedLayers: { pad: true, bass: true, drums: true, melody: false },
+  })
+  assert.ok(rhythm.events.bass.length > 0)
+  assert.ok(rhythm.events.drums.length > 0)
+  assert.equal(rhythm.events.melody.length, 0)
+})
+
 test("bar generation is deterministic for a seed", () => {
   const options = { bar: 3, scene: "combat", intensity: 0.8, seed: 99, noteProbability: 0.8 }
   assert.deepEqual(generateBar(options), generateBar(options))

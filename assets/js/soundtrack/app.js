@@ -14,25 +14,25 @@ import { SoundtrackEngine } from "./audio.js"
 const STEPS = [
   {
     title: "Лад и аккордовая сетка",
-    text: "Лад задаёт набор нот, а аккордовая сетка — гармонический маршрут. Для каждой сцены прогрессия своя: исследование звучит шире, бой — жёстче.",
+    text: "Лад задаёт набор нот, а аккордовая сетка — гармонический маршрут. На этом шаге звучит только пэд с аккордами: так проще услышать, как устроена гармония.",
     formula: "chord = scale[degree] + scale[degree + 2] + scale[degree + 4]",
-    output: (pattern) => `Аккорд: ${pattern.chordLabel} · лад: ${SCALES[pattern.scale].label}`,
+    output: (pattern) => `Аккорд: ${pattern.chordLabel} · звучит: ${activeNames(pattern)}`,
   },
   {
     title: "Ритм и вероятности",
-    text: "Барабаны и бас не играют фиксированный паттерн. Интенсивность меняет, сколько событий вообще появится в такте — и какие слои уже включены. В учебном миксе по умолчанию включены все четыре слоя.",
+    text: "Барабаны и бас не играют фиксированный паттерн. Интенсивность меняет, сколько событий вообще появится в такте. На этом шаге к пэду добавляются бас и барабаны, а мелодия пока молчит.",
     formula: "density = base + intensity × range",
     output: (pattern) => `Интенсивность ${Math.round(pattern.intensity * 100)}% · активны: ${activeNames(pattern)}`,
   },
   {
     title: "Генерация мелодии",
-    text: "Мелодия ходит по ступеням лада случайным шагом. Вероятность ноты и вероятность паузы оставляют место для дыхания и непредсказуемости.",
+    text: "Мелодия ходит по ступеням лада случайным шагом. Теперь к пэду, басу и барабанам добавляется мелодия — в миксе звучат все четыре слоя, и можно услышать, как фраза ложится на гармонию.",
     formula: "melody = randomWalk(scale) × noteChance × restChance",
-    output: (pattern) => `Мелодических нот: ${pattern.events.melody.length} · паузы делают фразу живой`,
+    output: (pattern) => `Мелодических нот: ${pattern.events.melody.length} · активны: ${activeNames(pattern)}`,
   },
   {
     title: "Слои",
-    text: "Аранжировка собирается из четырёх слоёв. Каждый можно выключить и услышать, как меняется общая картина.",
+    text: "Аранжировка собирается из четырёх слоёв. Теперь доступны все инструменты: каждый можно выключить и услышать, как меняется общая картина.",
     formula: "mix = drums + bass + pad + melody",
     output: (pattern) => `Слои: ${activeNames(pattern)}`,
   },
@@ -54,6 +54,17 @@ const STEPS = [
     formula: "sfx = noise × envelope × filter",
     output: () => "Шаги · ветер · удар — синтез в реальном времени",
   },
+]
+
+const ALL_LAYERS = { drums: true, bass: true, pad: true, melody: true }
+const TUTORIAL_LAYERS = [
+  { drums: false, bass: false, pad: true, melody: false },
+  { drums: true, bass: true, pad: true, melody: false },
+  { drums: true, bass: true, pad: true, melody: true },
+  { ...ALL_LAYERS },
+  { ...ALL_LAYERS },
+  { ...ALL_LAYERS },
+  { ...ALL_LAYERS },
 ]
 
 const canvas = document.querySelector("#soundtrack-canvas")
@@ -127,6 +138,7 @@ const state = {
   layers: { drums: true, bass: true, pad: true, melody: true },
   volumes: { drums: 0.7, bass: 0.65, pad: 0.55, melody: 0.65 },
   masterVolume: 1,
+  allowedLayers: TUTORIAL_LAYERS[0],
   pattern: null,
   preview: null,
   playing: false,
@@ -171,6 +183,7 @@ function makePreview() {
     bpm: state.bpm,
     noteProbability: state.noteProbability,
     restProbability: state.restProbability,
+    allowedLayers: state.allowedLayers,
     seed: 37,
   })
 }
@@ -292,8 +305,20 @@ function updateActivity() {
   })
 }
 
+function allowedLayersMatch(a, b) {
+  return Object.keys(ALL_LAYERS).every((layer) => Boolean(a[layer]) === Boolean(b[layer]))
+}
+
+function syncTutorialLayers() {
+  const next = state.level === 1 ? TUTORIAL_LAYERS[state.step] : ALL_LAYERS
+  const changed = !allowedLayersMatch(state.allowedLayers, next)
+  state.allowedLayers = next
+  return changed
+}
+
 function setStep(next) {
   state.step = Math.max(0, Math.min(STEPS.length - 1, Number(next)))
+  const layersChanged = syncTutorialLayers()
   els.stepButtons.forEach((button) => {
     const selected = Number(button.dataset.step) === state.step
     button.setAttribute("aria-pressed", selected ? "true" : "false")
@@ -305,6 +330,7 @@ function setStep(next) {
   els.stepTitle.textContent = STEPS[state.step].title
   els.stepText.textContent = STEPS[state.step].text
   els.stepFormula.textContent = STEPS[state.step].formula
+  if (layersChanged) applySettings()
   updateReadouts()
   updateActivity()
 }
@@ -315,13 +341,15 @@ function setLevel(level) {
   els.panels.forEach((panel) => {
     panel.hidden = Number(panel.id.replace("panel-", "")) !== state.level
   })
+  const layersChanged = syncTutorialLayers()
   if (state.level === 1 && state.intensity < 0.65) {
     state.intensity = 0.65
     applySettings()
     syncControls()
     return
   }
-  updateReadouts()
+  if (layersChanged) applySettings()
+  else updateReadouts()
 }
 
 function applySettings() {

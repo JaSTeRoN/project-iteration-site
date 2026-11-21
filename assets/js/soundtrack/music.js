@@ -112,6 +112,11 @@ export function generateBar(options = {}) {
   const seed = Number(options.seed ?? 37)
   const rng = makeRng(seed + bar * 7919 + sceneKey.length * 131)
   const active = activeLayers(intensity, sceneKey)
+  if (options.allowedLayers) {
+    for (const layer of Object.keys(active)) {
+      active[layer] = Boolean(options.allowedLayers[layer]) && active[layer]
+    }
+  }
   const degree = scene.progression[bar % scene.progression.length]
   const chord = buildChord(root, scaleName, degree)
   const scale = SCALES[scaleName].steps

@@ -198,6 +198,7 @@ export class SoundtrackEngine {
       bpm: this.state.bpm,
       noteProbability: this.state.noteProbability,
       restProbability: this.state.restProbability,
+      allowedLayers: this.state.allowedLayers,
       seed: 37,
     })
   }
