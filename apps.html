@@ -33,70 +33,134 @@
         <p>Интерактивные демонстрации к занятиям.</p>
       </div>
     </div>
-    <section class="app-grid" id="apps">
-      <a class="card" data-gate="wang.html" href="wang.html">
-        <span class="tag ready">Тема №1</span>
-        <h2>Плитки Вана (Wang Tiles)</h2>
-        <p>Простой ассоциативный алгоритм для построения структуры уровня.</p>
-        <p class="gate-note" hidden></p>
-        <img src="assets/brand/voxel/wang_tiles.webp" alt="">
-      </a>
-      <a class="card" data-gate="rogue.html" href="rogue.html">
-        <span class="tag ready">Тема №1</span>
-        <h2>Генерация подземелий в Rogue</h2>
-        <p>Изучи, как генерируются уровни в оригинальной Rogue 1980 года, и пройдись по готовому уровню!</p>
-        <p class="gate-note" hidden></p>
-        <img src="assets/brand/voxel/cave_explorer.webp" alt="">
-      </a>
-      <a class="card" href="voronoi.html">
-        <span class="tag ready theme-2">Тема №2</span>
-        <h2>Диаграмма Вороного</h2>
-        <p>Построй диаграмму Вороного по шагам, сгладь её релаксацией Ллойда и попробуй песочницу.</p>
-        <img src="assets/brand/voxel/voronoi_card.webp" alt="">
-      </a>
-      <a class="card" href="perlin.html">
-        <span class="tag ready theme-2">Тема №2</span>
-        <h2>Шум Перлина</h2>
-        <p>Разберись, как из случайных градиентов получается плавный шум, и собери собственный ландшафт.</p>
-        <img src="assets/brand/voxel/terrain_editor.webp" alt="">
-      </a>
-      <a class="card" href="diamond-square.html">
-        <span class="tag ready theme-2">Тема №2</span>
-        <h2>Diamond-Square</h2>
-        <p>Сгенерируй рельеф из четырёх углов: diamond- и square-шаги, карта высот и песочница.</p>
-        <img src="assets/brand/voxel/crystal_and_gold.webp" alt="">
-      </a>
-      <a class="card" href="life.html">
-        <span class="tag ready theme-2">Тема №2</span>
-        <h2>Игра «Жизнь»</h2>
-        <p>Клеточный автомат Конвея: четыре правила, мигалки, планеры и песочница с колониями.</p>
-        <img src="assets/brand/voxel/life_portrait.webp" alt="">
-      </a>
-      <a class="card" href="bestiary.html">
-        <span class="tag ready theme-3">Тема №3</span>
-        <h2>Генерация ассетов</h2>
-        <p>Пять способов собрать моба: части, параметры, грамматика, шум и эволюция.</p>
-        <img src="assets/brand/voxel/control_panel.webp" alt="">
-      </a>
-      <a class="card" href="animation.html">
-        <span class="tag ready theme-3">Тема №3</span>
-        <h2>Процедурная анимация</h2>
-        <p>Оживим маскота: скелет, пивоты, процедурная походка и вторичные движения.</p>
-        <img src="assets/brand/voxel/dash_smoke.webp" alt="">
-      </a>
-      <a class="card" href="narrative.html">
-        <span class="tag ready theme-3">Тема №3</span>
-        <h2>Генерация нарратива</h2>
-        <p>Граф истории, текст и журнал правил: жанр, тон, персонажи и закрепление узлов.</p>
-        <img src="assets/brand/voxel/candlelight_reading.webp" alt="">
-      </a>
-      <a class="card" href="soundtrack.html">
-        <span class="tag ready theme-3">Тема №3</span>
-        <h2>Процедурный и адаптивный саундтрек</h2>
-        <p>Лад, слои, вероятности и сцены: музыка, которая собирается и подстраивается.</p>
-        <img src="assets/brand/voxel/headphones_music.webp" alt="">
-      </a>
-    </section>
+    <div class="apps-sections">
+      <details class="apps-section" open>
+        <summary class="apps-section-summary">
+          <span class="apps-section-copy">
+            <span class="apps-section-title">Теория</span>
+            <span class="apps-section-sub">Алгоритмы, генерация и процедурные системы</span>
+          </span>
+          <span class="apps-section-count">10 приложений</span>
+          <span class="apps-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="apps-section-body">
+          <details class="apps-theme" open>
+            <summary class="apps-theme-summary">
+              <span class="apps-theme-title">Тема №1</span>
+              <span class="apps-theme-sub">Алгоритмы и структуры уровней</span>
+              <span class="apps-section-count">2 приложения</span>
+              <span class="apps-chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="apps-theme-body">
+              <section class="app-grid apps-grid" aria-label="Тема №1">
+                <a class="card" data-gate="wang.html" href="wang.html">
+                  <span class="tag ready">Тема №1</span>
+                  <h2>Плитки Вана (Wang Tiles)</h2>
+                  <p>Простой ассоциативный алгоритм для построения структуры уровня.</p>
+                  <p class="gate-note" hidden></p>
+                  <img src="assets/brand/voxel/wang_tiles.webp" alt="">
+                </a>
+                <a class="card" data-gate="rogue.html" href="rogue.html">
+                  <span class="tag ready">Тема №1</span>
+                  <h2>Генерация подземелий в Rogue</h2>
+                  <p>Изучи, как генерируются уровни в оригинальной Rogue 1980 года, и пройдись по готовому уровню!</p>
+                  <p class="gate-note" hidden></p>
+                  <img src="assets/brand/voxel/cave_explorer.webp" alt="">
+                </a>
+              </section>
+            </div>
+          </details>
+
+          <details class="apps-theme" open>
+            <summary class="apps-theme-summary">
+              <span class="apps-theme-title">Тема №2</span>
+              <span class="apps-theme-sub">Шум, рельеф и клеточные автоматы</span>
+              <span class="apps-section-count">4 приложения</span>
+              <span class="apps-chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="apps-theme-body">
+              <section class="app-grid apps-grid" aria-label="Тема №2">
+                <a class="card" href="voronoi.html">
+                  <span class="tag ready theme-2">Тема №2</span>
+                  <h2>Диаграмма Вороного</h2>
+                  <p>Построй диаграмму Вороного по шагам, сгладь её релаксацией Ллойда и попробуй песочницу.</p>
+                  <img src="assets/brand/voxel/voronoi_card.webp" alt="">
+                </a>
+                <a class="card" href="perlin.html">
+                  <span class="tag ready theme-2">Тема №2</span>
+                  <h2>Шум Перлина</h2>
+                  <p>Разберись, как из случайных градиентов получается плавный шум, и собери собственный ландшафт.</p>
+                  <img src="assets/brand/voxel/terrain_editor.webp" alt="">
+                </a>
+                <a class="card" href="diamond-square.html">
+                  <span class="tag ready theme-2">Тема №2</span>
+                  <h2>Diamond-Square</h2>
+                  <p>Сгенерируй рельеф из четырёх углов: diamond- и square-шаги, карта высот и песочница.</p>
+                  <img src="assets/brand/voxel/crystal_and_gold.webp" alt="">
+                </a>
+                <a class="card" href="life.html">
+                  <span class="tag ready theme-2">Тема №2</span>
+                  <h2>Игра «Жизнь»</h2>
+                  <p>Клеточный автомат Конвея: четыре правила, мигалки, планеры и песочница с колониями.</p>
+                  <img src="assets/brand/voxel/life_portrait.webp" alt="">
+                </a>
+              </section>
+            </div>
+          </details>
+
+          <details class="apps-theme" open>
+            <summary class="apps-theme-summary">
+              <span class="apps-theme-title">Тема №3</span>
+              <span class="apps-theme-sub">Ассеты, анимация, нарратив и звук</span>
+              <span class="apps-section-count">4 приложения</span>
+              <span class="apps-chevron" aria-hidden="true"></span>
+            </summary>
+            <div class="apps-theme-body">
+              <section class="app-grid apps-grid" aria-label="Тема №3">
+                <a class="card" href="bestiary.html">
+                  <span class="tag ready theme-3">Тема №3</span>
+                  <h2>Генерация ассетов</h2>
+                  <p>Пять способов собрать моба: части, параметры, грамматика, шум и эволюция.</p>
+                  <img src="assets/brand/voxel/control_panel.webp" alt="">
+                </a>
+                <a class="card" href="animation.html">
+                  <span class="tag ready theme-3">Тема №3</span>
+                  <h2>Процедурная анимация</h2>
+                  <p>Оживим маскота: скелет, пивоты, процедурная походка и вторичные движения.</p>
+                  <img src="assets/brand/voxel/dash_smoke.webp" alt="">
+                </a>
+                <a class="card" href="narrative.html">
+                  <span class="tag ready theme-3">Тема №3</span>
+                  <h2>Генерация нарратива</h2>
+                  <p>Граф истории, текст и журнал правил: жанр, тон, персонажи и закрепление узлов.</p>
+                  <img src="assets/brand/voxel/candlelight_reading.webp" alt="">
+                </a>
+                <a class="card" href="soundtrack.html">
+                  <span class="tag ready theme-3">Тема №3</span>
+                  <h2>Процедурный и адаптивный саундтрек</h2>
+                  <p>Лад, слои, вероятности и сцены: музыка, которая собирается и подстраивается.</p>
+                  <img src="assets/brand/voxel/headphones_music.webp" alt="">
+                </a>
+              </section>
+            </div>
+          </details>
+        </div>
+      </details>
+
+      <details class="apps-section apps-section-practice">
+        <summary class="apps-section-summary">
+          <span class="apps-section-copy">
+            <span class="apps-section-title">Практика</span>
+            <span class="apps-section-sub">Заготовка для практических приложений</span>
+          </span>
+          <span class="apps-section-count">0 приложений</span>
+          <span class="apps-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="apps-section-body">
+          <p class="apps-empty">Практика пока готовится. Здесь появятся приложения для самостоятельной работы.</p>
+        </div>
+      </details>
+    </div>
   </main>
   <footer class="site-footer">
     <p class="wrap">Специ<a class="admin-dot" href="admin.html" aria-label="Админка" style="text-decoration:none">а</a>льный <a class="footer-link" href="about.html">курс</a> «Итерация-8». <a class="footer-link" href="https://gpo.tusur.ru/chairs/9/projects/1637" target="_blank" rel="noopener noreferrer">Проект ГПО ЭМИС-2003 «Процедурная генерация игрового контента»</a>, <a class="footer-link" href="https://tusur.ru" target="_blank" rel="noopener noreferrer">ТУСУР</a>, <span data-year>2026</span>. Все права защищены.</p>
