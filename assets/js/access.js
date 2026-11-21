@@ -1,6 +1,7 @@
 import { zonedToUtc } from "./schedule-data.js"
 
 const DEFAULT_ZONE = "Asia/Tomsk"
+const ACCESS_URL = new URL("../../data/access.json", import.meta.url)
 
 export function gateInstant(gate) {
   const [date, time = "00:00"] = String(gate.open || "").split("T")
@@ -28,7 +29,7 @@ export function gateLabel(gate) {
 
 export async function loadGates() {
   try {
-    const response = await fetch("data/access.json", { cache: "no-cache" })
+    const response = await fetch(ACCESS_URL, { cache: "no-cache" })
     if (!response.ok) return []
     const payload = await response.json()
     return Array.isArray(payload.gates) ? payload.gates : []
@@ -62,19 +63,50 @@ export async function guardPage(target, root = document.querySelector("main")) {
   return false
 }
 
-export async function applyGates(selector = "[data-gate]") {
+function targetForNode(node) {
+  if (node.dataset.gate) return String(node.dataset.gate).trim()
+  if (!node.matches?.("a.card[href]")) return ""
+  return String(node.getAttribute("href") || "").split("#")[0].trim()
+}
+
+function ensureGateNote(node) {
+  let note = node.querySelector(".gate-note")
+  if (!note) {
+    note = document.createElement("p")
+    note.className = "gate-note"
+    node.append(note)
+  }
+  note.hidden = false
+  return note
+}
+
+export async function applyGates(selector = "[data-gate], a.card[href]") {
   const gates = await loadGates()
   for (const node of document.querySelectorAll(selector)) {
-    const gate = gates.find((item) => item.target === node.dataset.gate)
+    if (node.dataset.gateApplied === "true") continue
+    const target = targetForNode(node)
+    if (!target) continue
+    const gate = gates.find((item) => item.target === target)
     if (!gate) continue
     if (gateState(gate).open) continue
+    node.dataset.gateApplied = "true"
     node.classList.add("locked")
     node.setAttribute("aria-disabled", "true")
-    node.addEventListener("click", (event) => {
+
+    const note = ensureGateNote(node)
+    note.textContent = `Откроется ${gateLabel(gate)}`
+    const showLock = (event) => {
       event.preventDefault()
-      const note = node.querySelector(".gate-note")
-      if (note) note.textContent = `Откроется ${gateLabel(gate)}`
-    })
+      event.stopPropagation()
+      note.textContent = `Откроется ${gateLabel(gate)}`
+    }
+
+    node.addEventListener("click", showLock)
+    for (const link of node.querySelectorAll("a")) {
+      link.setAttribute("aria-disabled", "true")
+      link.addEventListener("click", showLock)
+    }
+
     const tag = node.querySelector(".tag")
     if (tag) {
       tag.textContent = `Откроется ${gateLabel(gate)}`

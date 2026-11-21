@@ -6,6 +6,7 @@ import {
   recordingsFor,
   safeHref,
 } from "./materials-data.js"
+import { applyGates } from "./access.js"
 
 const host = document.querySelector("[data-materials-section]")
 const sectionKey = host?.dataset.materialsSection || ""
@@ -91,6 +92,7 @@ function materialCard(material, all) {
   const card = document.createElement("article")
   card.className = "card material-card"
   card.id = `material-${material.id}`
+  card.dataset.gate = `material:${material.id}`
 
   const date = formatMaterialDate(material.date)
   if (date) {
@@ -153,6 +155,7 @@ async function load() {
     grid.className = "app-grid materials-grid"
     for (const item of items) grid.append(materialCard(item, all))
     host.append(grid)
+    await applyGates("[data-gate]")
   } catch {
     host.textContent = "Не удалось загрузить материалы."
   }

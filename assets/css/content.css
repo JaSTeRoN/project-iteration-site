@@ -44,6 +44,14 @@
   cursor: not-allowed;
 }
 
+.gate-note {
+  margin: 4px 0 0;
+  color: #7a4b00;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 .tag.locked-tag {
   background: #ffe6a8;
   color: #5a4300;

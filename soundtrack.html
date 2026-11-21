@@ -201,6 +201,9 @@
 
   <script src="assets/js/nav.js" defer></script>
   <script src="assets/js/footer.js" defer></script>
-  <script type="module" src="assets/js/soundtrack/app.js"></script>
+  <script type="module">
+    import { guardPage } from "./assets/js/access.js"
+    if (await guardPage("soundtrack.html")) await import("./assets/js/soundtrack/app.js")
+  </script>
 </body>
 </html>

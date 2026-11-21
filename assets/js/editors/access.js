@@ -1,17 +1,14 @@
-const FILE = "data/access.json"
+import { loadAccessCatalog } from "../access-catalog.js"
 
-const TARGETS = [
-  { value: "wang.html", label: "Плитки Вана" },
-  { value: "rogue.html", label: "Подземелье Rogue" },
-  { value: "apps.html", label: "Страница приложений" },
-]
+const FILE = "data/access.json"
 
 export async function mountAccess(host, api) {
   host.innerHTML = `
     <section class="editor-card">
-      <p class="editor-note">Пока не наступит указанное время, карточка на сайте закрыта, а страница показывает заглушку. Это мягкое ограничение: файлы всё равно лежат в открытом репозитории.</p>
+      <p class="editor-note">Пока не наступит указанное время, элемент закрыт на сайте. Список целей собирается автоматически из <code>apps.html</code> и <code>data/materials.json</code>: новые приложения и материалы появятся здесь без правки кода. Это мягкое ограничение — файлы всё равно лежат в открытом репозитории.</p>
       <div data-list></div>
       <div class="week-tools">
+        <button type="button" class="quiet" data-refresh>Обновить список</button>
         <button type="button" class="quiet" data-add>Добавить правило</button>
         <button type="button" data-save>Сохранить</button>
       </div>
@@ -22,8 +19,10 @@ export async function mountAccess(host, api) {
   const statusNode = host.querySelector("[data-status]")
   const list = host.querySelector("[data-list]")
   const saveButton = host.querySelector("[data-save]")
+  const refreshButton = host.querySelector("[data-refresh]")
 
   let data = { gates: [] }
+  let groups = []
   let sha = ""
 
   function setStatus(text, kind) {
@@ -31,9 +30,50 @@ export async function mountAccess(host, api) {
     statusNode.className = `status ${kind || ""}`
   }
 
+  function allTargets() {
+    return groups.flatMap((group) => group.items)
+  }
+
   function targetOf(value) {
-    const known = TARGETS.find((item) => item.value === value)
-    return known ? known.label : value
+    return allTargets().find((item) => item.value === value)?.label || value
+  }
+
+  function firstTarget() {
+    return allTargets().find((item) => item.value !== "apps.html")?.value || "apps.html"
+  }
+
+  function fillTargets(select, current) {
+    const used = new Set()
+    for (const group of groups) {
+      if (!group.items?.length) continue
+      const optgroup = document.createElement("optgroup")
+      optgroup.label = group.label
+      for (const item of group.items) {
+        if (used.has(item.value)) continue
+        used.add(item.value)
+        const option = document.createElement("option")
+        option.value = item.value
+        option.textContent = item.label
+        option.selected = current === item.value
+        optgroup.append(option)
+      }
+      if (optgroup.children.length > 0) select.append(optgroup)
+    }
+    if (current && !used.has(current)) {
+      const optgroup = document.createElement("optgroup")
+      optgroup.label = "Не найдено в каталоге"
+      const option = document.createElement("option")
+      option.value = current
+      option.textContent = current
+      option.selected = true
+      optgroup.append(option)
+      select.append(optgroup)
+    }
+  }
+
+  function gateHint(gate) {
+    const when = gate.open ? gate.open.replace("T", " ") : "не задано"
+    return `${targetOf(gate.target)} · откроется: ${when} (томское время)`
   }
 
   function gateCard(gate) {
@@ -44,17 +84,7 @@ export async function mountAccess(host, api) {
     rowOne.className = "event-edit-row"
     const target = document.createElement("select")
     target.setAttribute("aria-label", "Что закрываем")
-    const options = [...TARGETS]
-    if (gate.target && !TARGETS.some((item) => item.value === gate.target)) {
-      options.push({ value: gate.target, label: gate.target })
-    }
-    for (const item of options) {
-      const option = document.createElement("option")
-      option.value = item.value
-      option.textContent = item.label
-      option.selected = gate.target === item.value
-      target.append(option)
-    }
+    fillTargets(target, gate.target)
     const open = document.createElement("input")
     open.type = "datetime-local"
     open.value = gate.open || ""
@@ -65,7 +95,7 @@ export async function mountAccess(host, api) {
     rowTwo.className = "event-edit-row event-edit-footer"
     const hint = document.createElement("p")
     hint.className = "event-hint"
-    hint.textContent = `Откроется: ${open.value ? open.value.replace("T", " ") : "не задано"} (томское время)`
+    hint.textContent = gateHint(gate)
     const remove = document.createElement("button")
     remove.type = "button"
     remove.className = "quiet"
@@ -78,10 +108,11 @@ export async function mountAccess(host, api) {
 
     target.addEventListener("change", () => {
       gate.target = target.value
+      hint.textContent = gateHint(gate)
     })
     open.addEventListener("input", () => {
       gate.open = open.value
-      hint.textContent = `Откроется: ${open.value ? open.value.replace("T", " ") : "не задано"} (томское время)`
+      hint.textContent = gateHint(gate)
     })
 
     card.append(rowOne, rowTwo)
@@ -100,8 +131,23 @@ export async function mountAccess(host, api) {
   }
 
   host.querySelector("[data-add]").addEventListener("click", () => {
-    data.gates.push({ target: "wang.html", open: "", zone: "Asia/Tomsk", note: "" })
+    data.gates.push({ target: firstTarget(), open: "", zone: "Asia/Tomsk", note: "" })
     render()
+  })
+
+  refreshButton.addEventListener("click", async () => {
+    refreshButton.disabled = true
+    setStatus("Обновляем список целей…")
+    try {
+      const catalog = await loadAccessCatalog()
+      groups = catalog.groups
+      render()
+      setStatus(`Список обновлён: ${allTargets().length} элементов.`, "good")
+    } catch (error) {
+      setStatus(error.message, "bad")
+    } finally {
+      refreshButton.disabled = false
+    }
   })
 
   saveButton.addEventListener("click", async () => {
@@ -130,8 +176,9 @@ export async function mountAccess(host, api) {
     }
   })
 
-  const loaded = await api.load(FILE)
+  const [loaded, catalog] = await Promise.all([api.load(FILE), loadAccessCatalog()])
   data = loaded.data && Array.isArray(loaded.data.gates) ? loaded.data : { gates: [] }
+  groups = catalog.groups
   sha = loaded.sha
   render()
   if (!api.canWrite) {
