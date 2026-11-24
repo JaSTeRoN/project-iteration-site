@@ -137,6 +137,31 @@ function materialCard(material, all) {
   return card
 }
 
+function highlightHashTarget() {
+  document.querySelectorAll(".material-card.is-target").forEach((card) => {
+    card.classList.remove("is-target")
+    card.removeAttribute("tabindex")
+  })
+  const raw = location.hash.slice(1)
+  let id = ""
+  try {
+    id = decodeURIComponent(raw)
+  } catch {
+    return
+  }
+  if (!id) return
+  const target = document.getElementById(id)
+  if (!target?.classList.contains("material-card")) return
+  target.classList.add("is-target")
+  target.setAttribute("tabindex", "-1")
+  requestAnimationFrame(() => {
+    target.scrollIntoView({ behavior: "smooth", block: "center" })
+    target.focus({ preventScroll: true })
+  })
+}
+
+window.addEventListener("hashchange", highlightHashTarget)
+
 async function load() {
   if (!section || !host) return
   try {
@@ -156,6 +181,7 @@ async function load() {
     for (const item of items) grid.append(materialCard(item, all))
     host.append(grid)
     await applyGates("[data-gate]")
+    highlightHashTarget()
   } catch {
     host.textContent = "Не удалось загрузить материалы."
   }

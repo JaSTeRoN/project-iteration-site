@@ -281,6 +281,31 @@
 
 .material-card h2 { font-size: 1.22rem; }
 
+.material-card.is-target {
+  outline: 3px solid #1d8f55;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px rgba(29, 143, 85, 0.16), var(--shadow);
+  scroll-margin-top: 110px;
+}
+
+.material-card.is-target::before {
+  align-self: flex-start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #e5f6ec;
+  color: #146b3a;
+  content: "Вы перешли по этой ссылке";
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+}
+
+.material-card.is-target:focus {
+  outline: 3px solid #1d8f55;
+  outline-offset: 3px;
+}
+
 .material-related {
   margin: 2px 0 0;
   color: #43556c;
