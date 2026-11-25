@@ -49,10 +49,19 @@ function eventCard(event, zone, columnDate) {
   const time = document.createElement("p")
   time.className = "lesson-time"
   time.textContent = formatTime(instant, zone.timeZone)
+  const meta = document.createElement("div")
+  meta.className = "lesson-head-meta"
+  if (event.place && zone.id === primary.id) {
+    const place = document.createElement("p")
+    place.className = "lesson-place"
+    place.textContent = event.place
+    meta.append(place)
+  }
   const format = document.createElement("span")
   format.className = "lesson-format"
   format.textContent = KINDS[kindValue] || "Занятие"
-  head.append(time, format)
+  meta.append(format)
+  head.append(time, meta)
   card.append(head)
 
   const topic = document.createElement("p")
@@ -74,12 +83,6 @@ function eventCard(event, zone, columnDate) {
 
   const foot = document.createElement("div")
   foot.className = "lesson-foot"
-  if (event.place && zone.id === primary.id) {
-    const place = document.createElement("p")
-    place.className = "lesson-place"
-    place.textContent = event.place
-    foot.append(place)
-  }
   const href = eventLink(event, data.defaultLink)
   if (href) {
     const link = document.createElement("a")
