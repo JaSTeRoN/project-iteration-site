@@ -313,6 +313,10 @@
   line-height: 1.35;
 }
 
+.material-related a {
+  text-decoration: none;
+}
+
 .material-related-title {
   margin: 0 0 4px;
   color: var(--ink);
@@ -337,7 +341,12 @@
   line-height: 1.35;
 }
 
-.material-card .card-link { margin-top: auto; }
+.material-card .card-link {
+  display: block;
+  align-self: stretch;
+  margin-top: auto;
+  text-align: center;
+}
 
 .materials-empty {
   margin: 0;

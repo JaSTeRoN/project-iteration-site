@@ -55,12 +55,14 @@ function eventCard(event, zone, columnDate) {
   head.append(time, format)
   card.append(head)
 
+  const topic = document.createElement("p")
+  topic.className = "lesson-topic"
   if (event.topic) {
-    const topic = document.createElement("p")
-    topic.className = "lesson-topic"
     topic.textContent = event.topic
-    card.append(topic)
+  } else {
+    topic.setAttribute("aria-hidden", "true")
   }
+  card.append(topic)
 
   const localDate = formatDate(instant, zone.timeZone)
   if (localDate !== columnDate) {
