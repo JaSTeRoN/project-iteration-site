@@ -31,8 +31,8 @@
   "recordings": [
     {
       "id": "r-bffbc1dfbd",
-      "title": "Запись занятия по теме №1 - очное занятие 5 ноября 2026 г.",
-      "date": "",
+      "title": "Запись занятия по теме №1 - очное занятие",
+      "date": "2026-11-05",
       "note": "",
       "kind": "link",
       "url": "https://vkvideo.ru/video-243052415_456239017?list=ln-vrbpN4BwsJFQniiTBe",
@@ -42,8 +42,8 @@
     },
     {
       "id": "r-9fbaa2f5ed",
-      "title": "Запись занятия по теме №2 - дистанционное занятие 14 ноября 2026 г.",
-      "date": "",
+      "title": "Запись занятия по теме №2 - дистанционное занятие",
+      "date": "2026-11-14",
       "note": "",
       "kind": "link",
       "url": "https://skynet.tusur.ru/playback/presentation/2.3/329d0c43ac51b0d25603f7b3865ae2a3d0964a68-1794655877444",
