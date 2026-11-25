@@ -75,5 +75,15 @@
     }
   ],
   "articles": [],
-  "books": []
+  "books": [
+    {
+      "id": "b-fb9c65fb27",
+      "title": "[английский] Первая версия сборника \"Procedural Content Generation in Games\"",
+      "date": "",
+      "note": "Расширенная версия книги доступна в чате курса.",
+      "kind": "link",
+      "url": "https://www.pcgbook.com/",
+      "links": []
+    }
+  ]
 }
