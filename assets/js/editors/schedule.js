@@ -39,7 +39,7 @@ export async function mountSchedule(host, api) {
           <input type="date" data-date aria-label="Перейти к неделе">
           <button type="button" class="quiet" data-go>Перейти</button>
         </div>
-        <button type="button" data-save>Сохранить</button>
+        <button type="button" data-save>Сохранить раздел</button>
       </div>
       <div class="week-tools">
         <label class="week-topic">
@@ -349,5 +349,23 @@ export async function mountSchedule(host, api) {
     setStatus("Только чтение: у токена нет прав на запись.", "bad")
   } else if (!dirty) {
     setStatus("")
+  }
+
+  return {
+    async collectChanges() {
+      if (!dirty) return { files: [] }
+      const next = normalized()
+      return {
+        files: [{ path: FILE, data: next }],
+        commit: (fileShas) => {
+          sha = fileShas[FILE] || sha
+          data = next
+          defaultInput.value = next.defaultLink || ""
+          dirty = false
+          renderWeek()
+          setStatus("Сохранено в общем коммите.", "good")
+        },
+      }
+    },
   }
 }

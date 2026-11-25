@@ -52,7 +52,11 @@
       </nav>
       <div class="session" id="session"></div>
     </div>
-    <p class="admin-note" id="bar-note" hidden>Переключение раздела перечитывает данные с GitHub — сохраните правки заранее.</p>
+    <p class="admin-note" id="bar-note" hidden>Вкладки больше не сбрасывают изменения. Сохраните несколько разделов одной кнопкой — получится один коммит.</p>
+    <div class="admin-batch" id="batch" hidden>
+      <button type="button" id="save-all">Сохранить все изменения</button>
+      <p class="status" id="batch-status" role="status"></p>
+    </div>
     <div id="panel"></div>
   </main>
   <footer class="site-footer">

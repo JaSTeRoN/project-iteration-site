@@ -10,7 +10,7 @@ export async function mountAccess(host, api) {
       <div class="week-tools">
         <button type="button" class="quiet" data-refresh>Обновить список</button>
         <button type="button" class="quiet" data-add>Добавить правило</button>
-        <button type="button" data-save>Сохранить</button>
+        <button type="button" data-save>Сохранить раздел</button>
       </div>
       <p class="status" data-status role="status"></p>
     </section>
@@ -24,6 +24,7 @@ export async function mountAccess(host, api) {
   let data = { gates: [] }
   let groups = []
   let sha = ""
+  let baseline = ""
 
   function setStatus(text, kind) {
     statusNode.textContent = text
@@ -74,6 +75,18 @@ export async function mountAccess(host, api) {
   function gateHint(gate) {
     const when = gate.open ? gate.open.replace("T", " ") : "не задано"
     return `${targetOf(gate.target)} · откроется: ${when} (томское время)`
+  }
+
+  function serialized() {
+    return {
+      gates: data.gates
+        .map((gate) => ({
+          target: String(gate.target || "").trim(),
+          open: String(gate.open || "").trim(),
+          zone: "Asia/Tomsk",
+        }))
+        .filter((gate) => gate.target && gate.open),
+    }
   }
 
   function gateCard(gate) {
@@ -155,20 +168,13 @@ export async function mountAccess(host, api) {
       setStatus("У этой учётной записи только чтение.", "bad")
       return
     }
-    const next = {
-      gates: data.gates
-        .map((gate) => ({
-          target: String(gate.target || "").trim(),
-          open: String(gate.open || "").trim(),
-          zone: "Asia/Tomsk",
-        }))
-        .filter((gate) => gate.target && gate.open),
-    }
+    const next = serialized()
     setStatus("Сохраняем…")
     try {
       const result = await api.save(FILE, next, "Update access", sha)
       sha = result.sha
       data = next
+      baseline = JSON.stringify(next)
       render()
       setStatus("Сохранено. Сайт обновится через минуту.", "good")
     } catch (error) {
@@ -180,11 +186,29 @@ export async function mountAccess(host, api) {
   data = loaded.data && Array.isArray(loaded.data.gates) ? loaded.data : { gates: [] }
   groups = catalog.groups
   sha = loaded.sha
+  baseline = JSON.stringify(serialized())
   render()
   if (!api.canWrite) {
     saveButton.disabled = true
     setStatus("Только чтение: у токена нет прав на запись.", "bad")
   }
 
-  return { targetOf }
+  return {
+    targetOf,
+    async collectChanges() {
+      const next = serialized()
+      const text = JSON.stringify(next)
+      if (text === baseline) return { files: [] }
+      return {
+        files: [{ path: FILE, data: next }],
+        commit: (fileShas) => {
+          sha = fileShas[FILE] || sha
+          data = next
+          baseline = text
+          render()
+          setStatus("Сохранено в общем коммите.", "good")
+        },
+      }
+    },
+  }
 }

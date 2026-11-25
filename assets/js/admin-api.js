@@ -102,17 +102,84 @@ export function createApi(session) {
     return { sha: payload.content.sha }
   }
 
+  function fileBase64(file) {
+    if (file.base64) return file.base64
+    if (file.text !== undefined) return textBase64(file.text)
+    const data = file.data !== undefined ? file.data : null
+    return textBase64(`${JSON.stringify(data, null, 2)}\n`)
+  }
+
+  async function saveMany(files, message) {
+    if (!Array.isArray(files) || files.length === 0) return { sha: "", files: {} }
+    const git = `https://api.github.com/repos/${REPO}/git`
+    const reference = await send(`${git}/ref/heads/${BRANCH}`)
+    if (!reference.ok) throw new Error(errorText(reference.status))
+    const head = await reference.json()
+    const commit = await send(`${git}/commits/${head.object.sha}`)
+    if (!commit.ok) throw new Error(errorText(commit.status))
+    const baseCommit = await commit.json()
+
+    const blobs = await Promise.all(
+      files.map(async (file) => {
+        const response = await send(`${git}/blobs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: fileBase64(file), encoding: "base64" }),
+        })
+        if (!response.ok) throw new Error(errorText(response.status))
+        const payload = await response.json()
+        return { path: file.path, sha: payload.sha }
+      }),
+    )
+
+    const treeResponse = await send(`${git}/trees`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        base_tree: baseCommit.tree.sha,
+        tree: blobs.map((blob) => ({ path: blob.path, mode: "100644", type: "blob", sha: blob.sha })),
+      }),
+    })
+    if (!treeResponse.ok) throw new Error(errorText(treeResponse.status))
+    const tree = await treeResponse.json()
+
+    const commitResponse = await send(`${git}/commits`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, tree: tree.sha, parents: [head.object.sha] }),
+    })
+    if (!commitResponse.ok) throw new Error(errorText(commitResponse.status))
+    const nextCommit = await commitResponse.json()
+
+    const refResponse = await send(`${git}/refs/heads/${BRANCH}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sha: nextCommit.sha }),
+    })
+    if (!refResponse.ok) throw new Error(errorText(refResponse.status))
+
+    return {
+      sha: nextCommit.sha,
+      files: Object.fromEntries(blobs.map((blob) => [blob.path, blob.sha])),
+    }
+  }
+
+  const textEncoder = new TextEncoder()
+
+  function textBase64(text) {
+    return btoa(String.fromCharCode(...textEncoder.encode(text)))
+  }
+
   return {
     session,
     canWrite: canWrite(session),
     load,
     async save(path, data, message, sha) {
-      const text = `${JSON.stringify(data, null, 2)}\n`
-      const base64 = btoa(String.fromCharCode(...new TextEncoder().encode(text)))
-      return put(path, base64, message, sha)
+      return put(path, textBase64(`${JSON.stringify(data, null, 2)}\n`), message, sha)
     },
     async upload(path, base64, message) {
       return put(path, base64, message, "")
     },
+    saveMany,
   }
 }

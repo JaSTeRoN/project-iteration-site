@@ -7,7 +7,7 @@ export async function mountProjects(host, api) {
       <div data-list></div>
       <div class="week-tools">
         <button type="button" class="quiet" data-add>Добавить проект</button>
-        <button type="button" data-save>Сохранить</button>
+        <button type="button" data-save>Сохранить раздел</button>
       </div>
       <p class="status" data-status role="status"></p>
     </section>
@@ -19,6 +19,7 @@ export async function mountProjects(host, api) {
 
   let data = { projects: [] }
   let sha = ""
+  let baseline = ""
 
   function setStatus(text, kind) {
     statusNode.textContent = text
@@ -106,6 +107,10 @@ export async function mountProjects(host, api) {
     }
   }
 
+  function serialized() {
+    return { projects: data.projects.map(clean) }
+  }
+
   host.querySelector("[data-add]").addEventListener("click", () => {
     data.projects.push({ title: "", team: "", description: "", link: "" })
     render()
@@ -116,12 +121,13 @@ export async function mountProjects(host, api) {
       setStatus("У этой учётной записи только чтение.", "bad")
       return
     }
-    const next = { projects: data.projects.map(clean) }
+    const next = serialized()
     setStatus("Сохраняем…")
     try {
       const result = await api.save(FILE, next, "Update projects", sha)
       sha = result.sha
       data = next
+      baseline = JSON.stringify(next)
       render()
       setStatus("Сохранено. Сайт обновится через минуту.", "good")
     } catch (error) {
@@ -132,9 +138,28 @@ export async function mountProjects(host, api) {
   const loaded = await api.load(FILE)
   data = loaded.data && Array.isArray(loaded.data.projects) ? loaded.data : { projects: [] }
   sha = loaded.sha
+  baseline = JSON.stringify(serialized())
   render()
   if (!api.canWrite) {
     saveButton.disabled = true
     setStatus("Только чтение: у токена нет прав на запись.", "bad")
+  }
+
+  return {
+    async collectChanges() {
+      const next = serialized()
+      const text = JSON.stringify(next)
+      if (text === baseline) return { files: [] }
+      return {
+        files: [{ path: FILE, data: next }],
+        commit: (fileShas) => {
+          sha = fileShas[FILE] || sha
+          data = next
+          baseline = text
+          render()
+          setStatus("Сохранено в общем коммите.", "good")
+        },
+      }
+    },
   }
 }

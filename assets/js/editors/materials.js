@@ -40,7 +40,7 @@ export async function mountMaterials(host, api) {
       <p class="editor-note">Материалы делятся на презентации, записи занятий, статьи и книги. У записи можно выбрать занятие в расписании и презентацию, по которой оно проходило, а к любому материалу — добавить дополнительные ссылки. Файлы до 20 МБ загружаются в папку <code>materials/</code>.</p>
       <div data-sections></div>
       <div class="week-tools">
-        <button type="button" data-save>Сохранить</button>
+        <button type="button" data-save>Сохранить раздел</button>
       </div>
       <p class="status" data-status role="status"></p>
     </section>
@@ -53,6 +53,7 @@ export async function mountMaterials(host, api) {
   let data = { presentations: [], recordings: [], articles: [], books: [] }
   let sha = ""
   let lessons = []
+  let baseline = ""
 
   function setStatus(text, kind) {
     statusNode.textContent = text
@@ -331,6 +332,14 @@ export async function mountMaterials(host, api) {
     return result
   }
 
+  function serialized() {
+    const next = {}
+    for (const section of SECTIONS) {
+      next[section.key] = data[section.key].map((material) => cleanMaterial(material, section))
+    }
+    return next
+  }
+
   saveButton.addEventListener("click", async () => {
     if (!api.canWrite) {
       setStatus("У этой учётной записи только чтение.", "bad")
@@ -357,6 +366,7 @@ export async function mountMaterials(host, api) {
       const result = await api.save(FILE, next, "Update materials", sha)
       sha = result.sha
       data = next
+      baseline = JSON.stringify(next)
       render()
       setStatus("Сохранено. Сайт обновится через минуту.", "good")
     } catch (error) {
@@ -390,8 +400,42 @@ export async function mountMaterials(host, api) {
     lessons = []
   }
   render()
+  baseline = JSON.stringify(serialized())
   if (!api.canWrite) {
     saveButton.disabled = true
     setStatus("Только чтение: у токена нет прав на запись.", "bad")
+  }
+
+  return {
+    async collectChanges() {
+      const files = []
+      const next = {}
+      for (const section of SECTIONS) {
+        next[section.key] = []
+        for (const material of data[section.key]) {
+          const copy = cleanMaterial(material, section)
+          if (material.pendingFile) {
+            const path = filePath(material.pendingFile.name)
+            copy.url = path
+            copy.kind = "file"
+            files.push({ path, base64: await readAsBase64(material.pendingFile) })
+          }
+          next[section.key].push(copy)
+        }
+      }
+      const text = JSON.stringify(next)
+      if (text !== baseline || files.length > 0) files.push({ path: FILE, data: next })
+      if (files.length === 0) return { files: [] }
+      return {
+        files,
+        commit: (fileShas) => {
+          sha = fileShas[FILE] || sha
+          data = next
+          baseline = text
+          render()
+          setStatus("Сохранено в общем коммите.", "good")
+        },
+      }
+    },
   }
 }
