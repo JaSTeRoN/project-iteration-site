@@ -1,7 +1,10 @@
 import assert from "node:assert/strict"
 import test from "node:test"
 import {
+  ALLOWED_FILE_EXTENSIONS,
   SECTIONS,
+  fileError,
+  fileExtension,
   formatMaterialDate,
   normalizeLinks,
   normalizeMaterials,
@@ -62,6 +65,27 @@ test("дата материала выводится по-русски", () => {
   assert.equal(formatMaterialDate("2026-11-05"), "5 ноября 2026 г.")
   assert.equal(formatMaterialDate(""), "")
   assert.equal(formatMaterialDate("2026-13-40"), "")
+})
+
+test("загружать можно только неисполняемые типы файлов", () => {
+  assert.equal(fileError("slide.pdf"), "")
+  assert.equal(fileError("SCAN.PNG"), "")
+  assert.equal(fileError("lecture-1.pptx"), "")
+  assert.equal(fileError("archive.zip"), "")
+  assert.equal(fileExtension("slide.PDF"), "pdf")
+
+  assert.match(fileError("page.html"), /\.html/)
+  assert.match(fileError("icon.svg"), /\.svg/)
+  assert.match(fileError("script.js"), /\.js/)
+  assert.match(fileError("payload.svgz"), /\.svgz/)
+  assert.match(fileError("slides.pdf.html"), /\.html/)
+  assert.match(fileError("slides.pdf"), /^$/)
+  assert.match(fileError("no-extension"), /расширения/)
+  assert.match(fileError(""), /расширения/)
+
+  for (const extension of ["html", "htm", "svg", "js", "mjs", "xml"]) {
+    assert.equal(ALLOWED_FILE_EXTENSIONS.includes(extension), false)
+  }
 })
 
 test("запись занятия связывается с занятием расписания", () => {

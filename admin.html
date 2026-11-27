@@ -36,12 +36,13 @@
       </div>
     </div>
     <section class="editor-card" id="login" hidden>
-      <p>Создайте <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer">fine-grained token</a> с правом Contents: Read and write только для репозитория project-iteration-site. Токен хранится в этом браузере 12 часов и дальше никуда не уходит.</p>
+      <p>Создайте <a href="https://github.com/settings/tokens?type=beta" target="_blank" rel="noopener noreferrer">fine-grained token</a> с правом Contents: Read and write только для репозитория project-iteration-site. Токен хранится в этом браузере не дольше 12 часов с момента входа и дальше никуда не уходит.</p>
       <div class="token-row">
         <input id="token" type="password" autocomplete="off" placeholder="github_pat_...">
         <button type="button" id="signin">Войти</button>
       </div>
       <p id="login-status" class="status" role="status"></p>
+      <button type="button" id="retry" class="quiet" hidden>Повторить подключение</button>
     </section>
     <div class="admin-bar" id="bar" hidden>
       <nav class="admin-tabs" id="tabs" aria-label="Разделы админки">

@@ -1,7 +1,8 @@
-import { SECTIONS, newId, safeHref } from "../materials-data.js"
+import { ALLOWED_FILE_EXTENSIONS, SECTIONS, fileError, newId, safeHref } from "../materials-data.js"
 
 const FILE = "data/materials.json"
 const MAX_FILE = 20 * 1024 * 1024
+const ACCEPT = ALLOWED_FILE_EXTENSIONS.map((extension) => `.${extension}`).join(",")
 const ID_PREFIX = { presentations: "p", recordings: "r", articles: "a", books: "b" }
 
 function lessonLabel(event) {
@@ -37,7 +38,7 @@ function filePath(name) {
 export async function mountMaterials(host, api) {
   host.innerHTML = `
     <section class="editor-card">
-      <p class="editor-note">Материалы делятся на презентации, записи занятий, статьи и книги. У записи можно выбрать занятие в расписании и презентацию, по которой оно проходило, а к любому материалу — добавить дополнительные ссылки. Файлы до 20 МБ загружаются в папку <code>materials/</code>.</p>
+      <p class="editor-note">Материалы делятся на презентации, записи занятий, статьи и книги. У записи можно выбрать занятие в расписании и презентацию, по которой оно проходило, а к любому материалу — добавить дополнительные ссылки. Файлы до 20 МБ загружаются в папку <code>materials/</code>; принимаются PDF, PPTX, DOC, DOCX, ZIP и изображения.</p>
       <div data-sections></div>
       <div class="week-tools">
         <button type="button" data-save>Сохранить раздел</button>
@@ -166,6 +167,7 @@ export async function mountMaterials(host, api) {
     url.setAttribute("aria-label", "Ссылка")
     const file = document.createElement("input")
     file.type = "file"
+    file.accept = ACCEPT
     file.setAttribute("aria-label", "Файл")
     file.hidden = material.kind !== "file"
     url.hidden = material.kind === "file"
@@ -253,6 +255,12 @@ export async function mountMaterials(host, api) {
       if (!selected) return
       if (selected.size > MAX_FILE) {
         setStatus("Файл больше 20 МБ — загрузите его вручную.", "bad")
+        file.value = ""
+        return
+      }
+      const problem = fileError(selected.name)
+      if (problem) {
+        setStatus(problem, "bad")
         file.value = ""
         return
       }
@@ -350,6 +358,8 @@ export async function mountMaterials(host, api) {
       for (const section of SECTIONS) {
         for (const material of data[section.key]) {
           if (!material.pendingFile) continue
+          const problem = fileError(material.pendingFile.name)
+          if (problem) throw new Error(problem)
           const path = filePath(material.pendingFile.name)
           setStatus(`Загружаем файл ${material.pendingFile.name}…`)
           const base64 = await readAsBase64(material.pendingFile)
@@ -415,6 +425,8 @@ export async function mountMaterials(host, api) {
         for (const material of data[section.key]) {
           const copy = cleanMaterial(material, section)
           if (material.pendingFile) {
+            const problem = fileError(material.pendingFile.name)
+            if (problem) throw new Error(problem)
             const path = filePath(material.pendingFile.name)
             copy.url = path
             copy.kind = "file"

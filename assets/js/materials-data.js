@@ -10,6 +10,37 @@ export function newId(prefix) {
   return `${prefix}-${random.replace(/-/g, "").slice(0, 10)}`
 }
 
+// Загруженные файлы раздаются с того же домена, что и админка, поэтому
+// исполняемые форматы (html, svg, js) сюда попадать не должны.
+export const ALLOWED_FILE_EXTENSIONS = [
+  "pdf",
+  "pptx",
+  "ppt",
+  "docx",
+  "doc",
+  "zip",
+  "png",
+  "jpg",
+  "jpeg",
+  "webp",
+  "gif",
+]
+
+const ALLOWED_FILES = new Set(ALLOWED_FILE_EXTENSIONS)
+
+export function fileExtension(name) {
+  const match = /\.([a-z0-9]+)$/i.exec(String(name || "").trim())
+  return match ? match[1].toLowerCase() : ""
+}
+
+export function fileError(name) {
+  const allowed = ALLOWED_FILE_EXTENSIONS.join(", ")
+  const extension = fileExtension(name)
+  if (!extension) return `У файла «${name}» нет расширения. Разрешены: ${allowed}.`
+  if (!ALLOWED_FILES.has(extension)) return `Файлы .${extension} не принимаются. Разрешены: ${allowed}.`
+  return ""
+}
+
 export function safeHref(value) {
   const raw = String(value ?? "").trim()
   if (!raw || /\s/.test(raw) || raw.includes("..")) return ""

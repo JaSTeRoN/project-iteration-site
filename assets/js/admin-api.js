@@ -1,8 +1,14 @@
 const SESSION_KEY = "iteration-admin-session"
-const TTL = 12 * 60 * 60 * 1000
+export const SESSION_TTL = 12 * 60 * 60 * 1000
 
 export const REPO = "JaSTeRoN/project-iteration-site"
 export const BRANCH = "main"
+
+function requestError(message, status) {
+  const error = new Error(message)
+  error.status = status
+  return error
+}
 
 function errorText(status) {
   if (status === 401) return "GitHub ответил 401: токен не подошёл или истёк."
@@ -24,12 +30,19 @@ export function readSession() {
     }
     return session
   } catch {
+    try {
+      localStorage.removeItem(SESSION_KEY)
+    } catch {
+      // хранилище недоступно — считаем, что сессии нет
+    }
     return null
   }
 }
 
-export function writeSession({ token, login, permission }) {
-  const session = { token, login, permission, expires: Date.now() + TTL }
+export function writeSession({ token, login, permission, issuedAt }) {
+  // Срок отсчитывается от входа и не продлевается при перезагрузке админки.
+  const started = Number.isFinite(issuedAt) ? issuedAt : Date.now()
+  const session = { token, login, permission, issuedAt: started, expires: started + SESSION_TTL }
   localStorage.setItem(SESSION_KEY, JSON.stringify(session))
   return session
 }
@@ -49,12 +62,16 @@ export async function signIn(token) {
     "X-GitHub-Api-Version": "2022-11-28",
   }
   const userResponse = await fetch("https://api.github.com/user", { headers })
-  if (userResponse.status === 401) throw new Error("Токен не подошёл: проверьте, что он активен и не истёк.")
-  if (!userResponse.ok) throw new Error(errorText(userResponse.status))
+  if (userResponse.status === 401) {
+    throw requestError("Токен не подошёл: проверьте, что он активен и не истёк.", 401)
+  }
+  if (!userResponse.ok) throw requestError(errorText(userResponse.status), userResponse.status)
   const user = await userResponse.json()
 
   const repoResponse = await fetch(`https://api.github.com/repos/${REPO}`, { headers })
-  if (!repoResponse.ok) throw new Error("Не удалось прочитать репозиторий — проверьте права токена.")
+  if (!repoResponse.ok) {
+    throw requestError("Не удалось прочитать репозиторий — проверьте права токена.", repoResponse.status)
+  }
   const repo = await repoResponse.json()
   const permissions = repo.permissions || {}
   const permission = permissions.admin

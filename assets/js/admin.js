@@ -15,6 +15,7 @@ const loginPanel = document.querySelector("#login")
 const loginStatus = document.querySelector("#login-status")
 const tokenInput = document.querySelector("#token")
 const signinButton = document.querySelector("#signin")
+const retryButton = document.querySelector("#retry")
 const bar = document.querySelector("#bar")
 const barNote = document.querySelector("#bar-note")
 const tabs = document.querySelector("#tabs")
@@ -152,6 +153,7 @@ async function saveAll() {
 async function start(session) {
   api = createApi(session)
   loginPanel.hidden = true
+  retryButton.hidden = true
   bar.hidden = false
   barNote.hidden = false
   batchBar.hidden = false
@@ -165,6 +167,7 @@ async function start(session) {
 
 function showLogin(message) {
   loginPanel.hidden = false
+  retryButton.hidden = true
   bar.hidden = true
   barNote.hidden = true
   batchBar.hidden = true
@@ -174,12 +177,29 @@ function showLogin(message) {
   tokenInput.focus()
 }
 
+function showRetry(error) {
+  loginPanel.hidden = false
+  retryButton.hidden = false
+  bar.hidden = true
+  barNote.hidden = true
+  batchBar.hidden = true
+  panes.clear()
+  panel.replaceChildren()
+  const reason = String(error?.message || "неизвестная ошибка").replace(/\.$/, "")
+  setStatus(
+    loginStatus,
+    `${reason}. Токен остался в браузере — повторите попытку или войдите заново.`,
+    "bad",
+  )
+}
+
 signinButton.addEventListener("click", async () => {
   const token = tokenInput.value.trim()
   if (!token) {
     setStatus(loginStatus, "Вставьте токен GitHub.", "bad")
     return
   }
+  retryButton.hidden = true
   signinButton.disabled = true
   setStatus(loginStatus, "Проверяем токен…")
   try {
@@ -199,20 +219,37 @@ window.addEventListener("hashchange", () => {
 
 saveAllButton.addEventListener("click", saveAll)
 
+retryButton.addEventListener("click", async () => {
+  retryButton.disabled = true
+  setStatus(loginStatus, "Проверяем подключение…")
+  try {
+    await boot()
+  } finally {
+    retryButton.disabled = false
+  }
+})
+
 async function boot() {
   const session = readSession()
   if (!session) {
     showLogin()
     return
   }
+  let fresh
   try {
-    const fresh = await signIn(session.token)
-    writeSession(fresh)
-    await start(readSession())
-  } catch {
-    clearSession()
-    showLogin("Сессия истекла — войдите заново.")
+    fresh = await signIn(session.token)
+  } catch (error) {
+    if (error?.status === 401) {
+      clearSession()
+      showLogin("Сессия истекла — войдите заново.")
+      return
+    }
+    // Сеть, 5xx или сбой GitHub: токен не трогаем, даём повторить.
+    showRetry(error)
+    return
   }
+  writeSession({ ...fresh, issuedAt: session.issuedAt })
+  await start(readSession())
 }
 
 boot()
